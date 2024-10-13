@@ -36,7 +36,6 @@ jobs:
         with:
           release-type: python
           include-v-in-tag: false
-          versioning-strategy: auto
     outputs:
       release_created: ${{ steps.release.outputs.releases_created }}
       version: ${{ steps.release.outputs.version }}
