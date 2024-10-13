@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "open-source-polarion-python-repo-template"
+name = "python-polarion-utils"
 version = "0.1.0"
 description = ""
 authors = [
@@ -7,8 +7,8 @@ authors = [
 ]
 license = "Apache License 2.0"
 readme = "README.md"
-homepage = "https://github.com/SchweizerischeBundesbahnen/open-source-polarion-python-repo-template"
-repository = "https://github.com/SchweizerischeBundesbahnen/open-source-polarion-python-repo-template"
+homepage = "https://github.com/SchweizerischeBundesbahnen/python-polarion-utils"
+repository = "https://github.com/SchweizerischeBundesbahnen/python-polarion-utils"
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -50,7 +50,7 @@ extend-select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"polarion_requirements_inspector/main.py" = [
+"python_polarion_utils/main.py" = [
     "T201" # No prints
 ]
 "tests/*" = [
