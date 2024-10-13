@@ -2,10 +2,10 @@
 
 import string
 
-from ...common.util_http import HttpConnection  # pylint: disable=E0402
+from ...common.util_http import HttpConnection
 
 
-class PolarionRestApiConnection(HttpConnection):  # pylint: disable=R0903
+class PolarionRestApiConnection(HttpConnection):
     """Generic Polarion Extension REST API Connection"""
 
 

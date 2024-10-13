@@ -1,4 +1,4 @@
-"""Tests python_polarion_utils.common"""
+"""Tests python_polarion_utils.common.util_argparse"""
 
 from python_polarion_utils.common import util_argparse
 

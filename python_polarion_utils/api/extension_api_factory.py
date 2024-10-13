@@ -15,12 +15,12 @@ from .jobs import PolarionJobsApi
 from .json_editor import PolarionJsonEditorApi
 from .mailworkflow import PolarionMailWorkflowApi
 from .pdf_exporter import PolarionPdfExporterApi
-from .qualityanalysis import PolarionQualityAnalysisApi
+from .requirements_inspector import PolarionRequirementsInspectorApi
 from .sbbtool import PolarionSBBToolApi
 from .test_data import PolarionTestDataApi
 
 
-class ExtensionApiFactory:  # pylint: disable=R0903
+class ExtensionApiFactory:
     """Extension API Factory"""
 
     __extension_api_classes = {
@@ -38,7 +38,7 @@ class ExtensionApiFactory:  # pylint: disable=R0903
         "json-editor": PolarionJsonEditorApi,
         "mailworkflow": PolarionMailWorkflowApi,
         "pdf-exporter": PolarionPdfExporterApi,
-        "qualityanalysis": PolarionQualityAnalysisApi,
+        "requirements-inspector": PolarionRequirementsInspectorApi,
         "sbbtool": PolarionSBBToolApi,
         "test-data": PolarionTestDataApi,
         "generic": PolarionGenericExtensionApi,
