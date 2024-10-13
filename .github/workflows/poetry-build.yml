@@ -69,9 +69,9 @@ jobs:
       - name: 📦 Publish artifacts to PyPI/TestPyPI
         env:
           name: testpypi
-          url: https://test.pypi.org/p/python-requirements-inspector
+          url: https://test.pypi.org/p/python-polarion-utils
 #          name: pypi
-#          url: https://pypi.org/p/python-requirements-inspector
+#          url: https://pypi.org/p/python-polarion-utils
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/  # it must be removed when publishing to PyPI
