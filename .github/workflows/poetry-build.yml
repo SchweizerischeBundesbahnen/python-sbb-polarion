@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     permissions:
-#      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing for PyPI
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing for PyPI
       contents: write  # Required for uploading artifacts to GitHub release
     steps:
       - name: 📄 Checkout code

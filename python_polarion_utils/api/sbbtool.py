@@ -10,7 +10,7 @@ ACCEPT_XML = {"Accept": "application/xml"}
 
 
 class AttachTableParams(NamedTuple):
-    """Definition of paramteters for atttach_table API call"""
+    """Definition of parameters for attach_table API call"""
 
     objectType: str
     objectId: str
