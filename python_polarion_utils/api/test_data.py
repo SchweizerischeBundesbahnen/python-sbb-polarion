@@ -1,13 +1,15 @@
 """Test data Polarion Extension API"""
 
-from .generic import PolarionGenericExtensionApi
+from requests import Response  # type: ignore
+
+from python_polarion_utils.api.generic import PolarionGenericExtensionApi, PolarionRestApiConnection
 
 
 class PolarionTestDataApi(PolarionGenericExtensionApi):
-    def __init__(self, polarion_connection):
-        super().__init__("test-data", polarion_connection)
+    def __init__(self, polarion_connection: PolarionRestApiConnection) -> None:
+        super().__init__(polarion_connection, "test-data")
 
-    def generate_large_document(self, project_id, space_id, document_name, quantity=None):
+    def generate_large_document(self, project_id: str, space_id: str, document_name: str, quantity: int | None = None) -> Response | None:
         """Generate test live document"""
         url = f"/{self.rest_api_url}/projects/{project_id}/spaces/{space_id}/documents/{document_name}"
         if quantity:
@@ -16,7 +18,7 @@ class PolarionTestDataApi(PolarionGenericExtensionApi):
         headers = {"Accept": "text/plain"}
         return self.polarion_connection.api_request_post(url, headers=headers)
 
-    def change_work_item_descriptions(self, project_id, space_id, document_name, interval=None):
+    def change_work_item_descriptions(self, project_id: str, space_id: str, document_name: str, interval: int | None = None) -> Response | None:
         """Update workitem descriptions in specified document"""
         url = f"/{self.rest_api_url}/projects/{project_id}/spaces/{space_id}/documents/{document_name}/change-wi-descriptions"
         if interval:

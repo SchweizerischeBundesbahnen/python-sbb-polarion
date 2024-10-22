@@ -55,9 +55,13 @@ extend-select = [
 "python_polarion_utils/main.py" = [
     "T201" # No prints
 ]
+
 "tests/*" = [
     "S101" # No assert rule (bandit)
 ]
+
+[tool.ruff.lint.pylint]
+max-args = 7
 
 [tool.ruff.format]
 line-ending = "lf"

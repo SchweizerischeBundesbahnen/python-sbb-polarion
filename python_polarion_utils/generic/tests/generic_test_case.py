@@ -1,14 +1,15 @@
 """Generic Polarion Test Case"""
 
+import logging
 import os
 import unittest
 from abc import abstractmethod
 
-from ....common.util_argparse import get_script_arguments  # pylint: disable=E0402
-from ....common.util_http import HttpConnection  # pylint: disable=E0402
-from ....polarion.api.extension_api_factory import ExtensionApiFactory  # pylint: disable=E0402
-from ....polarion.api.generic import PolarionGenericExtensionApi, PolarionRestApiConnection  # pylint: disable=E0402
-from ...api.polarion_api import PolarionApi  # pylint: disable=E0402
+from python_polarion_utils.api.extension_api_factory import ExtensionApiFactory
+from python_polarion_utils.api.generic import PolarionGenericExtensionApi, PolarionRestApiConnection
+from python_polarion_utils.api.polarion_api import PolarionApi
+from python_polarion_utils.common.util_argparse import get_script_arguments
+from python_polarion_utils.common.util_http import HttpConnection
 
 
 class GenericTestCase(unittest.TestCase):
@@ -16,6 +17,7 @@ class GenericTestCase(unittest.TestCase):
 
     extension_api: PolarionGenericExtensionApi = None
     _polarion_api: PolarionApi = None
+    logger = logging.getLogger("GenericTestCase")
 
     @classmethod
     def setUpClass(cls):
@@ -68,10 +70,10 @@ class GenericTestCase(unittest.TestCase):
         automatic_module_name = json["automaticModuleName"]
         bundle_build_timestamp_digits_only = json["bundleBuildTimestampDigitsOnly"]
 
-        print(f"Bundle name: '{bundle_name}'")
-        print(f"Automatic module name: '{automatic_module_name}'")
-        print(f"Bundle version: '{bundle_version}'")
-        print(f"Bundle Build timestamp: '{bundle_build_timestamp}'")
+        self.logger.info(f"Bundle name: '{bundle_name}'")
+        self.logger.info(f"Automatic module name: '{automatic_module_name}'")
+        self.logger.info(f"Bundle version: '{bundle_version}'")
+        self.logger.info(f"Bundle Build timestamp: '{bundle_build_timestamp}'")
 
         self.assertEqual(bundle_vendor, "SBB AG")
         self.assertEqual(automatic_module_name, f"ch.sbb.polarion.extension.{self.extension_api.extension_name.replace('-', '_')}")
@@ -85,7 +87,7 @@ class GenericTestCase(unittest.TestCase):
         """Method code for testing GET /version endpoint with invalid token."""
         # Act
         extension_url = f"/polarion/{self.extension_api.extension_name}/rest/api/version"
-        http_connection = HttpConnection(url=self.extension_api.polarion_connection.host, token="invalid token")
+        http_connection = HttpConnection(url=self.extension_api.polarion_connection.host, token="invalid token")  # noqa: S106
         response = http_connection.api_request_get(extension_url, print_error=False)
 
         # Assert

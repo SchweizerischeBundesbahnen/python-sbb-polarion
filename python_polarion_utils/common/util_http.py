@@ -4,15 +4,57 @@ common implementation for HTTP connections
 """
 
 import base64
+import logging
+import re
+from enum import Enum
+from typing import Any, Literal, NotRequired, TypeAlias, TypedDict, Unpack
 
-import requests
+import requests  # type: ignore
+from requests import Response  # type: ignore
+
+
+class StatusCodeClass(Enum):
+    SUCCESSFUL = re.compile(r"^2\d\d$")
+    REDIRECT = re.compile(r"^3\d\d$")
+    CLIENT_ERROR = re.compile(r"^4\d\d$")
+    SERVER_ERROR = re.compile(r"^5\d\d$")
+
+
+class StatusCode(Enum):
+    OK = 200
+    INTERNAL_SERVER_ERROR = 503
+
+
+class HttpConnectionParams(TypedDict):
+    url: str
+    username: NotRequired[str]
+    password: NotRequired[str]
+    token: NotRequired[str]
+    api_key: NotRequired[str]
+    content_type: NotRequired[str]
+    accept: NotRequired[str]
+    trust_env: NotRequired[bool]
+    print_error: NotRequired[bool]
+
+
+RequestType: TypeAlias = Literal["GET", "POST", "PATCH", "PUT", "DELETE"]
+
+
+class OptionalApiRequestParams(TypedDict):
+    data: NotRequired[Any]
+    files: NotRequired[Any]
+    params: NotRequired[dict[str, str]]
+    headers: NotRequired[dict[str, str]]
+    print_error: NotRequired[bool]
+    allow_redirects: NotRequired[bool]
 
 
 class HttpConnection:
     """HTTP connection"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Unpack[HttpConnectionParams]) -> None:
         self.host = kwargs.get("url", "")
+        self.logger = logging.getLogger("python-polarion-utils-http")
         __username = kwargs.get("username", "")
         __password = kwargs.get("password", "")
         __token = kwargs.get("token", "")
@@ -27,7 +69,7 @@ class HttpConnection:
         elif __api_key:
             self.__authorization_headers = {"X-API-Key": __api_key}
         else:
-            print("WARNING: this type of authorization is not secure --> please consider to generate an access token instead")
+            self.logger.warning("This type of authorization is not secure --> please consider to generate an access token instead")
             __auth = base64.b64encode(f"{__username}:{__password}".encode()).decode("utf-8")
             self.__authorization_headers = {"Authorization": f"Basic {__auth}"}
 
@@ -39,7 +81,7 @@ class HttpConnection:
 
         self.__requests_error_occurred = False
 
-    def get_requests_error_occurred(self):
+    def get_requests_error_occurred(self) -> bool:
         """in case a request error returns True and reset the state
 
         :return:
@@ -49,13 +91,13 @@ class HttpConnection:
             return True
         return False
 
-    def __set_requests_error_occurred(self):
+    def __set_requests_error_occurred(self) -> None:
         self.__requests_error_occurred = True
 
-    def __reset_requests_error_occurred(self):
+    def __reset_requests_error_occurred(self) -> None:
         self.__requests_error_occurred = False
 
-    def __api_request(self, request_type, api_url, **kwargs):
+    def __api_request(self, request_type: RequestType, api_url: str, **kwargs: Unpack[OptionalApiRequestParams]) -> Response | None:
         """request handler for all request types
 
         :param request_type: GET, POST, PUT, PATCH, DELETE, etc
@@ -85,24 +127,24 @@ class HttpConnection:
                 verify=True,
                 allow_redirects=allow_redirects,
             )
-            if response.status_code // 100 != 2:  # Consider any status other than 2xx as an error
+            if StatusCodeClass.SUCCESSFUL.value.match(str(response.status_code)) is not None:  # Consider any status other than 2xx as an error
                 self.__set_requests_error_occurred()
                 if print_error:
-                    print(f"Error: Unexpected response: '{response}'")
-                    print(f"Error: Response header: '{response.headers}'")
-                    print(f"Error: Response content: '{response.content}'")
-                    print(f"Error: Request header: '{response.request.headers}'")
+                    self.logger.error(f"Unexpected response: '{response}'")
+                    self.logger.error(f"Response header: '{response.headers}'")
+                    self.logger.error(f"Response content: '{response.content}'")
+                    self.logger.error(f"Request header: '{response.request.headers}'")
         except requests.exceptions.RequestException as e:
             # A serious problem happened, like an SSLError or InvalidURL
-            print(f"Error: {e}")
+            self.logger.error(e)
 
         return response
 
-    def set_print_error(self, print_error):
+    def set_print_error(self, print_error: bool) -> None:
         """print error or not"""
         self.__print_error = print_error
 
-    def __create_request_headers(self, headers=None, files=None):
+    def __create_request_headers(self, headers: dict[str, str] | None = None, files: dict[str, str] | None = None) -> dict[str, str]:
         if headers:
             headers.update(self.__authorization_headers)
             effective_headers = headers
@@ -112,22 +154,22 @@ class HttpConnection:
                 effective_headers.pop("Content-Type", "")  # Content-Type should be omitted if multipart/form-data is used
         return effective_headers
 
-    def api_request_get(self, api_url, **kwargs):
+    def api_request_get(self, api_url: str, **kwargs: Unpack[OptionalApiRequestParams]) -> Response | None:
         """GET request"""
         return self.__api_request("GET", api_url, **kwargs)
 
-    def api_request_patch(self, api_url, **kwargs):
+    def api_request_patch(self, api_url: str, **kwargs: Unpack[OptionalApiRequestParams]) -> Response | None:
         """PATCH request"""
         return self.__api_request("PATCH", api_url, **kwargs)
 
-    def api_request_put(self, api_url, **kwargs):
+    def api_request_put(self, api_url: str, **kwargs: Unpack[OptionalApiRequestParams]) -> Response | None:
         """PUT request"""
         return self.__api_request("PUT", api_url, **kwargs)
 
-    def api_request_post(self, api_url, **kwargs):
+    def api_request_post(self, api_url: str, **kwargs: Unpack[OptionalApiRequestParams]) -> Response | None:
         """POST request"""
         return self.__api_request("POST", api_url, **kwargs)
 
-    def api_request_delete(self, api_url, **kwargs):
+    def api_request_delete(self, api_url: str, **kwargs: Unpack[OptionalApiRequestParams]) -> Response | None:
         """DELETE request"""
         return self.__api_request("DELETE", api_url, **kwargs)

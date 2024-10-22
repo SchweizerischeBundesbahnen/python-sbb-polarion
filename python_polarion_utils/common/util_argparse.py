@@ -6,7 +6,7 @@ common implementation for argument parsing
 import argparse
 
 
-def get_script_arguments(url):
+def get_script_arguments(url: str) -> argparse.Namespace:
     """common implementation for argument parsing"""
     parser = argparse.ArgumentParser(description="Universal parser configuration for all utilities")
     parser.add_argument("-l", "--app_url", type=str, help=f"Application URL (default: {url})", default=url)

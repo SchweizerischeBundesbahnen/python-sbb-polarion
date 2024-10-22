@@ -1,15 +1,17 @@
 """Collection Checker Polarion Extension API"""
 
-from .generic import PolarionGenericExtensionApi
+from requests import Response  # type: ignore
+
+from python_polarion_utils.api.generic import PolarionGenericExtensionApi, PolarionRestApiConnection
 
 
 class PolarionCollectionCheckerApi(PolarionGenericExtensionApi):
     """Collection Checker Polarion Extension API"""
 
-    def __init__(self, polarion_connection):
-        super().__init__("collection-checker", polarion_connection)
+    def __init__(self, polarion_connection: PolarionRestApiConnection) -> None:
+        super().__init__(polarion_connection, "collection-checker")
 
-    def get_checks(self, project_id, days_interval=1, page=1, count=20):
+    def get_checks(self, project_id: str, days_interval: int = 1, page: int = 1, count: int = 20) -> Response | None:
         """get checks list"""
         url = f"/{self.rest_api_url}/projects/{project_id}/checks?"
         url += f"&daysInterval={days_interval}"
@@ -18,31 +20,31 @@ class PolarionCollectionCheckerApi(PolarionGenericExtensionApi):
 
         return self.polarion_connection.api_request_get(url)
 
-    def get_check(self, project_id, check_id):
+    def get_check(self, project_id: str, check_id: str) -> Response | None:
         """get check for provided id"""
         return self.polarion_connection.api_request_get(f"/{self.rest_api_url}/projects/{project_id}/checks/{check_id}")
 
-    def get_linkroles(self, project_id):
+    def get_linkroles(self, project_id: str) -> Response | None:
         """get project link roles"""
         return self.polarion_connection.api_request_get(f"/{self.rest_api_url}/projects/{project_id}/linkroles")
 
-    def get_check_json_report(self, project_id, check_id):
+    def get_check_json_report(self, project_id: str, check_id: str) -> Response | None:
         """get check repost in JSON format"""
         return self.polarion_connection.api_request_get(f"/{self.rest_api_url}/projects/{project_id}/checks/{check_id}/report?format=JSON")
 
-    def get_check_text_log(self, project_id, check_id):
+    def get_check_text_log(self, project_id: str, check_id: str) -> Response | None:
         """get check log as text"""
         return self.polarion_connection.api_request_get(f"/{self.rest_api_url}/projects/{project_id}/checks/{check_id}/report?format=TXT")
 
-    def get_collections(self, project_id):
+    def get_collections(self, project_id: str) -> Response | None:
         """get all collections within the project"""
         return self.polarion_connection.api_request_get(f"/{self.rest_api_url}/projects/{project_id}/collections")
 
-    def cancel_check(self, project_id, check_id):
+    def cancel_check(self, project_id: str, check_id: str) -> Response | None:
         """cancel check"""
         return self.polarion_connection.api_request_post(f"/{self.rest_api_url}/projects/{project_id}/checks/{check_id}/cancel")
 
-    def start_check(self, project_id, collection_id, **kwargs):
+    def start_check(self, project_id: str, collection_id: str, **kwargs) -> Response | None:
         """start new check"""
         default_check_options = {
             "ignoreLinkRoles": None,
