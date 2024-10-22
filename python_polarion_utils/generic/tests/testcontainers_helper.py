@@ -5,19 +5,21 @@ import shutil
 import subprocess
 import tempfile
 import time
+from argparse import Namespace
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
-import docker
-from docker.models.networks import Network
-from testcontainers.core.container import DockerContainer
+import docker  # type: ignore
+from docker.models.networks import Network  # type: ignore
+from requests import Response  # type: ignore
+from testcontainers.core.container import DockerContainer  # type: ignore
 
 from python_polarion_utils.api.admin_utility import PolarionAdminUtilityApi
-from python_polarion_utils.api.extension_api_factory import ExtensionApiFactory  # pylint: disable=E0402
-from python_polarion_utils.api.generic import PolarionGenericExtensionApi, PolarionRestApiConnection  # pylint: disable=E0402
-from python_polarion_utils.common.util_argparse import get_script_arguments  # pylint: disable=E0402
+from python_polarion_utils.api.extension_api_factory import ExtensionApiFactory
+from python_polarion_utils.api.generic import PolarionApiExtensionName, PolarionRestApiConnection
+from python_polarion_utils.common.util_argparse import get_script_arguments
 from python_polarion_utils.common.util_http import StatusCode
 
 TIMEOUT_IN_SEC = 120
@@ -27,6 +29,38 @@ DEFAULT_ADMIN_UTILITY_VERSION = "1.8.0"
 WEASYPRINT_NETWORK = "test-weasyprint-network"
 
 
+@dataclass
+class ArtifactInfo:
+    """Class for keeping extension information."""
+
+    group_id: str
+    artifact_id: str
+    version: str
+
+
+@dataclass
+class TestContainerParameters:
+    """Class for keeping command line arguments."""
+
+    polarion_image_name: str
+    weasyprint_service_image_name: str
+    extension_version: str
+    additional_bundles: list[ArtifactInfo] | None
+    admin_utility_version: str
+
+
+class ContainerSetupException(Exception):
+    pass
+
+
+class PolarionStartupException(Exception):
+    pass
+
+
+class MavenException(Exception):
+    pass
+
+
 class TestContainersHelper:
     polarion_container: DockerContainer = None
     weasyprint_service_container: DockerContainer = None
@@ -34,7 +68,7 @@ class TestContainersHelper:
     systest_extensions_root = None
     logger = logging.getLogger("TestContainersHelper")
 
-    def create_test_container_if_required(self, extension_name):
+    def create_test_container_if_required(self, extension_name: PolarionApiExtensionName) -> None:
         args = get_script_arguments(None)
         parameters = TestContainersHelper.get_parameters(args)
         if parameters.weasyprint_service_image_name is not None:
@@ -45,11 +79,15 @@ class TestContainersHelper:
 
         if parameters.polarion_image_name is not None:
             app_url, app_token = self.create_polarion_container(extension_name, parameters, weasyprint_service_endpoint)
+            if app_token is None:
+                self.logger.warning("app_token response is None")
+                os.environ["APP_TOKEN"] = ""
+                return
             os.environ["APP_URL"] = app_url
             os.environ["APP_TOKEN"] = app_token
 
     @staticmethod
-    def get_parameters(args):
+    def get_parameters(args: Namespace) -> TestContainerParameters:
         polarion_image_name = TestContainersHelper.get_parameter("TC_POLARION_IMAGE_NAME", args.tc_polarion_image_name)
         weasyprint_service_image_name = TestContainersHelper.get_parameter("TC_WEASYPRINT_SERVICE_IMAGE_NAME", args.tc_weasyprint_service_image_name)
         extension_version = TestContainersHelper.get_parameter("TC_EXTENSION_VERSION", args.tc_extension_version)
@@ -65,28 +103,28 @@ class TestContainersHelper:
         )
 
     @staticmethod
-    def get_parameter(env_param_name, script_argument_value):
+    def get_parameter(env_param_name: str, script_argument_value: str) -> str:
         param = os.environ.get(env_param_name)
         if not param:
             param = script_argument_value
         return param
 
     @staticmethod
-    def parse_additional_bundles(bundles):
+    def parse_additional_bundles(bundles: str | None) -> list[ArtifactInfo] | None:
         if bundles is None:
             return None
         bundles_list = bundles.split(",")
-        artifacts_info_list = []
+        artifacts_info_list: list[ArtifactInfo] = []
         for bundle in bundles_list:
             artifact_details = bundle.split(":")
             artifacts_info_list.append(ArtifactInfo(group_id=artifact_details[0], artifact_id=artifact_details[1], version=artifact_details[2]))
         return artifacts_info_list
 
-    def create_network(self, network_name):
+    def create_network(self, network_name: str) -> None:
         client = docker.from_env()
         self.network = client.networks.create(network_name, driver="bridge")
 
-    def create_weasyprint_service_container(self, parameters):
+    def create_weasyprint_service_container(self, parameters: TestContainerParameters) -> str:
         container_name = "test-weasyprint-service-container"
         port = 9080
         try:
@@ -103,7 +141,7 @@ class TestContainersHelper:
             self.tear_down()
             raise ContainerSetupException("Cannot setup Weasyprint Service container: " + str(ex)) from ex
 
-    def create_polarion_container(self, extension_name, parameters, weasyprint_service_endpoint):
+    def create_polarion_container(self, extension_name: PolarionApiExtensionName, parameters: TestContainerParameters, weasyprint_service_endpoint: str) -> tuple[str, str | None]:
         container_name = "test-polarion-container"
         port = 80
         try:
@@ -134,7 +172,7 @@ class TestContainersHelper:
             self.tear_down()
             raise ContainerSetupException("Cannot setup Polarion container: " + str(ex)) from ex
 
-    def prepare_systest_extensions(self, extension_name, parameters):
+    def prepare_systest_extensions(self, extension_name: PolarionApiExtensionName, parameters: TestContainerParameters) -> None:
         systest_extensions_jars_path = self.create_host_extensions_path()
         systest_extensions = [
             ArtifactInfo("ch.sbb.polarion.extensions", f"ch.sbb.polarion.extension.{extension_name}", parameters.extension_version),
@@ -146,7 +184,7 @@ class TestContainersHelper:
         for systest_extension in systest_extensions:
             self.copy_dependency(systest_extensions_jars_path, systest_extension.group_id, systest_extension.artifact_id, systest_extension.version)
 
-    def tear_down(self):
+    def tear_down(self) -> None:
         # Stop and remove the container after the tests
         if self.weasyprint_service_container is not None and self.weasyprint_service_container.get_wrapped_container() is not None:
             self.logger.info("Stopping Weasyprint Servce test container ...")
@@ -160,7 +198,7 @@ class TestContainersHelper:
             self.network.remove()
 
     @staticmethod
-    def setup_polarion_container(base_url: str):
+    def setup_polarion_container(base_url: str) -> str | None:
         polarion_connection = PolarionRestApiConnection(url=base_url, username=INITIAL_LOGIN, password=INITIAL_LOGIN)
         polarion_admin_utility_api = cast(PolarionAdminUtilityApi, ExtensionApiFactory.get_extension_api_by_name(extension_name="admin-utility", polarion_connection=polarion_connection))
         TestContainersHelper.wait_for_start_and_activate(polarion_admin_utility_api)
@@ -175,8 +213,8 @@ class TestContainersHelper:
         try:
             while time.time() - start < TIMEOUT_IN_SEC:
                 activate_response = polarion_admin_utility_api.activate_trial_license()
-                TestContainersHelper.logger.info("Waiting for Polarion container readiness, status: " + str(activate_response.status_code))
-                if activate_response.status_code == StatusCode.INTERNAL_SERVER_ERROR.value:
+                TestContainersHelper.logger.info("Waiting for Polarion container readiness, status: " + str(activate_response.status_code if activate_response else "unknown"))
+                if not activate_response or activate_response.status_code == StatusCode.INTERNAL_SERVER_ERROR.value:
                     time.sleep(1)
                     continue
                 elif activate_response.status_code == StatusCode.OK.value:
@@ -186,26 +224,26 @@ class TestContainersHelper:
                     error_message = activate_response.content.decode("utf-8") if activate_response.content is not None else ""
                     raise PolarionStartupException("Polarion license activation failure: status = " + str(activate_response.status_code) + "; message = " + error_message)
 
-            if activate_response.status_code != StatusCode.OK.value:
+            if not activate_response or activate_response.status_code != StatusCode.OK.value:
                 raise PolarionStartupException("Polarion start timeout")
         finally:
             polarion_admin_utility_api.polarion_connection.set_print_error(True)
 
     @staticmethod
-    def check_default_activation_response(activate_response):
+    def check_default_activation_response(activate_response: Response) -> None:
         content_type = activate_response.headers.get("Content-Type")
         if content_type is not None and activate_response.headers.get("Content-Type").__contains__("text/plain") and activate_response.content is not None and activate_response.content.decode().__contains__('"activated":true'):
             raise PolarionStartupException("admin-utility extension is not available in Polarion")
 
     @staticmethod
-    def issue_security_token(polarion_admin_utility_api: PolarionGenericExtensionApi) -> str:
+    def issue_security_token(polarion_admin_utility_api: PolarionAdminUtilityApi) -> str | None:
         now = datetime.now()
         now_plus_10 = now + timedelta(minutes=5)
         token = polarion_admin_utility_api.create_security_token("test", now_plus_10.strftime("%Y-%m-%dT%H:%M:%SZ"))
         return token
 
     @staticmethod
-    def copy_dependency(systest_extensions_jars_path, group_id, artifact_id, version):
+    def copy_dependency(systest_extensions_jars_path: str, group_id: str, artifact_id: str, version: str) -> None:
         mvn_path = TestContainersHelper.get_maven_location()
         if not version:
             version = TestContainersHelper.get_latest_artifact_version(group_id, artifact_id)
@@ -215,7 +253,7 @@ class TestContainersHelper:
             raise MavenException(f"Failed to copy artifact {group_id}:{artifact_id}:{version}, code: " + str(result.returncode))
 
     @staticmethod
-    def get_latest_artifact_version(group_id, artifact_id):
+    def get_latest_artifact_version(group_id: str, artifact_id: str) -> str:
         repo_location = TestContainersHelper.get_maven_repo_location()
         artifact_dir_content = os.listdir(repo_location / Path(group_id.replace(".", os.sep)) / Path(artifact_id))
         regex = re.compile("^(?:\\d+\\.)?(?:\\d+\\.)?(?:\\*|\\d+)(?:-SNAPSHOT)?$")
@@ -224,7 +262,7 @@ class TestContainersHelper:
         return versions[0]
 
     @staticmethod
-    def get_maven_repo_location():
+    def get_maven_repo_location() -> Path:
         mvn_location = TestContainersHelper.get_maven_location()
         command = [mvn_location, "-q", "help:evaluate", "-Dexpression=settings.localRepository", "-DforceStdout=true"]
         result = subprocess.run(command, stdout=subprocess.PIPE, text=True, check=False)  # noqa: S603
@@ -233,48 +271,16 @@ class TestContainersHelper:
         return Path(result.stdout.strip()).expanduser()
 
     @staticmethod
-    def get_maven_location():
+    def get_maven_location() -> str:
         mvn_path = shutil.which("mvn")
         if not mvn_path:
             raise MavenException("Maven is not available, please, install mvn and try again.")
         return mvn_path
 
-    def create_host_extensions_path(self):
+    def create_host_extensions_path(self) -> str:
         self.systest_extensions_root = f"{tempfile.gettempdir()}/systest"
         systest_extensions_jars_path = f"{self.systest_extensions_root}/sbb-extensions/eclipse/plugins"
         if Path(systest_extensions_jars_path).exists():
             shutil.rmtree(systest_extensions_jars_path)
         Path(systest_extensions_jars_path).mkdir(parents=True)
         return systest_extensions_jars_path
-
-
-@dataclass
-class TestContainerParameters:
-    """Class for keeping command line arguments."""
-
-    polarion_image_name: str
-    weasyprint_service_image_name: str
-    extension_version: str
-    additional_bundles: list[Any]
-    admin_utility_version: str
-
-
-@dataclass
-class ArtifactInfo:
-    """Class for keeping extension information."""
-
-    group_id: str
-    artifact_id: str
-    version: str
-
-
-class ContainerSetupException(Exception):
-    pass
-
-
-class PolarionStartupException(Exception):
-    pass
-
-
-class MavenException(Exception):
-    pass

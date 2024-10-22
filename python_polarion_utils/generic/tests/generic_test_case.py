@@ -6,7 +6,7 @@ import unittest
 from abc import abstractmethod
 
 from python_polarion_utils.api.extension_api_factory import ExtensionApiFactory
-from python_polarion_utils.api.generic import PolarionGenericExtensionApi, PolarionRestApiConnection
+from python_polarion_utils.api.generic import PolarionApiExtensionName, PolarionGenericExtensionApi, PolarionRestApiConnection
 from python_polarion_utils.api.polarion_api import PolarionApi
 from python_polarion_utils.common.util_argparse import get_script_arguments
 from python_polarion_utils.common.util_http import HttpConnection
@@ -15,16 +15,16 @@ from python_polarion_utils.common.util_http import HttpConnection
 class GenericTestCase(unittest.TestCase):
     """Generic Polarion Test Case with common code for system tests"""
 
-    extension_api: PolarionGenericExtensionApi = None
-    _polarion_api: PolarionApi = None
+    extension_api: PolarionGenericExtensionApi
+    _polarion_api: PolarionApi | None = None
     logger = logging.getLogger("GenericTestCase")
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         GenericTestCase.extension_api = GenericTestCase.create_extension_api("generic")
 
     @classmethod
-    def create_extension_api(cls, extension_name):
+    def create_extension_api(cls, extension_name: PolarionApiExtensionName) -> PolarionGenericExtensionApi:
         """Create extension API using provided extension name. If omitted try to detect it based on repo name."""
         app_url, app_token = cls.__get_parameters()
         polarion_connection = PolarionRestApiConnection(url=app_url, token=app_token)
@@ -32,7 +32,7 @@ class GenericTestCase(unittest.TestCase):
         return ExtensionApiFactory.get_extension_api_by_name(extension_name=extension_name, polarion_connection=polarion_connection)
 
     @classmethod
-    def __get_parameters(cls):
+    def __get_parameters(cls) -> tuple[str, str]:
         args = get_script_arguments(None)
         app_url = cls.get_parameter("APP_URL", args.app_url)
         app_token = cls.get_parameter("APP_TOKEN", args.app_token)
@@ -40,23 +40,26 @@ class GenericTestCase(unittest.TestCase):
         return app_url, app_token
 
     @staticmethod
-    def get_parameter(env_param_name, script_argument_value):
+    def get_parameter(env_param_name: str, script_argument_value: str) -> str:
         param = os.environ.get(env_param_name)
         if not param:
             param = script_argument_value
         return param
 
     @classmethod
-    def __check_mandatory_parameters(cls, app_url, app_token):
+    def __check_mandatory_parameters(cls, app_url: str, app_token: str) -> None:
         if app_url is None:
             raise ValueError("'app_url' is not provided: use --app_url or APP_URL env variable")
         if app_token is None:
             raise ValueError("'app_token' is not provided: use --app_token or APP_TOKEN env variable")
 
-    def run_test_get_version(self):
+    def run_test_get_version(self) -> None:
         """Method code for testing GET /version endpoint."""
         # Act
         response = self.extension_api.get_version()
+
+        if response is None:
+            raise Exception("No or invalid response received")
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -83,20 +86,26 @@ class GenericTestCase(unittest.TestCase):
 
         return json
 
-    def run_test_get_version_with_invalid_token(self):
+    def run_test_get_version_with_invalid_token(self) -> None:
         """Method code for testing GET /version endpoint with invalid token."""
         # Act
         extension_url = f"/polarion/{self.extension_api.extension_name}/rest/api/version"
         http_connection = HttpConnection(url=self.extension_api.polarion_connection.host, token="invalid token")  # noqa: S106
         response = http_connection.api_request_get(extension_url, print_error=False)
 
+        if response is None:
+            raise Exception("No or invalid response received")
+
         # Assert
         self.assertEqual(response.status_code, 401)
 
-    def run_test_get_context(self):
+    def run_test_get_context(self) -> None:
         """Method code for testing GET /context endpoint."""
         # Act
         response = self.extension_api.get_context()
+
+        if response is None:
+            raise Exception("No or invalid response received")
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -111,6 +120,6 @@ class GenericTestCase(unittest.TestCase):
         return json
 
     @abstractmethod
-    def api(self):
+    def api(self) -> None:
         """Casting to extension API"""
         raise ValueError("Unknown extension API")

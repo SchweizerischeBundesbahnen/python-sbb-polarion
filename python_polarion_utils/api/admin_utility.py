@@ -15,7 +15,7 @@ class PolarionAdminUtilityApi(PolarionGenericExtensionApi):
         """activate trial license"""
         return self.polarion_connection.api_request_post(f"/{self.rest_api_url}/licenses/trial/activation")
 
-    def create_security_token(self, name: str, expires_date: str) -> Response | None:
+    def create_security_token(self, name: str, expires_date: str) -> str | None:
         """create security token"""
         data = {"name": name, "expiresOn": expires_date}
         response = self.polarion_connection.api_request_post(f"/{self.rest_api_url}/tokens", data=data)
