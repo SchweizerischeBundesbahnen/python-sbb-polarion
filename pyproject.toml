@@ -16,7 +16,7 @@ requests = "^2.31.0"
 testcontainers = "^3.7.1"
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "4.1.0"
+pre-commit = "4.2.0"
 ruff = "0.11.0"
 mypy = "1.15.0"
 
