@@ -11,7 +11,7 @@ homepage = "https://github.com/SchweizerischeBundesbahnen/python-polarion-utils"
 repository = "https://github.com/SchweizerischeBundesbahnen/python-polarion-utils"
 requires-python = ">=3.13,<4.0"
 [tool.poetry.dependencies]
-requests = "2.31.0"
+requests = "2.32.4"
 testcontainers = "4.0.0"
 
 [tool.poetry.group.dev.dependencies]
