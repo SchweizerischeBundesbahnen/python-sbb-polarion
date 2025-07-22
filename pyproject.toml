@@ -12,7 +12,7 @@ repository = "https://github.com/SchweizerischeBundesbahnen/python-polarion-util
 requires-python = ">=3.13,<4.0"
 [tool.poetry.dependencies]
 requests = "2.32.4"
-testcontainers = "4.10.0"
+testcontainers = "4.12.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "4.2.0"
