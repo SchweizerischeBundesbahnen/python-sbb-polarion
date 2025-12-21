@@ -16,7 +16,7 @@ testcontainers = "4.13.3"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "4.5.1"
-ruff = "0.14.9"
+ruff = "0.14.10"
 mypy = "1.19.1"
 
 [tool.poetry.group.test.dependencies]
