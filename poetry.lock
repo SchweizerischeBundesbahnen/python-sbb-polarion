@@ -945,26 +945,26 @@ weaviate = ["weaviate-client (>=4,<5)"]
 
 [[package]]
 name = "tox"
-version = "4.44.0"
+version = "4.45.0"
 description = "tox is a generic virtualenv management and test command line tool"
 optional = false
 python-versions = ">=3.10"
 groups = ["test"]
 files = [
-    {file = "tox-4.44.0-py3-none-any.whl", hash = "sha256:b850fb8d1803d132c3120a189b2ae7fe319a07a9cb4254d81ac9c94e3230bc0f"},
-    {file = "tox-4.44.0.tar.gz", hash = "sha256:0c911cbc448a2ac5dd7cbb6be2f9ffa26d0a10405982f9efea654803b23cec77"},
+    {file = "tox-4.45.0-py3-none-any.whl", hash = "sha256:a9910fab652c9b378659a4d13a2cbdaebd3737c60bd1a96b7b573a89824f4e7c"},
+    {file = "tox-4.45.0.tar.gz", hash = "sha256:c0ce50ce0f7ace524cca9cf85d4a9fbd8e338aaa830e33521d3355f3f2f97c05"},
 ]
 
 [package.dependencies]
 cachetools = ">=7.0.1"
-chardet = ">=5.2"
+chardet = ">=6.0.0.post1"
 colorama = ">=0.4.6"
-filelock = ">=3.24"
+filelock = ">=3.24.3"
 packaging = ">=26"
-platformdirs = ">=4.9.1"
+platformdirs = ">=4.9.2"
 pluggy = ">=1.6"
 pyproject-api = ">=1.10"
-virtualenv = ">=20.36.1"
+virtualenv = ">=20.38"
 
 [package.extras]
 completion = ["argcomplete (>=3.6.3)"]
@@ -1110,4 +1110,4 @@ dev = ["pytest", "setuptools"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<4.0"
-content-hash = "56da07eec7757711bf318cae535fb2797ef35481ff7b3350756c5ca5adb0a767"
+content-hash = "e83a73cb2d4d936ea34131469da41286647d1d666b9522e6090d200d1f395265"
