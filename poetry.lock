@@ -953,14 +953,14 @@ weaviate = ["weaviate-client (>=4,<5)"]
 
 [[package]]
 name = "tox"
-version = "4.47.0"
+version = "4.47.2"
 description = "tox is a generic virtualenv management and test command line tool"
 optional = false
 python-versions = ">=3.10"
 groups = ["test"]
 files = [
-    {file = "tox-4.47.0-py3-none-any.whl", hash = "sha256:79260c47814086313eea516c6cd4ce374f93c19be2de6125e7d330356a000364"},
-    {file = "tox-4.47.0.tar.gz", hash = "sha256:db08368214f6f44b3e9b6c6e937140e25a4b0cea63f8489bf1c9b6b34d3e42e3"},
+    {file = "tox-4.47.2-py3-none-any.whl", hash = "sha256:6845717a01c30a46ce91c69d493a96f554d235dc9e0c0732c1395794f72c6d29"},
+    {file = "tox-4.47.2.tar.gz", hash = "sha256:eaf01d7f1887a9399298e9d13ccca6cd0bbcf6d44bd6029136df284894288a6c"},
 ]
 
 [package.dependencies]
@@ -1114,4 +1114,4 @@ dev = ["pytest", "setuptools"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<4.0"
-content-hash = "99ed380430628d29874b79f1cb8b9884a441572e43326e8af0290587248fe64d"
+content-hash = "9535d61eb41edec69326ca6518ae08982fbad8baaa0f52df7fe9ea1a6066c311"
