@@ -39,6 +39,7 @@ dev = [
 ]
 test = [
     "tox==4.48.1",
+    "tox-uv==1.25.0",
     "pytest==9.0.2",
     "pytest-cov==7.0.0",
 ]
