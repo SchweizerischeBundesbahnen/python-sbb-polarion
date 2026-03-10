@@ -19,19 +19,20 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
-      - name: 🧱 Install Poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-      - name: 🧱 Setup Python
+      - name: Set up Python from .tool-versions
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
-          python-version: '3.14'
-          cache: poetry
+          python-version-file: .tool-versions
+      - name: 🧱 Install uv
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098  # v7.3.1
+        with:
+          enable-cache: true
       - name: 🧱 Install dependencies
-        run: poetry install --all-extras
+        run: uv sync --all-groups --frozen
       - name: 🧪 Run tests
-        run: poetry run tox
+        run: uv run tox
 #      - name: SonarCloud scan for PR
-#        uses: sonarsource/sonarqube-scan-action@2500896589ef8f7247069a56136f8dc177c27ccf  # v5.2.0
+#        uses: sonarsource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9  # v7.0.0
 #        if: github.event_name == 'pull_request'
 #        env:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information
@@ -40,7 +41,7 @@ jobs:
 #          args: |
 #            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
 #      - name: SonarCloud scan for Push
-#        uses: sonarsource/sonarqube-scan-action@2500896589ef8f7247069a56136f8dc177c27ccf  # v5.2.0
+#        uses: sonarsource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9  # v7.0.0
 #        if: github.event_name == 'push'
 #        env:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information
@@ -71,6 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     permissions:
+#      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing for PyPI
       contents: write  # Required for uploading artifacts to GitHub release
     steps:
       - name: 📄 Checkout code
@@ -78,19 +80,30 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
-      - name: 🧱 Install Poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
-      - name: 🧱 Setup Python
+      - name: Set up Python from .tool-versions
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
-          python-version: '3.14'
-          cache: poetry
+          python-version-file: .tool-versions
+      - name: 🧱 Install uv
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098  # v7.3.1
+        with:
+          enable-cache: true
       - name: 🧱 Install dependencies
-        run: poetry install
+        run: uv sync --frozen
       - name: 📦 Build the package
-        run: poetry build
+        run: uv build
       - name: 📦 Publish artifacts to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: needs.release-please.outputs.version
         run: gh release upload "${RELEASE_VERSION}" dist/*.{tar.gz,whl}
+#      - name: 📦 Publish artifacts to PyPI/TestPyPI
+#        env:
+#          name: testpypi
+#          url: https://test.pypi.org/p/python-requirements-inspector
+#          name: pypi
+#          url: https://pypi.org/p/python-requirements-inspector
+#        uses: pypa/gh-action-pypi-publish@release/v1.12.3
+#        with:
+#          repository-url: https://test.pypi.org/legacy/  # it must be removed when publishing to PyPI
+#          verbose: true
