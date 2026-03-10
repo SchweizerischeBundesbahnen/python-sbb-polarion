@@ -195,19 +195,19 @@ class TestSshConnection(unittest.TestCase):
         mock_client.close.assert_called_once()
 
     @patch("python_sbb_polarion.util.ssh.paramiko.SSHClient")
-    @patch("python_sbb_polarion.util.ssh.paramiko.AutoAddPolicy")
-    def test_auto_add_policy_set(self, mock_auto_add_policy: Mock, mock_ssh_client_class: Mock) -> None:
-        """Test that AutoAddPolicy is set for missing host keys."""
+    @patch("python_sbb_polarion.util.ssh.paramiko.RejectPolicy")
+    def test_reject_policy_set(self, mock_reject_policy: Mock, mock_ssh_client_class: Mock) -> None:
+        """Test that RejectPolicy is set for missing host keys."""
         mock_client = Mock()
         mock_ssh_client_class.return_value = mock_client
         mock_policy = Mock()
-        mock_auto_add_policy.return_value = mock_policy
+        mock_reject_policy.return_value = mock_policy
 
         SshConnection(self.host, ssh_username=self.ssh_username)
 
         mock_client.set_missing_host_key_policy.assert_called_once()
         # Verify the policy instance was created
-        mock_auto_add_policy.assert_called_once()
+        mock_reject_policy.assert_called_once()
 
     @patch("python_sbb_polarion.util.ssh.paramiko.SSHClient")
     def test_exec_command_exception(self, mock_ssh_client_class: Mock) -> None:
