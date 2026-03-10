@@ -42,7 +42,7 @@ class SshConnection:
         try:
             self.client = paramiko.SSHClient()
             self.client.load_system_host_keys()
-            self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            self.client.set_missing_host_key_policy(paramiko.RejectPolicy())
             self.client.connect(host, port=port, username=ssh_username, passphrase=ssh_private_key_password)
             # enable SSH agent forwarding for a session
             # https://stackoverflow.com/questions/23666600/ssh-key-forwarding-using-python-paramiko
