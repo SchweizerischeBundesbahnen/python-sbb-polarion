@@ -161,7 +161,7 @@ class TestMain(unittest.TestCase):
 
         main()
 
-        mock_logger.info.assert_called_with(f"Downloaded to: {mock_path}")
+        mock_logger.info.assert_called_with("Downloaded to: %s", mock_path)
 
     @patch("python_sbb_polarion.polarion_project_manager.cli.logger")
     @patch("python_sbb_polarion.polarion_project_manager.cli.PolarionProjectManager")
@@ -173,7 +173,7 @@ class TestMain(unittest.TestCase):
 
         main()
 
-        mock_logger.info.assert_called_with("Uploaded template: my_template")
+        mock_logger.info.assert_called_with("Uploaded template: %s", "my_template")
 
     @patch("python_sbb_polarion.polarion_project_manager.cli.logger")
     @patch("python_sbb_polarion.polarion_project_manager.cli.PolarionProjectManager")
@@ -188,7 +188,7 @@ class TestMain(unittest.TestCase):
 
         main()
 
-        mock_logger.info.assert_called_with("Created project: temp_proj_789")
+        mock_logger.info.assert_called_with("Created project: %s", "temp_proj_789")
 
     @patch("python_sbb_polarion.polarion_project_manager.cli.logger")
     @patch("python_sbb_polarion.polarion_project_manager.cli.PolarionProjectManager")
@@ -203,7 +203,11 @@ class TestMain(unittest.TestCase):
         with self.assertRaises(SystemExit):
             main()
 
-        mock_logger.critical.assert_called_with(f"File not found: {error_msg}")
+        mock_logger.critical.assert_called_once()
+        call_args: tuple[str, ...] = mock_logger.critical.call_args[0]
+        self.assertEqual(call_args[0], "File not found: %s")
+        self.assertIsInstance(call_args[1], FileNotFoundError)
+        self.assertEqual(str(call_args[1]), error_msg)
 
     @patch("python_sbb_polarion.polarion_project_manager.cli.logger")
     @patch("python_sbb_polarion.polarion_project_manager.cli.PolarionProjectManager")
@@ -218,7 +222,11 @@ class TestMain(unittest.TestCase):
         with self.assertRaises(SystemExit):
             main()
 
-        mock_logger.critical.assert_called_with(f"An unhandled error occurred: {error_msg}")
+        mock_logger.critical.assert_called_once()
+        call_args: tuple[str, ...] = mock_logger.critical.call_args[0]
+        self.assertEqual(call_args[0], "An unhandled error occurred: %s")
+        self.assertIsInstance(call_args[1], Exception)
+        self.assertEqual(str(call_args[1]), error_msg)
 
 
 if __name__ == "__main__":
