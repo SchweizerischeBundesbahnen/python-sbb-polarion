@@ -8,14 +8,14 @@ repos:
         name: ruff formatter
         entry: uv run ruff format
         language: system
-        types: [ python ]
+        types: [python]
       # Run the linter (inherits config from pyproject.toml)
       - id: ruff-check
         name: ruff linter
         entry: uv run ruff check
         language: system
-        types: [ python ]
-        args: [ --fix ]
+        types: [python]
+        args: [--fix]
         exclude: ^tests/
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
