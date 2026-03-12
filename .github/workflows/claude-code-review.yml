@@ -12,11 +12,9 @@ concurrency:
   cancel-in-progress: true
 jobs:
   claude-review:
-    # Skip Claude review for Renovate, Dependabot PRs, and fork PRs
+    # Skip Claude review for bot PRs and fork PRs
     if: |
-      github.event.pull_request.user.login != 'renovate[bot]' &&
-      github.event.pull_request.user.login != 'dependabot[bot]' &&
-      github.event.pull_request.user.login != 'release-please[bot]' &&
+      !contains(github.event.pull_request.user.login, '[bot]') &&
       github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     permissions:
@@ -88,16 +86,24 @@ jobs:
             GUIDELINES:
             - Use Read/Grep/Glob to search the codebase for context
             - The PR branch is already checked out
-            STEP 3: Resolve outdated comments.
-            For any previously flagged issue (from step 2b) that has been FIXED in
-            the current diff, resolve the review thread AND minimize the comment:
-            ```
-            gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } } }'
-            gh api graphql -f query='mutation { minimizeComment(input: {subjectId: "COMMENT_NODE_ID", classifier: OUTDATED}) { minimizedComment { isMinimized } } }'
-            ```
+            STEP 3: MANDATORY — Process ALL previous review threads.
+            You MUST process every unresolved review thread from step 2b authored by
+            claude[bot]. For each one, read the CURRENT file content (use Read tool,
+            not just the diff) and classify the thread into one of three cases:
+            A) FIXED — the issue no longer exists in the current code. Resolve AND
+               minimize the comment:
+               ```
+               gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "THREAD_ID"}) { thread { isResolved } } }'
+               gh api graphql -f query='mutation { minimizeComment(input: {subjectId: "COMMENT_NODE_ID", classifier: OUTDATED}) { minimizedComment { isMinimized } } }'
+               ```
+            B) STILL PRESENT — the issue was NOT fixed. Leave the thread open.
+               Count it as an open issue in your Step 5 summary.
+            C) ALREADY RESOLVED — skip, no action needed.
             Use the thread `id` from the reviewThreads query and the `node_id` from
             the comments REST API response fetched in step 2b.
-            Skip threads that are already resolved.
+            Do NOT skip this step even if you find no new issues.
+            The confidence score in Step 5 MUST account for still-open issues from
+            previous reviews — you cannot score 5/5 if unresolved issues remain.
             STEP 4: Submit your review as INLINE COMMENTS on the specific lines where
             issues are found, using the GitHub Pull Request Review API.
             To submit, pipe JSON via stdin to `gh api --input -`:
@@ -145,6 +151,9 @@ jobs:
             </details>
             ```
             STEP 5: Post a PR comment summary using `gh pr comment`.
+            You MUST use the EXACT HTML structure below — do NOT omit <details>
+            tags, do NOT replace the markdown table with a list, do NOT change
+            heading levels. Copy the template and only fill in the placeholders.
             If issues were found:
             ```
             gh pr comment --repo ${{ github.repository }} ${{ github.event.pull_request.number }} --body "$(cat <<'EOF'
