@@ -350,7 +350,7 @@ def get_verb_from_method_name(method_name: str) -> str | None:
     return None
 
 
-def suggest_better_name(method_name: str, http_method: str, path: str, operation_id: str = "") -> str | None:
+def suggest_better_name(method_name: str, http_method: str, path: str, _operation_id: str = "") -> str | None:
     """Suggest a better method name based on endpoint."""
     path_keywords: list[str] = extract_path_keywords(path)
 
@@ -592,7 +592,7 @@ def validate_path_keywords_present(method_name: str, path: str) -> NamingIssue |
     return None
 
 
-def validate_consistent_verbs(method_name: str, similar_methods: list[str]) -> NamingIssue | None:
+def validate_consistent_verbs(_method_name: str, _similar_methods: list[str]) -> NamingIssue | None:
     """Rule 6: Consistent verb usage across similar endpoints."""
     # This is a more complex check that requires context from other methods
     # For now, we skip this as it needs aggregate analysis
