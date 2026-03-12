@@ -469,7 +469,7 @@ def validate_implementation_http_method(method_func: Any, annotated_method: str)
     return None
 
 
-def validate_annotation_against_openapi(method_name: str, annotation_data: dict[str, Any], openapi_endpoint: dict[str, Any]) -> list[str]:
+def validate_annotation_against_openapi(_method_name: str, annotation_data: dict[str, Any], openapi_endpoint: dict[str, Any]) -> list[str]:
     """
     Validate that method annotation matches OpenAPI endpoint specification.
 

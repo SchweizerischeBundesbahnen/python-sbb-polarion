@@ -38,6 +38,22 @@ from .test_polarion_live import PolarionLiveAPIVerificationTest
 
 logger = logging.getLogger(__name__)
 
+_MSG_UNKNOWN_EXTENSION: str = "Unknown extension '%s'"
+_MSG_AVAILABLE_EXTENSIONS: str = "Available extensions: %s"
+
+
+def _validate_extension(extension_snake: str, extension: str) -> bool:
+    """Validate that an extension exists in the mapping.
+
+    Returns:
+        True if valid, False if unknown.
+    """
+    if extension_snake not in EXTENSION_MAPPING and extension not in EXTENSION_MAPPING.values():
+        logger.error(_MSG_UNKNOWN_EXTENSION, extension)
+        logger.info(_MSG_AVAILABLE_EXTENSIONS, ", ".join(sorted(EXTENSION_MAPPING.values())))
+        return False
+    return True
+
 
 def run_naming_validation(extension: str | None = None, verbose: bool = False, json_output: bool = False) -> bool:
     """
@@ -61,9 +77,7 @@ def run_naming_validation(extension: str | None = None, verbose: bool = False, j
         # Convert kebab-case to snake_case
         extension_snake: str = extension.replace("-", "_")
 
-        if extension_snake not in EXTENSION_MAPPING and extension not in EXTENSION_MAPPING.values():
-            logger.error("Unknown extension '%s'", extension)
-            logger.info("Available extensions: %s", ", ".join(sorted(EXTENSION_MAPPING.values())))
+        if not _validate_extension(extension_snake, extension):
             return False
 
         # Use snake_case for internal lookup
@@ -144,10 +158,7 @@ def run_live_verification(extension: str | None = None, app_url: str | None = No
         # Convert kebab-case to snake_case for test lookup
         extension_snake: str = extension.replace("-", "_")
 
-        # Validate extension exists
-        if extension_snake not in EXTENSION_MAPPING and extension not in EXTENSION_MAPPING.values():
-            logger.error("Unknown extension '%s'", extension)
-            logger.info("Available extensions: %s", ", ".join(sorted(EXTENSION_MAPPING.values())))
+        if not _validate_extension(extension_snake, extension):
             return
 
         # Run single test
@@ -178,10 +189,7 @@ def run_github_verification(extension: str | None = None) -> bool:
         # Convert kebab-case to snake_case for test lookup
         extension_snake: str = extension.replace("-", "_")
 
-        # Validate extension exists
-        if extension_snake not in EXTENSION_MAPPING and extension not in EXTENSION_MAPPING.values():
-            logger.error("Unknown extension '%s'", extension)
-            logger.info("Available extensions: %s", ", ".join(sorted(EXTENSION_MAPPING.values())))
+        if not _validate_extension(extension_snake, extension):
             return False
 
         # Run single test
