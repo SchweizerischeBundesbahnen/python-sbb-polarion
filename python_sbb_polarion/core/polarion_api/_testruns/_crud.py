@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from python_sbb_polarion.core.annotations import restapi_endpoint
-from python_sbb_polarion.core.polarion_api._base import BaseMixin
+from python_sbb_polarion.core.polarion_api._base import PAGE_NUMBER, PAGE_SIZE, BaseMixin
 
 
 if TYPE_CHECKING:
@@ -28,8 +28,8 @@ class TestrunsCrudMixin(BaseMixin):
             "projectId": "project_id",
         },
         query_params={
-            "page[size]": "page_size",
-            "page[number]": "page_number",
+            PAGE_SIZE: "page_size",
+            PAGE_NUMBER: "page_number",
             "fields": "fields",
             "include": "include",
             "query": "query",
@@ -71,9 +71,9 @@ class TestrunsCrudMixin(BaseMixin):
         url: str = f"{self.base_url}/projects/{project_id}/testruns"
         params: dict[str, str] = {}
         if page_size is not None:
-            params["page[size]"] = str(page_size)
+            params[PAGE_SIZE] = str(page_size)
         if page_number is not None:
-            params["page[number]"] = str(page_number)
+            params[PAGE_NUMBER] = str(page_number)
         self._add_sparse_fields(params, fields)
         if include:
             params["include"] = include
@@ -277,8 +277,8 @@ class TestrunsCrudMixin(BaseMixin):
             "testRunId": "testrun_id",
         },
         query_params={
-            "page[size]": "page_size",
-            "page[number]": "page_number",
+            PAGE_SIZE: "page_size",
+            PAGE_NUMBER: "page_number",
             "revision": "revision",
         },
         required_params=["projectId", "testRunId"],
@@ -307,9 +307,9 @@ class TestrunsCrudMixin(BaseMixin):
         url: str = f"{self.base_url}/projects/{project_id}/testruns/{testrun_id}/actions/getWorkflowActions"
         params: dict[str, str] = {}
         if page_size is not None:
-            params["page[size]"] = str(page_size)
+            params[PAGE_SIZE] = str(page_size)
         if page_number is not None:
-            params["page[number]"] = str(page_number)
+            params[PAGE_NUMBER] = str(page_number)
         if revision:
             params["revision"] = revision
         return self.polarion_connection.api_request_get(url, params=params or None)

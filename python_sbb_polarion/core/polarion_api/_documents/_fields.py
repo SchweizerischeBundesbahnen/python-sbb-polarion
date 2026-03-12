@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from python_sbb_polarion.core.annotations import restapi_endpoint
-from python_sbb_polarion.core.polarion_api._base import BaseMixin
+from python_sbb_polarion.core.polarion_api._base import PAGE_NUMBER, PAGE_SIZE, BaseMixin
 
 
 if TYPE_CHECKING:
@@ -28,8 +28,8 @@ class DocumentsFieldsMixin(BaseMixin):
             "fieldId": "field_id",
         },
         query_params={
-            "page[size]": "page_size",
-            "page[number]": "page_number",
+            PAGE_SIZE: "page_size",
+            PAGE_NUMBER: "page_number",
         },
         required_params=["projectId", "spaceId", "documentName", "fieldId"],
         response_type="json",
@@ -59,9 +59,9 @@ class DocumentsFieldsMixin(BaseMixin):
         url: str = f"{self.base_url}/projects/{project_id}/spaces/{space_id}/documents/{document_name}/fields/{field_id}/actions/getAvailableOptions"
         params: dict[str, str] = {}
         if page_size is not None:
-            params["page[size]"] = str(page_size)
+            params[PAGE_SIZE] = str(page_size)
         if page_number is not None:
-            params["page[number]"] = str(page_number)
+            params[PAGE_NUMBER] = str(page_number)
         return self.polarion_connection.api_request_get(url, params=params or None)
 
     @restapi_endpoint(
@@ -74,8 +74,8 @@ class DocumentsFieldsMixin(BaseMixin):
             "fieldId": "field_id",
         },
         query_params={
-            "page[size]": "page_size",
-            "page[number]": "page_number",
+            PAGE_SIZE: "page_size",
+            PAGE_NUMBER: "page_number",
             "revision": "revision",
         },
         required_params=["projectId", "spaceId", "documentName", "fieldId"],
@@ -108,9 +108,9 @@ class DocumentsFieldsMixin(BaseMixin):
         url: str = f"{self.base_url}/projects/{project_id}/spaces/{space_id}/documents/{document_name}/fields/{field_id}/actions/getCurrentOptions"
         params: dict[str, str] = {}
         if page_size is not None:
-            params["page[size]"] = str(page_size)
+            params[PAGE_SIZE] = str(page_size)
         if page_number is not None:
-            params["page[number]"] = str(page_number)
+            params[PAGE_NUMBER] = str(page_number)
         if revision:
             params["revision"] = revision
         return self.polarion_connection.api_request_get(url, params=params or None)
@@ -123,8 +123,8 @@ class DocumentsFieldsMixin(BaseMixin):
             "fieldId": "field_id",
         },
         query_params={
-            "page[size]": "page_size",
-            "page[number]": "page_number",
+            PAGE_SIZE: "page_size",
+            PAGE_NUMBER: "page_number",
             "type": "document_type",
         },
         required_params=["projectId", "fieldId"],
@@ -153,9 +153,9 @@ class DocumentsFieldsMixin(BaseMixin):
         url: str = f"{self.base_url}/projects/{project_id}/documents/fields/{field_id}/actions/getAvailableOptions"
         params: dict[str, str] = {}
         if page_size is not None:
-            params["page[size]"] = str(page_size)
+            params[PAGE_SIZE] = str(page_size)
         if page_number is not None:
-            params["page[number]"] = str(page_number)
+            params[PAGE_NUMBER] = str(page_number)
         if document_type:
             params["type"] = document_type
         return self.polarion_connection.api_request_get(url, params=params or None)

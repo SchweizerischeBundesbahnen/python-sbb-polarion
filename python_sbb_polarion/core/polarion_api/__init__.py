@@ -4,9 +4,12 @@ This module provides comprehensive access to the Polarion REST API v1
 with 220 operations across all resources.
 """
 
+from python_sbb_polarion.core.polarion_api._base import PAGE_NUMBER, PAGE_SIZE
 from python_sbb_polarion.core.polarion_api.polarion_api_v1 import PolarionApiV1
 
 
 __all__ = [
+    "PAGE_NUMBER",
+    "PAGE_SIZE",
     "PolarionApiV1",
 ]
