@@ -10,6 +10,10 @@ if TYPE_CHECKING:
     from python_sbb_polarion.core.base import PolarionRestApiConnection
     from python_sbb_polarion.types import SparseFields
 
+# JSON:API pagination parameter names
+PAGE_SIZE: str = "page[size]"
+PAGE_NUMBER: str = "page[number]"
+
 
 class BaseMixin(ABC):
     """Base mixin providing type hints for Polarion API v1 mixins.
