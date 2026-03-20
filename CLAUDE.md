@@ -13,3 +13,4 @@
 - **None checks depend on type** — `str | None`: use `if var:`. `list | None` / `dict | None` / `int | None`: use `if var is not None:`.
 - **NamedTuple fields: snake_case. TypedDict fields: camelCase allowed** when matching JSON API schema keys.
 - **Extension APIs map to GitHub repos** at `SchweizerischeBundesbahnen/ch.sbb.polarion.extension.*` — verification tests validate methods against their OpenAPI specs.
+- **SBB GitHub Actions workflows are pinned to `@main`, not hash-pinned** — `SchweizerischeBundesbahnen/*` reusable workflows intentionally use branch refs. This is enforced by `zizmor.yml`. Do not convert these to commit hash pins.
