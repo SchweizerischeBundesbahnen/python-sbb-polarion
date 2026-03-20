@@ -6,7 +6,7 @@ on:
 permissions: {}
 jobs:
   add-to-project:
-    uses: SchweizerischeBundesbahnen/github-workflows-polarion/.github/workflows/reusable-add-issue-to-project.yml@main  # zizmor: ignore[unpinned-uses]
+    uses: SchweizerischeBundesbahnen/github-workflows-polarion/.github/workflows/reusable-add-issue-to-project.yml@main
     secrets:
       POLARION_GITHUB_APP_ID: ${{ secrets.POLARION_GITHUB_APP_ID }}
       POLARION_GITHUB_APP_PRIVATE_KEY: ${{ secrets.POLARION_GITHUB_APP_PRIVATE_KEY }}

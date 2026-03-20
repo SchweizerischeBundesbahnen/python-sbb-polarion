@@ -11,7 +11,7 @@ jobs:
   verify-with-tox:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pull-requests: write  # Required for SonarCloud to comment on PRs and update status
     steps:
       - name: 📄 Checkout code
@@ -28,7 +28,7 @@ jobs:
         with:
           enable-cache: true
       - name: 🧱 Install dependencies
-        run: uv sync --all-groups --frozen
+        run: uv sync --all-groups --locked
       - name: 🧪 Run tests
         run: uv run tox
       - name: SonarCloud scan for PR
@@ -51,7 +51,7 @@ jobs:
             -Dsonar.branch.name=${{ github.head_ref }}
   release-please:
     if: github.event_name != 'pull_request' && github.ref_name == 'main'
-    uses: SchweizerischeBundesbahnen/github-workflows-polarion/.github/workflows/reusable-release-please.yml@main  # zizmor: ignore[unpinned-uses]
+    uses: SchweizerischeBundesbahnen/github-workflows-polarion/.github/workflows/reusable-release-please.yml@main
     permissions:
       contents: write
       pull-requests: write
@@ -80,7 +80,7 @@ jobs:
         with:
           enable-cache: true
       - name: 🧱 Install dependencies
-        run: uv sync --frozen
+        run: uv sync --locked
       - name: 📦 Build the package
         run: uv build
       - name: 📦 Publish artifacts to GitHub release
