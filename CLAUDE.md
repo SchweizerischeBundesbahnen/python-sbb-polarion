@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-- **Version `0.0.0` in `pyproject.toml` is intentional** — Jenkins sets the real version from git tags. Never change it.
+- **Version `0.0.0` in `pyproject.toml` is intentional** — the CI/CD pipeline (Release Please) sets the real version from git tags. Never change it.
 - **Custom AST linter (PSP001–PSP017)** runs in `uv run tox` alongside ruff/mypy. Suppress with `# psp-ignore: PSP0XX`, NOT `# noqa`. The linter catches project-specific rules that ruff cannot enforce.
 - **All local variables must have explicit type annotations** — even obvious ones: `url: str = f"..."` not `url = f"..."`. (PSP001)
 - **No `Any`, `cast()`, or `assert` in production code** — use `JsonDict` for `dict[str, Any]`, `@overload` for type-safe factories, `raise` instead of `assert`. OK in test files. (PSP015–PSP017)

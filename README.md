@@ -159,13 +159,13 @@ The CLI wraps around the core project manager class and exposes three commands:
 
 ```bash
 # Run as a module
-python -m python_sbb_polarion.polarion_project_manager.cli <command> [options]
+python -m python_sbb_polarion.polarion_project_manager <command> [options]
 ```
 
 ### Download a project template by its project ID
 
 ```bash
-python -m python_sbb_polarion.polarion_project_manager.cli download --project_id elibrary --project_group "Demo Projects" --output elibrary_st
+python -m python_sbb_polarion.polarion_project_manager download --project_id elibrary --project_group "Demo Projects" --output elibrary_st
 ```
 
 ### Parameters
@@ -179,7 +179,7 @@ python -m python_sbb_polarion.polarion_project_manager.cli download --project_id
 ### Create a temporary project from a template
 
 ```bash
-python -m python_sbb_polarion.polarion_project_manager.cli create --project_id elibrary_system_test --project_name "Elibrary System Test" --template_id custom_project_template_for_st
+python -m python_sbb_polarion.polarion_project_manager create --project_id elibrary_system_test --project_name "Elibrary System Test" --template_id custom_project_template_for_st
 ```
 
 ### Parameters
@@ -193,7 +193,7 @@ python -m python_sbb_polarion.polarion_project_manager.cli create --project_id e
 ### Upload a local ZIP file as a new template
 
 ```bash
-python -m python_sbb_polarion.polarion_project_manager.cli upload_template --template_id custom_project_template_for_st
+python -m python_sbb_polarion.polarion_project_manager upload_template --template_id custom_project_template_for_st
 ```
 
 ### Parameters
