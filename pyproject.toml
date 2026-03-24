@@ -41,7 +41,7 @@ test = [
     "tox==4.50.3",
     "tox-uv==1.33.4",
     "pytest==9.0.2",
-    "pytest-cov==7.0.0",
+    "pytest-cov==7.1.0",
 ]
 
 [build-system]
