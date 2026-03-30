@@ -27,7 +27,7 @@ __version__ = "2.0.0"
 
 # Add NullHandler to prevent "No handlers could be found" warning
 # if the application doesn't configure logging
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logging.getLogger(__name__).addHandler(logging.NullHandler())  # noqa: RUF067 - stdlib NullHandler convention for libraries
 
 
 __all__ = [

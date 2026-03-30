@@ -73,8 +73,7 @@ class SharedExporterSettingsMixin(BaseMixin):
             params["scope"] = scope
 
         file_path: pathlib.Path = pathlib.Path(xliff_file_path)
-        with file_path.open(encoding="utf-8") as f:
-            file_content: str = f.read()
+        file_content: str = file_path.read_text(encoding="utf-8")
 
         files: FilesDict = {
             "file": (file_path.name, file_content),

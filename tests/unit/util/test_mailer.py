@@ -3,7 +3,7 @@
 import unittest
 from email.mime.multipart import MIMEMultipart
 from smtplib import SMTPException
-from unittest.mock import Mock, call, mock_open, patch
+from unittest.mock import Mock, patch
 
 from python_sbb_polarion.util.mailer import Mailer, MailerError
 
@@ -134,8 +134,8 @@ class TestMailer(unittest.TestCase):
 
     @patch("python_sbb_polarion.util.mailer.SMTP")
     @patch("python_sbb_polarion.util.mailer.create_default_context")
-    @patch("python_sbb_polarion.util.mailer.pathlib.Path.open", new_callable=mock_open, read_data=b"file content")
-    def test_send_message_with_attachments(self, mock_file: Mock, mock_create_context: Mock, mock_smtp: Mock) -> None:
+    @patch("python_sbb_polarion.util.mailer.pathlib.Path.read_bytes", return_value=b"file content")
+    def test_send_message_with_attachments(self, mock_read_bytes: Mock, mock_create_context: Mock, mock_smtp: Mock) -> None:
         """Test sending email with file attachments."""
         mock_server = Mock()
         mock_smtp.return_value.__enter__.return_value = mock_server
@@ -143,16 +143,15 @@ class TestMailer(unittest.TestCase):
         mailer = Mailer(smtp_host=self.smtp_host, smtp_port=self.smtp_port, smtp_user=self.smtp_user, smtp_password=self.smtp_password)
         mailer.send_message(from_addr="sender@example.com", to_addr=["recipient@example.com"], subject="Test", message="Test", attachments=["/path/to/file.txt"])
 
-        # Verify file was opened in binary read mode (filter out other calls like linter cache)
-        rb_calls_count: int = sum(1 for c in mock_file.call_args_list if c == call("rb"))
-        self.assertEqual(rb_calls_count, 1)
+        # Verify read_bytes was called once for the attachment
+        mock_read_bytes.assert_called_once()
         # Verify send_message was called
         mock_server.send_message.assert_called_once()
 
     @patch("python_sbb_polarion.util.mailer.SMTP")
     @patch("python_sbb_polarion.util.mailer.create_default_context")
-    @patch("python_sbb_polarion.util.mailer.pathlib.Path.open", new_callable=mock_open, read_data=b"file1")
-    def test_send_message_with_multiple_attachments(self, mock_file: Mock, mock_create_context: Mock, mock_smtp: Mock) -> None:
+    @patch("python_sbb_polarion.util.mailer.pathlib.Path.read_bytes", return_value=b"file1")
+    def test_send_message_with_multiple_attachments(self, mock_read_bytes: Mock, mock_create_context: Mock, mock_smtp: Mock) -> None:
         """Test sending email with multiple attachments."""
         mock_server = Mock()
         mock_smtp.return_value.__enter__.return_value = mock_server
@@ -166,9 +165,8 @@ class TestMailer(unittest.TestCase):
             attachments=["/path/to/file1.txt", "/path/to/file2.pdf"],
         )
 
-        # Verify file was opened twice in binary read mode (filter out other calls like linter cache)
-        rb_calls_count: int = sum(1 for c in mock_file.call_args_list if c == call("rb"))
-        self.assertEqual(rb_calls_count, 2)
+        # Verify read_bytes was called twice (once per attachment)
+        self.assertEqual(mock_read_bytes.call_count, 2)
         # Verify send_message was called
         mock_server.send_message.assert_called_once()
 

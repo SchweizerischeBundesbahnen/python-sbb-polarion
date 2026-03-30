@@ -138,11 +138,11 @@ class ExtensionApiFactory:
     def get_extension_api_by_name(cls, extension_name: str, polarion_connection: PolarionRestApiConnection) -> PolarionGenericExtensionApi:
         """Get extension api object for provided extension name
 
-        Raises:
-            ValueError: If extension name is invalid
-
         Returns:
             PolarionGenericExtensionApi: Extension API instance
+
+        Raises:
+            ValueError: If extension name is invalid
         """
         api_class: type[PolarionGenericExtensionApi] | None = cls.__extension_api_classes.get(extension_name)
         if api_class:
