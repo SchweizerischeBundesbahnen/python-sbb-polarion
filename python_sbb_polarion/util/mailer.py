@@ -73,15 +73,14 @@ class Mailer:
 
         if attachments:
             for filename in attachments:
-                with pathlib.Path(filename).open("rb") as attachment:
-                    part = MIMEBase("application", "octet-stream")
-                    part.set_payload(attachment.read())
-                    encoders.encode_base64(part)
-                    part.add_header(
-                        "Content-Disposition",
-                        f"attachment; filename= {filename}",
-                    )
-                    msg.attach(part)
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(pathlib.Path(filename).read_bytes())
+                encoders.encode_base64(part)
+                part.add_header(
+                    "Content-Disposition",
+                    f"attachment; filename={pathlib.Path(filename).name}",
+                )
+                msg.attach(part)
 
         ctx: ssl.SSLContext = create_default_context()
 
