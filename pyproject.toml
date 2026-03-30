@@ -20,6 +20,10 @@ dependencies = [
     "docker>=7.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion"
+Repository = "https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion"
+
 [project.scripts]
 python-sbb-polarion-lint = "python_sbb_polarion.linter:main"
 
