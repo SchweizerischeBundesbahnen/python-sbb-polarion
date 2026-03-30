@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.3](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.0.2...v2.0.3) (2026-03-30)
+
+
+### Bug Fixes
+
+* use github.ref_name for SonarCloud push scan branch name ([#42](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/42)) ([ffcdf47](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/ffcdf4776a5f789dff27e0961992f5d9ee5da25d)), closes [#27](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/27)
+
 ## [2.0.2](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.0.1...v2.0.2) (2026-03-30)
 
 
