@@ -1,6 +1,6 @@
 [project]
 name = "python-sbb-polarion"
-version = "0.0.0"  # the version is controlled by the pipeline
+version = "2.0.0"  # the version is controlled by the pipeline
 description = "Python library for Polarion requirements management system - provides utilities, core API, extension clients, and testing helpers"
 authors = [
     {name = "SBB Polarion Team", email = "polarion-opensource@sbb.ch"},
