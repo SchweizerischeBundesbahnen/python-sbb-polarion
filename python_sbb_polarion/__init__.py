@@ -23,7 +23,7 @@ from python_sbb_polarion.core import (
 
 
 # Version will be set by CI/CD
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 
 # Add NullHandler to prevent "No handlers could be found" warning
 # if the application doesn't configure logging
