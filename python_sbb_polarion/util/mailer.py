@@ -78,7 +78,7 @@ class Mailer:
                 encoders.encode_base64(part)
                 part.add_header(
                     "Content-Disposition",
-                    f"attachment; filename= {filename}",
+                    f"attachment; filename={pathlib.Path(filename).name}",
                 )
                 msg.attach(part)
 
