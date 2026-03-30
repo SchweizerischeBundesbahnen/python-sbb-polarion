@@ -45,6 +45,7 @@ class TestGetScriptArguments(unittest.TestCase):
             self.assertIsNone(args.tc_extension_version)
             self.assertIsNone(args.tc_additional_bundles)
             self.assertIsNone(args.tc_admin_utility_version)
+            self.assertIsNone(args.tc_test_data_version)
 
     def test_app_url_argument(self) -> None:
         """Test --app_url argument."""
@@ -159,6 +160,12 @@ class TestGetScriptArguments(unittest.TestCase):
         with patch.object(sys, "argv", ["script.py", "--tc_admin_utility_version", "2.0.0"]):
             args: argparse.Namespace = get_script_arguments()
             self.assertEqual(args.tc_admin_utility_version, "2.0.0")
+
+    def test_tc_test_data_version_argument(self) -> None:
+        """Test --tc_test_data_version argument."""
+        with patch.object(sys, "argv", ["script.py", "--tc_test_data_version", "3.1.1"]):
+            args: argparse.Namespace = get_script_arguments()
+            self.assertEqual(args.tc_test_data_version, "3.1.1")
 
     def test_multiple_arguments_combined(self) -> None:
         """Test multiple arguments combined."""

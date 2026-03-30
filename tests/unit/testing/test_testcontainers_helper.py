@@ -78,7 +78,8 @@ class TestPolarionContainerParameters(unittest.TestCase):
             weasyprint_service_image_name="weasyprint:latest",
             extension_version="2.0.0",
             additional_bundles=artifacts,
-            admin_utility_version="3.0.0",
+            admin_utility_version="4.0.1",
+            test_data_version="4.1.0",
         )
 
         # Assert
@@ -86,7 +87,8 @@ class TestPolarionContainerParameters(unittest.TestCase):
         self.assertEqual(params.weasyprint_service_image_name, "weasyprint:latest")
         self.assertEqual(params.extension_version, "2.0.0")
         self.assertEqual(params.additional_bundles, artifacts)
-        self.assertEqual(params.admin_utility_version, "3.0.0")
+        self.assertEqual(params.admin_utility_version, "4.0.1")
+        self.assertEqual(params.test_data_version, "4.1.0")
 
 
 class TestTestContainersHelperGetParameter(unittest.TestCase):
@@ -406,7 +408,7 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
     def test_get_parameters_all_set(self, mock_parse: Mock, mock_get_param: Mock) -> None:
         """Test get_parameters with all parameters set."""
         # Arrange
-        mock_get_param.side_effect = ["polarion:latest", "weasyprint:latest", "1.0.0", "com.example:artifact:1.0", "3.0.0"]
+        mock_get_param.side_effect = ["polarion:latest", "weasyprint:latest", "1.0.0", "com.example:artifact:1.0", "3.0.0", "3.1.1"]
         mock_parse.return_value = [ArtifactInfo("com.example", "artifact", "1.0")]
 
         args = Mock()
@@ -415,6 +417,7 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         args.tc_extension_version = "1.0.0"
         args.tc_additional_bundles = "com.example:artifact:1.0"
         args.tc_admin_utility_version = "3.0.0"
+        args.tc_test_data_version = "3.1.1"
 
         # Act
         result: PolarionContainerParameters = TestContainersHelper.get_parameters(args)
@@ -425,6 +428,7 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         self.assertEqual(result.weasyprint_service_image_name, "weasyprint:latest")
         self.assertEqual(result.extension_version, "1.0.0")
         self.assertEqual(result.admin_utility_version, "3.0.0")
+        self.assertEqual(result.test_data_version, "3.1.1")
         self.assertIsNotNone(result.additional_bundles)
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameter")
@@ -441,6 +445,7 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         args.tc_extension_version = None
         args.tc_additional_bundles = None
         args.tc_admin_utility_version = None
+        args.tc_test_data_version = None
 
         # Act
         result: PolarionContainerParameters = TestContainersHelper.get_parameters(args)
@@ -450,6 +455,7 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         self.assertEqual(result.weasyprint_service_image_name, "")
         self.assertEqual(result.extension_version, "")
         self.assertEqual(result.admin_utility_version, "")
+        self.assertEqual(result.test_data_version, "")
         self.assertIsNone(result.additional_bundles)
 
 
@@ -533,7 +539,9 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         mock_args = Mock()
         mock_get_args.return_value = mock_args
 
-        params = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="weasyprint:latest", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0")
+        params = PolarionContainerParameters(
+            polarion_image_name="polarion:latest", weasyprint_service_image_name="weasyprint:latest", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0", test_data_version="3.1.1"
+        )
         mock_get_params.return_value = params
 
         mock_create_weasyprint.return_value = "http://weasyprint:9080"
@@ -561,7 +569,7 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         mock_args = Mock()
         mock_get_args.return_value = mock_args
 
-        params = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0")
+        params = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0", test_data_version="3.1.1")
         mock_get_params.return_value = params
 
         mock_create_polarion.return_value = ("http://localhost:8080", "test-token")
@@ -582,7 +590,7 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         mock_args = Mock()
         mock_get_args.return_value = mock_args
 
-        params = PolarionContainerParameters(polarion_image_name="", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0")
+        params = PolarionContainerParameters(polarion_image_name="", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0", test_data_version="3.1.1")
         mock_get_params.return_value = params
 
         helper = TestContainersHelper()
@@ -600,7 +608,7 @@ class TestTestContainersHelperCreateWeasyprintServiceContainer(unittest.TestCase
     def test_create_weasyprint_service_container_success(self, mock_docker_container_class: Mock) -> None:
         """Test create_weasyprint_service_container creates and starts container."""
         # Arrange
-        params = PolarionContainerParameters(polarion_image_name="", weasyprint_service_image_name="weasyprint:latest", extension_version="", additional_bundles=None, admin_utility_version="")
+        params = PolarionContainerParameters(polarion_image_name="", weasyprint_service_image_name="weasyprint:latest", extension_version="", additional_bundles=None, admin_utility_version="", test_data_version="")
 
         mock_container = Mock()
         mock_wrapped = Mock()
@@ -624,7 +632,7 @@ class TestTestContainersHelperCreateWeasyprintServiceContainer(unittest.TestCase
     def test_create_weasyprint_service_container_with_network(self, mock_docker_container_class: Mock) -> None:
         """Test create_weasyprint_service_container connects to network."""
         # Arrange
-        params = PolarionContainerParameters(polarion_image_name="", weasyprint_service_image_name="weasyprint:latest", extension_version="", additional_bundles=None, admin_utility_version="")
+        params = PolarionContainerParameters(polarion_image_name="", weasyprint_service_image_name="weasyprint:latest", extension_version="", additional_bundles=None, admin_utility_version="", test_data_version="")
 
         mock_container = Mock()
         mock_wrapped = Mock()
@@ -649,7 +657,7 @@ class TestTestContainersHelperCreateWeasyprintServiceContainer(unittest.TestCase
     def test_create_weasyprint_service_container_error(self, mock_docker_container_class: Mock, mock_tear_down: Mock) -> None:
         """Test create_weasyprint_service_container raises ContainerSetupError on failure."""
         # Arrange
-        params = PolarionContainerParameters(polarion_image_name="", weasyprint_service_image_name="weasyprint:latest", extension_version="", additional_bundles=None, admin_utility_version="")
+        params = PolarionContainerParameters(polarion_image_name="", weasyprint_service_image_name="weasyprint:latest", extension_version="", additional_bundles=None, admin_utility_version="", test_data_version="")
 
         mock_container = Mock()
         mock_container.with_bind_ports.return_value = mock_container
@@ -677,7 +685,7 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
     def test_create_polarion_container_success(self, mock_docker_container_class: Mock, mock_prepare: Mock, mock_setup: Mock, mock_sleep: Mock) -> None:
         """Test create_polarion_container creates and starts container."""
         # Arrange
-        params = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0")
+        params = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0", test_data_version="3.1.1")
 
         mock_container = Mock()
         mock_wrapped = Mock()
@@ -715,7 +723,9 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
     def test_create_polarion_container_with_weasyprint(self, mock_docker_container_class: Mock, mock_prepare: Mock, mock_setup: Mock, mock_sleep: Mock) -> None:
         """Test create_polarion_container with weasyprint endpoint."""
         # Arrange
-        params = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="weasyprint:latest", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0")
+        params = PolarionContainerParameters(
+            polarion_image_name="polarion:latest", weasyprint_service_image_name="weasyprint:latest", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0", test_data_version="3.1.1"
+        )
 
         mock_container = Mock()
         mock_wrapped = Mock()
@@ -746,7 +756,7 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
     def test_create_polarion_container_with_network(self, mock_docker_container_class: Mock, mock_prepare: Mock, mock_setup: Mock, mock_sleep: Mock) -> None:
         """Test create_polarion_container connects to network when network is set."""
         # Arrange
-        params = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0")
+        params = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0", test_data_version="3.1.1")
 
         mock_container = Mock()
         mock_wrapped = Mock()
@@ -784,7 +794,7 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
     def test_create_polarion_container_error(self, mock_docker_container_class: Mock, mock_prepare: Mock, mock_tear_down: Mock) -> None:
         """Test create_polarion_container raises ContainerSetupError on failure."""
         # Arrange
-        params = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0")
+        params = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0", test_data_version="3.1.1")
 
         mock_container = Mock()
         mock_container.with_bind_ports.return_value = mock_container
@@ -1102,6 +1112,7 @@ class TestTestContainersHelperPrepareSystemTestExtensions(unittest.TestCase):
             extension_version="1.0.0",
             additional_bundles=None,
             admin_utility_version="2.0.0",
+            test_data_version="3.1.1",
         )
 
         helper = TestContainersHelper()
@@ -1110,9 +1121,10 @@ class TestTestContainersHelperPrepareSystemTestExtensions(unittest.TestCase):
         helper.prepare_systest_extensions("pdf-exporter", params)
 
         # Assert
-        self.assertEqual(mock_copy.call_count, 2)
+        self.assertEqual(mock_copy.call_count, 3)
         mock_copy.assert_any_call("/tmp/systest/plugins", "ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.pdf-exporter", "1.0.0")
         mock_copy.assert_any_call("/tmp/systest/plugins", "ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.admin-utility", "2.0.0")
+        mock_copy.assert_any_call("/tmp/systest/plugins", "ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.test-data", "3.1.1")
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.copy_dependency")
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_host_extensions_path")
@@ -1128,6 +1140,7 @@ class TestTestContainersHelperPrepareSystemTestExtensions(unittest.TestCase):
             extension_version="1.0.0",
             additional_bundles=additional,
             admin_utility_version="2.0.0",
+            test_data_version="3.1.1",
         )
 
         helper = TestContainersHelper()
@@ -1136,7 +1149,10 @@ class TestTestContainersHelperPrepareSystemTestExtensions(unittest.TestCase):
         helper.prepare_systest_extensions("pdf-exporter", params)
 
         # Assert
-        self.assertEqual(mock_copy.call_count, 3)
+        self.assertEqual(mock_copy.call_count, 4)
+        mock_copy.assert_any_call("/tmp/systest/plugins", "ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.pdf-exporter", "1.0.0")
+        mock_copy.assert_any_call("/tmp/systest/plugins", "ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.admin-utility", "2.0.0")
+        mock_copy.assert_any_call("/tmp/systest/plugins", "ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.test-data", "3.1.1")
         mock_copy.assert_any_call("/tmp/systest/plugins", "com.example", "extra-bundle", "3.0.0")
 
 
