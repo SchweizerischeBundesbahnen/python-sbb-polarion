@@ -37,7 +37,8 @@ logger = logging.getLogger(__name__)
 TIMEOUT_IN_SEC = 120
 INITIAL_LOGIN = "admin"
 POLARION_EXTENSIONS_PATH = "/opt/polarion/polarion/extensions/"
-DEFAULT_ADMIN_UTILITY_VERSION = "3.0.0"
+DEFAULT_ADMIN_UTILITY_VERSION = "4.0.1"
+DEFAULT_TEST_DATA_VERSION = "4.1.0"
 WEASYPRINT_NETWORK = "test-weasyprint-network"
 
 
@@ -73,6 +74,7 @@ class TestContainersHelper:
         extension_version: str | None = TestContainersHelper.get_parameter("TC_EXTENSION_VERSION", args.tc_extension_version)
         additional_bundles_artifacts: str | None = TestContainersHelper.get_parameter("TC_ADDITIONAL_BUNDLES", args.tc_additional_bundles)
         admin_utility_version: str | None = TestContainersHelper.get_parameter("TC_ADMIN_UTILITY_VERSION", args.tc_admin_utility_version)
+        test_data_version: str | None = TestContainersHelper.get_parameter("TC_TEST_DATA_VERSION", args.tc_test_data_version)
         additional_bundles_list: list[ArtifactInfo] | None = TestContainersHelper.parse_additional_bundles(additional_bundles_artifacts)
         return PolarionContainerParameters(
             polarion_image_name=polarion_image_name or "",
@@ -80,6 +82,7 @@ class TestContainersHelper:
             extension_version=extension_version or "",
             additional_bundles=additional_bundles_list,
             admin_utility_version=admin_utility_version or "",
+            test_data_version=test_data_version or "",
         )
 
     @staticmethod
@@ -159,6 +162,7 @@ class TestContainersHelper:
         systest_extensions: list[ArtifactInfo] = [
             ArtifactInfo("ch.sbb.polarion.extensions", f"ch.sbb.polarion.extension.{extension_name}", parameters.extension_version),
             ArtifactInfo("ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.admin-utility", parameters.admin_utility_version or DEFAULT_ADMIN_UTILITY_VERSION),
+            ArtifactInfo("ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.test-data", parameters.test_data_version or DEFAULT_TEST_DATA_VERSION),
         ]
         if parameters.additional_bundles:
             systest_extensions.extend(parameters.additional_bundles)
@@ -284,6 +288,7 @@ class PolarionContainerParameters:
     extension_version: str
     additional_bundles: list[ArtifactInfo] | None
     admin_utility_version: str
+    test_data_version: str
 
 
 @dataclass
