@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.0.0...v2.0.1) (2026-03-30)
+
+
+### Bug Fixes
+
+* use --frozen instead of --locked in CI workflow ([#33](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/33)) ([5ce770a](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/5ce770a0402c45cbd89c026f5f85020974e9b47d)), closes [#32](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/32)
+
 ## 2.0.0 (2026-03-30)
 
 
