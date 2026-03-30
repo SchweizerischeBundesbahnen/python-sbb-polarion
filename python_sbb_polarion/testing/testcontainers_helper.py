@@ -287,8 +287,8 @@ class PolarionContainerParameters:
     weasyprint_service_image_name: str
     extension_version: str
     additional_bundles: list[ArtifactInfo] | None
-    admin_utility_version: str
-    test_data_version: str
+    admin_utility_version: str | None = None
+    test_data_version: str | None = None
 
 
 @dataclass
