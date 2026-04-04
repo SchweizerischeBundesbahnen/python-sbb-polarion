@@ -8,6 +8,7 @@ on:
     types: [opened, assigned]
   pull_request_review:
     types: [submitted]
+permissions: {}
 jobs:
   claude:
     if: |
