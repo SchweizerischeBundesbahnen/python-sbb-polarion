@@ -15,9 +15,6 @@ Provides utilities, core API access, extension clients, and testing helpers for 
 ## Installation
 
 ```bash
-# From private Artifactory (requires authentication)
-pip install python-sbb-polarion --index-url https://pypi.example.com/simple
-
 # For development
 git clone <repository-url>
 cd python-sbb-polarion
@@ -59,8 +56,6 @@ result = pdf_api.convert({"projectId": "PROJECT", "documentName": "doc"})
 ## Documentation
 
 * Internal documentation: See project wiki
-* See `CLAUDE.md` for development guidelines and commands
-* See `UV_MIGRATION.md` for migration from Poetry to uv
 
 ## Project Structure
 
@@ -83,9 +78,8 @@ python_sbb_polarion/
 └── types.py        # Type definitions (JsonDict, MediaType, Header, etc.)
 
 tests/
-├── unit/           # Unit tests (98% coverage, 1254 tests)
-├── verification/   # OpenAPI verification tests (manual/local only)
-└── integration/    # Integration tests
+├── unit/           # Unit tests
+└── verification/   # OpenAPI verification tests
 ```
 
 ## Key Modules
@@ -109,9 +103,8 @@ uv run ruff check python_sbb_polarion       # Check code quality
 uv run ruff format python_sbb_polarion      # Format code
 uv run ruff check --fix python_sbb_polarion # Auto-fix issues
 
-# OpenAPI verification (manual/local only, not in CI/CD)
+# OpenAPI verification
 gh auth login                              # One-time GitHub authentication
-export BITBUCKET_TOKEN="your_token"        # For Bitbucket repos
 uv run tox -e verify-openapi-mapping       # Verify extension APIs match upstream
 
 # Build package
@@ -154,7 +147,7 @@ for v in violations:
     print(v)
 ```
 
-## Polarion project manager
+## Polarion Project Manager
 
 This module provides a command-line interface for downloading, uploading, and creating Polarion project templates through PolarionProjectManager.
 
@@ -164,13 +157,15 @@ The CLI wraps around the core project manager class and exposes three commands:
 * create — Create a temporary Polarion project from a template
 * upload_template — Upload a local ZIP file as a new template
 
-### Download a project template by its project ID.
+```bash
+# Run as a module
+python -m python_sbb_polarion.polarion_project_manager <command> [options]
+```
+
+### Download a project template by its project ID
 
 ```bash
-# CLI command (after pip install) from system test project
-
-polarion-project-manager download --project_id elibrary --project_group "Demo Projects" --output elibrary_st
-
+python -m python_sbb_polarion.polarion_project_manager download --project_id elibrary --project_group "Demo Projects" --output elibrary_st
 ```
 
 ### Parameters
@@ -184,10 +179,7 @@ polarion-project-manager download --project_id elibrary --project_group "Demo Pr
 ### Create a temporary project from a template
 
 ```bash
-# CLI command (after pip install) from system test project
-
-polarion-project-manager create --project_id elibrary_system_test --project_name "Elibrary System Test" --template_id custom_project_template_for_st
-
+python -m python_sbb_polarion.polarion_project_manager create --project_id elibrary_system_test --project_name "Elibrary System Test" --template_id custom_project_template_for_st
 ```
 
 ### Parameters
@@ -201,10 +193,7 @@ polarion-project-manager create --project_id elibrary_system_test --project_name
 ### Upload a local ZIP file as a new template
 
 ```bash
-# CLI command (after pip install) from system test project
-
-polarion-project-manager upload_template --template_id custom_project_template_for_st
-
+python -m python_sbb_polarion.polarion_project_manager upload_template --template_id custom_project_template_for_st
 ```
 
 ### Parameters
@@ -215,10 +204,9 @@ polarion-project-manager upload_template --template_id custom_project_template_f
 
 ## Requirements
 
-- Python >=3.11, <3.14
+- Python >=3.11, <3.15
 - uv package manager
-- Private Artifactory access for dependencies
 
 ## License
 
-Internal SBB project - not for public distribution
+This project is licensed under the [Apache License 2.0](LICENSE).
