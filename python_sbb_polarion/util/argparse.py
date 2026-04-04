@@ -40,6 +40,7 @@ def get_script_arguments() -> argparse.Namespace:
     parser.add_argument("--tc_extension_version", type=str, help="Version of testing extension in test container")
     parser.add_argument("--tc_additional_bundles", type=str, help="Comma separated list of additional bundles in format group_id:artifact_id:version")
     parser.add_argument("--tc_admin_utility_version", type=str, help="Admin utility version")
+    parser.add_argument("--tc_test_data_version", type=str, help="Test data version")
 
     args: argparse.Namespace
     args, _unknown = parser.parse_known_args()

@@ -1,6 +1,6 @@
 [project]
 name = "python-sbb-polarion"
-version = "0.0.0"  # the version is controlled by the pipeline
+version = "2.0.2"  # the version is controlled by the pipeline
 description = "Python library for Polarion requirements management system - provides utilities, core API, extension clients, and testing helpers"
 authors = [
     {name = "SBB Polarion Team", email = "polarion-opensource@sbb.ch"},
@@ -20,14 +20,18 @@ dependencies = [
     "docker>=7.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion"
+Repository = "https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion"
+
 [project.scripts]
 python-sbb-polarion-lint = "python_sbb_polarion.linter:main"
 
 [dependency-groups]
 dev = [
     "pre-commit==4.5.1",
-    "ruff==0.14.9",
-    "mypy==1.19.1",
+    "ruff==0.15.8",
+    "mypy==1.20.0",
     "types-requests>=2.32.4.20250913",
     "types-paramiko>=4.0.0.20250822",
     "types-psycopg2>=2.9.21.20251012",
@@ -38,8 +42,8 @@ dev = [
     "python-dotenv>=1.1.1",
 ]
 test = [
-    "tox==4.50.3",
-    "tox-uv==1.33.4",
+    "tox==4.52.0",
+    "tox-uv==1.34.0",
     "pytest==9.0.2",
     "pytest-cov==7.1.0",
 ]
