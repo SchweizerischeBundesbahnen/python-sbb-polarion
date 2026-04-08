@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.3](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.0.2...v2.0.3) (2026-04-08)
+
+
+### Bug Fixes
+
+* add pull-requests:read to actionlint caller permissions ([#44](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/44)) ([83b486f](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/83b486f9528540c1b05f5432acda2097575d097c))
+* add pull-requests:read to actionlint caller permissions ([#46](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/46)) ([83b486f](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/83b486f9528540c1b05f5432acda2097575d097c))
+* not all endpoints declared for xml-repair ([#51](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/51)) ([9df641a](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/9df641af2f07d06cd1e0612ea7a0d37548782213)), closes [#50](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/50)
+* use github.ref_name for SonarCloud push scan branch name ([#42](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/42)) ([ffcdf47](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/ffcdf4776a5f789dff27e0961992f5d9ee5da25d)), closes [#27](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/27)
+
 ## [2.0.2](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.0.1...v2.0.2) (2026-03-30)
 
 
