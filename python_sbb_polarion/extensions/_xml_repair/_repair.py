@@ -39,12 +39,27 @@ class RepairMixin(BaseMixin):
 
     @restapi_endpoint(
         method="POST",
+        path="/api/scan",
+        body_param="scan_params",
+        naming_ok=True,
+    )
+    def scan(self, scan_params: JsonDict) -> Response:
+        """Scans entities for XML issues
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/scan"
+        return self.polarion_connection.api_request_post(url, data=scan_params)
+
+    @restapi_endpoint(
+        method="POST",
         path="/api/repair",
         body_param="repair_params",
         naming_ok=True,
     )
     def repair(self, repair_params: JsonDict) -> Response:
-        """Checks or repairs XML issues based on provided parameters
+        """Repairs XML issues identified by scan
 
         Returns:
             Response: Response object from the API call
