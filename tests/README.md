@@ -271,8 +271,8 @@ test_admin_utility_completeness ... skipped 'No OpenAPI spec found'
 
 **Common skip reasons:**
 - No OpenAPI spec in repository (`docs/openapi.json` missing)
-- Network error (GitHub/Bitbucket unreachable)
-- Missing authentication token (Bitbucket extensions without `BITBUCKET_TOKEN`)
+- Network error (GitHub unreachable)
+- Missing authentication token
 
 ### Configuration
 
@@ -428,13 +428,6 @@ The API verification tests are included in the standard `tox` test suite and run
 - Check token has required permissions
 - Try accessing the URL manually in a browser
 
-**Problem:** All Bitbucket tests skipped
-
-**Solution:**
-- Set `BITBUCKET_TOKEN` environment variable
-- Verify token has `Repository Read` permission
-- Test token by accessing the Bitbucket instance manually
-
 **Problem:** Test reports many missing methods
 
 **Solution:**
@@ -448,8 +441,7 @@ The API verification tests are included in the standard `tox` test suite and run
 **When adding a new extension:**
 
 1. Add extension to `EXTENSION_MAPPING` in test file
-2. If on Bitbucket, add to `BITBUCKET_EXTENSIONS`
-3. Run verification test to see current status
+2. Run verification test to see current status
 4. Implement missing critical methods
 5. Document any intentional omissions
 
@@ -568,7 +560,6 @@ uv run coverage html  # Generate HTML report
 
 ## Questions or Issues?
 
-- Check the [project TODO.md](../TODO.md) for planned improvements
 - Review test output for detailed error messages
 - Consult the OpenAPI specs in upstream repositories
 - Contact the team for access to private repositories
