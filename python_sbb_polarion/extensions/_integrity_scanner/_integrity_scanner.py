@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from python_sbb_polarion.core.annotations import restapi_endpoint
-from python_sbb_polarion.extensions._base._mixin import BaseMixin
+from python_sbb_polarion.extensions._base import BaseMixin
 
 
 if TYPE_CHECKING:

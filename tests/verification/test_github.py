@@ -72,6 +72,10 @@ class GitHubAPIVerificationTest(BaseExtensionAPIVerificationTest):
         """Verify fake_services.py matches upstream Excel Importer API."""
         self._verify_extension("fake_services")
 
+    def test_integrity_scanner_completeness(self) -> None:
+        """Verify integrity_scanner.py matches upstream Integrity Scanner API."""
+        self._verify_extension("integrity_scanner")
+
     def test_interceptor_manager_completeness(self) -> None:
         """Verify interceptor_manager.py matches upstream Interceptor Manager API."""
         self._verify_extension("interceptor_manager")
@@ -99,10 +103,6 @@ class GitHubAPIVerificationTest(BaseExtensionAPIVerificationTest):
     def test_test_data_completeness(self) -> None:
         """Verify test_data.py matches upstream Test Data API."""
         self._verify_extension("test_data")
-
-    def test_integrity_scanner_completeness(self) -> None:
-        """Verify integrity_scanner.py matches upstream Integrity Scanner API."""
-        self._verify_extension("integrity_scanner")
 
     def test_xml_repair_completeness(self) -> None:
         """Verify xml_repair.py matches upstream XML Repair API."""
