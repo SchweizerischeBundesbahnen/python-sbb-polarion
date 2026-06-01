@@ -18,6 +18,52 @@ class UtilityMixin(BaseMixin):
     """Utility operations for spaces, documents, work items, and extension info."""
 
     # =========================================================================
+    # Projects
+    # =========================================================================
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/projects",
+    )
+    def get_projects(self) -> Response:
+        """Gets list of projects accessible to the current user
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/projects"
+        return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/projects/duplicate",
+        body_param="data",
+    )
+    def create_project_duplicate(self, data: JsonDict | None = None) -> Response:
+        """Post request to create duplicate of given project
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/projects/duplicate"
+        if data is not None:
+            return self.polarion_connection.api_request_post(url, data=data)
+        return self.polarion_connection.api_request_post(url)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/projects/duplicate/jobs",
+    )
+    def get_duplication_jobs(self) -> Response:
+        """Gets list of project duplication jobs
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/projects/duplicate/jobs"
+        return self.polarion_connection.api_request_get(url)
+
+    # =========================================================================
     # Spaces and Documents
     # =========================================================================
 

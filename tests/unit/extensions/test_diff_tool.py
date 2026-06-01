@@ -249,6 +249,54 @@ class TestPolarionDiffToolApi(unittest.TestCase):
     # Utility API - Spaces and Documents
     # =========================================================================
 
+    def test_get_projects(self) -> None:
+        """Test get projects."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_projects()
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects"
+        self.mock_connection.api_request_get.assert_called_once_with(expected_url)
+
+    def test_create_project_duplicate(self) -> None:
+        """Test create project duplicate."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+        data: JsonDict = {
+            "sourceProjectId": "PROJ",
+            "targetProjectId": "PROJ2",
+        }
+
+        response: Response = self.api.create_project_duplicate(data)
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/duplicate"
+        self.mock_connection.api_request_post.assert_called_once_with(expected_url, data=data)
+
+    def test_create_project_duplicate_without_data(self) -> None:
+        """Test create project duplicate without data."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        response: Response = self.api.create_project_duplicate()
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/duplicate"
+        self.mock_connection.api_request_post.assert_called_once_with(expected_url)
+
+    def test_get_duplication_jobs(self) -> None:
+        """Test get project duplication jobs."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_duplication_jobs()
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/duplicate/jobs"
+        self.mock_connection.api_request_get.assert_called_once_with(expected_url)
+
     def test_get_spaces(self) -> None:
         """Test get spaces."""
         mock_response = Mock()

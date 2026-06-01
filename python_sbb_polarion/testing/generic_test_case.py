@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from python_sbb_polarion.extensions.docx_exporter import PolarionDocxExporterApi
     from python_sbb_polarion.extensions.excel_importer import PolarionExcelImporterApi
     from python_sbb_polarion.extensions.fake_services import PolarionFakeServicesApi
+    from python_sbb_polarion.extensions.integrity_scanner import PolarionIntegrityScannerApi
     from python_sbb_polarion.extensions.interceptor_manager import PolarionInterceptorManagerApi
     from python_sbb_polarion.extensions.json_editor import PolarionJsonEditorApi
     from python_sbb_polarion.extensions.mailworkflow import PolarionMailWorkflowApi
@@ -132,6 +133,10 @@ class GenericTestCase(unittest.TestCase):
     @overload
     @classmethod
     def create_extension_api(cls, extension_name: Literal["test-data"]) -> PolarionTestDataApi: ...
+
+    @overload
+    @classmethod
+    def create_extension_api(cls, extension_name: Literal["integrity-scanner"]) -> PolarionIntegrityScannerApi: ...
 
     @overload
     @classmethod

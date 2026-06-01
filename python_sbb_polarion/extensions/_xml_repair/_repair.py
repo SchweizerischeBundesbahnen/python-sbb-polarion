@@ -19,6 +19,26 @@ class RepairMixin(BaseMixin):
 
     @restapi_endpoint(
         method="GET",
+        path="/api/baselines",
+        query_params={
+            "projectId": "project_id",
+        },
+        required_params=["projectId"],
+    )
+    def get_baselines(self, project_id: str) -> Response:
+        """Gets list of baselines for the given project
+
+        Returns:
+            Response: Response object from the API call
+        """
+        params: dict[str, str] = {
+            "projectId": project_id,
+        }
+        url: str = f"{self.rest_api_url}/baselines"
+        return self.polarion_connection.api_request_get(url, params=params)
+
+    @restapi_endpoint(
+        method="GET",
         path="/api/repairers",
         query_params={
             "entityType": "entity_type",
