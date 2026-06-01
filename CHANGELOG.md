@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.0.3...v2.1.0) (2026-06-01)
+
+
+### Features
+
+* Integrity-Scanner extension ([#55](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/55)) ([1759ca8](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/1759ca8723601356dc893f595868c1f83516f5d9)), closes [#54](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/54)
+
 ## [2.0.3](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.0.2...v2.0.3) (2026-04-08)
 
 
