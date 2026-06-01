@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 
     from requests import Response
 
+    from python_sbb_polarion.types import JsonDict
+
 
 class TestPolarionTestDataApi(unittest.TestCase):
     """Test PolarionTestDataApi class."""
@@ -101,6 +103,74 @@ class TestPolarionTestDataApi(unittest.TestCase):
         self.assertEqual(response, mock_response)
         expected_url: str = f"{self.api.rest_api_url}/projects/PROJ/spaces/space1/documents/doc1/change-wi-descriptions"
         self.mock_connection.api_request_patch.assert_called_once_with(expected_url, headers={Header.ACCEPT: MediaType.PLAIN}, params={"interval": "100"})
+
+    def test_create_baseline_without_params(self) -> None:
+        """Test create baseline without optional parameters."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        response: Response = self.api.create_baseline("PROJ", "baseline1")
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/PROJ/baselines/baseline1"
+        self.mock_connection.api_request_post.assert_called_once_with(expected_url, params=None)
+
+    def test_create_baseline_with_params(self) -> None:
+        """Test create baseline with description and revision parameters."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        response: Response = self.api.create_baseline("PROJ", "baseline1", description="My baseline", revision="rev123")
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/PROJ/baselines/baseline1"
+        expected_params: dict[str, str] = {
+            "description": "My baseline",
+            "revision": "rev123",
+        }
+        self.mock_connection.api_request_post.assert_called_once_with(expected_url, params=expected_params)
+
+    def test_create_collection(self) -> None:
+        """Test create collection."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+        data: JsonDict = {
+            "elements": [],
+        }
+
+        response: Response = self.api.create_collection("PROJ", "collection1", data)
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/PROJ/collections/collection1"
+        self.mock_connection.api_request_post.assert_called_once_with(expected_url, data=data)
+
+    def test_create_cross_document_links(self) -> None:
+        """Test create cross-document links."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+        data: JsonDict = {
+            "links": [],
+        }
+
+        response: Response = self.api.create_cross_document_links("PROJ", data)
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/PROJ/cross-document-links"
+        self.mock_connection.api_request_post.assert_called_once_with(expected_url, data=data)
+
+    def test_add_linked_revisions(self) -> None:
+        """Test add linked revisions to document."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+        data: JsonDict = {
+            "revisions": [],
+        }
+
+        response: Response = self.api.add_linked_revisions("PROJ", "space1", "doc1", data)
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/PROJ/spaces/space1/documents/doc1/linked-revisions"
+        self.mock_connection.api_request_post.assert_called_once_with(expected_url, data=data)
 
     # =========================================================================
     # Template Operations
