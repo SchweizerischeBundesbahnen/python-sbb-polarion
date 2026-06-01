@@ -15,6 +15,7 @@ from python_sbb_polarion.extensions.dms_wi_connector import PolarionDmsWiConnect
 from python_sbb_polarion.extensions.docx_exporter import PolarionDocxExporterApi
 from python_sbb_polarion.extensions.excel_importer import PolarionExcelImporterApi
 from python_sbb_polarion.extensions.fake_services import PolarionFakeServicesApi
+from python_sbb_polarion.extensions.integrity_scanner import PolarionIntegrityScannerApi
 from python_sbb_polarion.extensions.interceptor_manager import PolarionInterceptorManagerApi
 from python_sbb_polarion.extensions.json_editor import PolarionJsonEditorApi
 from python_sbb_polarion.extensions.mailworkflow import PolarionMailWorkflowApi
@@ -51,6 +52,7 @@ class ExtensionApiFactory:
         "requirements-inspector": PolarionRequirementsInspectorApi,
         "strictdoc-exporter": PolarionStrictDocExporterApi,
         "test-data": PolarionTestDataApi,
+        "integrity-scanner": PolarionIntegrityScannerApi,
         "xml-repair": PolarionXmlRepairApi,
     }
 
@@ -125,6 +127,10 @@ class ExtensionApiFactory:
     @overload
     @classmethod
     def get_extension_api_by_name(cls, extension_name: Literal["test-data"], polarion_connection: PolarionRestApiConnection) -> PolarionTestDataApi: ...
+
+    @overload
+    @classmethod
+    def get_extension_api_by_name(cls, extension_name: Literal["integrity-scanner"], polarion_connection: PolarionRestApiConnection) -> PolarionIntegrityScannerApi: ...
 
     @overload
     @classmethod

@@ -105,6 +105,7 @@ EXTENSION_MAPPING: dict[str, str] = {
     "requirements_inspector": "requirements-inspector",
     "strictdoc_exporter": "strictdoc-exporter",
     "test_data": "test-data",
+    "integrity_scanner": "integrity-scanner",
     "xml_repair": "xml-repair",
 }
 

@@ -99,3 +99,11 @@ class GitHubAPIVerificationTest(BaseExtensionAPIVerificationTest):
     def test_test_data_completeness(self) -> None:
         """Verify test_data.py matches upstream Test Data API."""
         self._verify_extension("test_data")
+
+    def test_integrity_scanner_completeness(self) -> None:
+        """Verify integrity_scanner.py matches upstream Integrity Scanner API."""
+        self._verify_extension("integrity_scanner")
+
+    def test_xml_repair_completeness(self) -> None:
+        """Verify xml_repair.py matches upstream XML Repair API."""
+        self._verify_extension("xml_repair")
