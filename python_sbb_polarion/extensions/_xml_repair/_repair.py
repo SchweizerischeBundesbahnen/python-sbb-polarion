@@ -39,6 +39,46 @@ class RepairMixin(BaseMixin):
 
     @restapi_endpoint(
         method="GET",
+        path="/api/work-item-types",
+        query_params={
+            "projectId": "project_id",
+        },
+        required_params=["projectId"],
+    )
+    def get_work_item_types(self, project_id: str) -> Response:
+        """Gets list of work item types for the given project
+
+        Returns:
+            Response: Response object from the API call
+        """
+        params: dict[str, str] = {
+            "projectId": project_id,
+        }
+        url: str = f"{self.rest_api_url}/work-item-types"
+        return self.polarion_connection.api_request_get(url, params=params)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/document-types",
+        query_params={
+            "projectId": "project_id",
+        },
+        required_params=["projectId"],
+    )
+    def get_document_types(self, project_id: str) -> Response:
+        """Gets list of document types for the given project
+
+        Returns:
+            Response: Response object from the API call
+        """
+        params: dict[str, str] = {
+            "projectId": project_id,
+        }
+        url: str = f"{self.rest_api_url}/document-types"
+        return self.polarion_connection.api_request_get(url, params=params)
+
+    @restapi_endpoint(
+        method="GET",
         path="/api/repairers",
         query_params={
             "entityType": "entity_type",

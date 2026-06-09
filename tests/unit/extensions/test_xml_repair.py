@@ -48,6 +48,38 @@ class TestPolarionXmlRepairApi(unittest.TestCase):
             params=expected_params,
         )
 
+    def test_get_work_item_types(self) -> None:
+        """Test get list of work item types for the given project."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_work_item_types(project_id="project1")
+
+        self.assertEqual(response, mock_response)
+        expected_params: dict[str, str] = {
+            "projectId": "project1",
+        }
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/work-item-types",
+            params=expected_params,
+        )
+
+    def test_get_document_types(self) -> None:
+        """Test get list of document types for the given project."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_document_types(project_id="project1")
+
+        self.assertEqual(response, mock_response)
+        expected_params: dict[str, str] = {
+            "projectId": "project1",
+        }
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/document-types",
+            params=expected_params,
+        )
+
     def test_get_repairers(self) -> None:
         """Test get list of repairers for specified entity type."""
         mock_response = Mock()
