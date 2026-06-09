@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.1.0...v2.1.1) (2026-06-09)
+
+
+### Bug Fixes
+
+* xml-repair endpoints actualization ([#58](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/58)) ([4aaba5a](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/4aaba5a338ca8c5fd1cbc3327110706fe78f4bda))
+
 ## [2.1.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.0.3...v2.1.0) (2026-06-01)
 
 
