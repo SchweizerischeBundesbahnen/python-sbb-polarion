@@ -283,6 +283,7 @@ class TestPolarionApiV1MethodSignatures(unittest.TestCase):
             "set_",
             "overwrite_",
             "execute_",
+            "generate_",
             "reuse_",
         ]
 

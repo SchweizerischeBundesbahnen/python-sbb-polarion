@@ -1,4 +1,4 @@
-"""Unit tests for PolarionApiV1 - complete coverage of all 212 methods."""
+"""Unit tests for PolarionApiV1 - complete coverage of all API methods."""
 
 from __future__ import annotations
 
@@ -4360,12 +4360,12 @@ class TestPolarion2606New(unittest.TestCase):
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "1")
 
-    def test_create_completion(self) -> None:
-        """Test create_completion method."""
+    def test_generate_completion(self) -> None:
+        """Test generate_completion method."""
         data: JsonDict = {
             "data": {"type": "completions"},
         }
-        self.api.create_completion(data)
+        self.api.generate_completion(data)
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_post.call_args
         self.assertIn("/llms/actions/generateCompletion", call_args[0][0])
 

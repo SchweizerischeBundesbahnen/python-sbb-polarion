@@ -58,7 +58,7 @@ class LlmsMixin(BaseMixin):
         body_param="data",
         response_type="json",
     )
-    def create_completion(
+    def generate_completion(
         self,
         data: JsonDict,
     ) -> Response:
