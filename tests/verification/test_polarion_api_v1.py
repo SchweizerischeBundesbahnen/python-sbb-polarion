@@ -281,7 +281,9 @@ class TestPolarionApiV1MethodSignatures(unittest.TestCase):
             "export_",
             "download_",
             "set_",
+            "overwrite_",
             "execute_",
+            "generate_",
             "reuse_",
         ]
 
