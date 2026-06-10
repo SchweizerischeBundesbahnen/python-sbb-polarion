@@ -130,7 +130,8 @@ class ProjectsCrudMixin(BaseMixin):
         """Create a project.
 
         Args:
-            data: Project data in JSON:API format
+            data: Project data as a flat body (not JSON:API), e.g.
+                {"projectId": ..., "trackerPrefix": ..., "location": ..., "templateId": ...}
 
         Returns:
             Response: Created project data from API

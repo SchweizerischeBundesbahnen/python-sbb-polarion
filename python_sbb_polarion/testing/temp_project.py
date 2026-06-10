@@ -13,6 +13,8 @@ from python_sbb_polarion.testing.project_template_uploader import ProjectTemplat
 
 
 if TYPE_CHECKING:
+    from typing import NoReturn
+
     from requests import Response
 
     from python_sbb_polarion.core import PolarionApiV1
@@ -106,11 +108,7 @@ class TempProject:
 
         # Project creation is asynchronous: the endpoint returns 202 (Accepted) with a job.
         if response.status_code != HTTPStatus.ACCEPTED:
-            logger.error("Error during creation project '%s'", self.temp_project_id)
-            logger.debug("Response status: %s", response.status_code)
-            logger.debug("Response headers: %s", response.headers)
-            logger.debug("Response content: %s", response.content)
-            sys.exit(-1)
+            self._fail("creation", response)
 
         if not self._wait_for_project(should_exist=True):
             logger.error("Timed out waiting for project '%s' to become available", self.temp_project_id)
@@ -143,6 +141,13 @@ class TempProject:
                 response.status_code,
             )
 
+    def _fail(self, action: str, response: Response) -> NoReturn:
+        logger.error("Error during %s project '%s'", action, self.temp_project_id)
+        logger.debug("Response status: %s", response.status_code)
+        logger.debug("Response headers: %s", response.headers)
+        logger.debug("Response content: %s", response.content)
+        sys.exit(-1)
+
     def _wait_for_project(self, should_exist: bool) -> bool:
         """Poll the project resource until it reaches the desired presence state.
 
@@ -152,19 +157,16 @@ class TempProject:
         Returns:
             bool: True if the desired state was reached within the timeout, False otherwise
         """
-        if should_exist:
-            logger.info("Waiting for project '%s' to be created...", self.temp_project_id)
-        else:
-            logger.info("Waiting for project '%s' to be deleted...", self.temp_project_id)
+        target_status: HTTPStatus = HTTPStatus.OK if should_exist else HTTPStatus.NOT_FOUND
+        logger.info("Waiting for project '%s' to be %s...", self.temp_project_id, "created" if should_exist else "deleted")
 
-        for _ in range(POLL_MAX_ATTEMPTS):
+        for attempt in range(POLL_MAX_ATTEMPTS):
             # While polling, the transient 404/200 mismatches are expected, so suppress the client's non-2xx warning.
             response: Response = self.polarion_api.get_project(self.temp_project_id, print_error=False)
-            if should_exist and response.status_code == HTTPStatus.OK:
+            if response.status_code == target_status:
                 return True
-            if not should_exist and response.status_code == HTTPStatus.NOT_FOUND:
-                return True
-            time.sleep(POLL_INTERVAL_SECONDS)
+            if attempt < POLL_MAX_ATTEMPTS - 1:
+                time.sleep(POLL_INTERVAL_SECONDS)
         return False
 
     def _upload_project_template(self, transform_links: SparseFields | None = None) -> None:
@@ -186,11 +188,7 @@ class TempProject:
 
         # Project deletion is asynchronous: the endpoint returns 202 (Accepted).
         if response.status_code != HTTPStatus.ACCEPTED:
-            logger.error("Error during deletion project '%s'", self.temp_project_id)
-            logger.debug("Response status: %s", response.status_code)
-            logger.debug("Response headers: %s", response.headers)
-            logger.debug("Response content: %s", response.content)
-            sys.exit(-1)
+            self._fail("deletion", response)
 
         if not self._wait_for_project(should_exist=False):
             logger.error("Timed out waiting for project '%s' to be deleted", self.temp_project_id)

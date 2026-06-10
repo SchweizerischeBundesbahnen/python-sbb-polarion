@@ -153,11 +153,7 @@ class GenericTestCase(unittest.TestCase):
         Returns:
             PolarionGenericExtensionApi: Configured extension API instance
         """
-        app_url: str
-        app_token: str
-        app_url, app_token = cls.__get_parameters()
-        polarion_connection = PolarionRestApiConnection(url=app_url, token=app_token)
-        cls.__polarion_api = PolarionApiV1(polarion_connection)
+        polarion_connection: PolarionRestApiConnection = cls.__create_connection()
         return ExtensionApiFactory.get_extension_api_by_name(extension_name=extension_name, polarion_connection=polarion_connection)
 
     @classmethod
@@ -169,12 +165,22 @@ class GenericTestCase(unittest.TestCase):
         Returns:
             PolarionApiV1: Configured standard Polarion REST API client
         """
+        cls.__create_connection()
+        return cls.__polarion_api
+
+    @classmethod
+    def __create_connection(cls) -> PolarionRestApiConnection:
+        """Build a Polarion connection from APP_URL/APP_TOKEN and cache a PolarionApiV1 client.
+
+        Returns:
+            PolarionRestApiConnection: Configured connection to the Polarion REST API
+        """
         app_url: str
         app_token: str
         app_url, app_token = cls.__get_parameters()
         polarion_connection = PolarionRestApiConnection(url=app_url, token=app_token)
         cls.__polarion_api = PolarionApiV1(polarion_connection)
-        return cls.__polarion_api
+        return polarion_connection
 
     @classmethod
     def __get_parameters(cls) -> tuple[str, str]:
