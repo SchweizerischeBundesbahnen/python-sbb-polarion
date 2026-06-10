@@ -209,7 +209,7 @@ class DocumentsPartsMixin(BaseMixin):
             "documentName": "document_name",
         },
         body_param="data",
-        required_params=["projectId", "spaceId", "documentName"],
+        required_params=["projectId", "spaceId", "documentName", "__request_body__"],
         response_type="json",
     )
     def delete_document_parts(
@@ -242,7 +242,7 @@ class DocumentsPartsMixin(BaseMixin):
             "documentName": "document_name",
         },
         body_param="data",
-        required_params=["projectId", "spaceId", "documentName"],
+        required_params=["projectId", "spaceId", "documentName", "__request_body__"],
         response_type="json",
     )
     def overwrite_document_parts(

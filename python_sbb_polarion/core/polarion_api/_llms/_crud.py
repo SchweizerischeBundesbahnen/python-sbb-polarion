@@ -56,6 +56,7 @@ class LlmsMixin(BaseMixin):
         method="POST",
         path="/llms/actions/generateCompletion",
         body_param="data",
+        required_params=["__request_body__"],
         response_type="json",
     )
     def generate_completion(

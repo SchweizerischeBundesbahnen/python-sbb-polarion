@@ -324,7 +324,7 @@ class LicenseMixin(BaseMixin):
         path="/license/assignments/{userId}",
         path_params={"userId": "user_id"},
         body_param="data",
-        required_params=["userId"],
+        required_params=["userId", "__request_body__"],
         response_type="json",
     )
     def update_license_assignment(

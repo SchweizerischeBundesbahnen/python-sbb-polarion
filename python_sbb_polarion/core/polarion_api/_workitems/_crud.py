@@ -369,7 +369,7 @@ class WorkitemsCrudMixin(BaseMixin):
             "projectId": "project_id",
         },
         body_param="data",
-        required_params=["projectId"],
+        required_params=["projectId", "__request_body__"],
         response_type="json",
     )
     def move_workitems_to_document(self, project_id: str, data: JsonDict) -> Response:
