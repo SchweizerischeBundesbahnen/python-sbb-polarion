@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import Mock, patch
 
+from python_sbb_polarion.testing.errors import TempProjectError
 from python_sbb_polarion.testing.temp_project import TempProject
 
 
@@ -152,9 +153,8 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    @patch("python_sbb_polarion.testing.temp_project.sys.exit")
-    def test_create_temp_project_create_error(self, mock_exit: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test _create_temp_project error handling when create returns a non-202 status."""
+    def test_create_temp_project_create_error(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test _create_temp_project raises when create returns a non-202 status."""
         # Arrange
         mock_uuid.return_value = Mock()
         mock_uuid.return_value.__str__ = Mock(return_value="error-uuid")
@@ -164,21 +164,15 @@ class TestTempProject(unittest.TestCase):
         mock_api.create_project.return_value = _response(HTTPStatus.INTERNAL_SERVER_ERROR)
         mock_create_api.return_value = mock_api
 
-        # sys.exit raises SystemExit in production; make the mock stop execution too
-        mock_exit.side_effect = SystemExit
-
         # Act & Assert
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(TempProjectError):
             TempProject("TEST", "Test Project", "template_id")
-
-        mock_exit.assert_called_once_with(-1)
 
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    @patch("python_sbb_polarion.testing.temp_project.sys.exit")
-    def test_create_temp_project_job_failed(self, mock_exit: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test _create_temp_project exits when the creation job reports a FAILED status."""
+    def test_create_temp_project_job_failed(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test _create_temp_project raises when the creation job reports a FAILED status."""
         # Arrange
         mock_uuid.return_value = Mock()
         mock_uuid.return_value.__str__ = Mock(return_value="failed-uuid")
@@ -189,14 +183,10 @@ class TestTempProject(unittest.TestCase):
         mock_api.get_job.return_value = _job("FAILED", "template broken")
         mock_create_api.return_value = mock_api
 
-        # sys.exit raises SystemExit in production; make the mock stop execution too
-        mock_exit.side_effect = SystemExit
-
         # Act & Assert
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(TempProjectError):
             TempProject("TEST", "Test Project", "template_id")
 
-        mock_exit.assert_called_once_with(-1)
         # name is never set once the job failed
         mock_api.update_project.assert_not_called()
 
@@ -204,9 +194,8 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
     @patch("python_sbb_polarion.testing.temp_project.time.sleep")
-    @patch("python_sbb_polarion.testing.temp_project.sys.exit")
-    def test_create_temp_project_job_timeout(self, mock_exit: Mock, mock_sleep: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test _create_temp_project exits when the creation job never reaches a terminal status."""
+    def test_create_temp_project_job_timeout(self, mock_sleep: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test _create_temp_project raises when the creation job never reaches a terminal status."""
         # Arrange
         mock_uuid.return_value = Mock()
         mock_uuid.return_value.__str__ = Mock(return_value="timeout-uuid")
@@ -218,21 +207,15 @@ class TestTempProject(unittest.TestCase):
         mock_api.get_job.return_value = _job("UNKNOWN")
         mock_create_api.return_value = mock_api
 
-        # sys.exit raises SystemExit in production; make the mock stop execution too
-        mock_exit.side_effect = SystemExit
-
         # Act & Assert
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(TempProjectError):
             TempProject("TEST", "Test Project", "template_id")
-
-        mock_exit.assert_called_once_with(-1)
 
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    @patch("python_sbb_polarion.testing.temp_project.sys.exit")
-    def test_create_temp_project_unexpected_job_body(self, mock_exit: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test _create_temp_project exits when the 202 response has no usable job id."""
+    def test_create_temp_project_unexpected_job_body(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test _create_temp_project raises when the 202 response has no usable job id."""
         # Arrange
         mock_uuid.return_value = Mock()
         mock_uuid.return_value.__str__ = Mock(return_value="nojob-uuid")
@@ -242,14 +225,9 @@ class TestTempProject(unittest.TestCase):
         mock_api.create_project.return_value = _response(HTTPStatus.ACCEPTED, {"unexpected": True})
         mock_create_api.return_value = mock_api
 
-        # sys.exit raises SystemExit in production; make the mock stop execution too
-        mock_exit.side_effect = SystemExit
-
         # Act & Assert
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(TempProjectError):
             TempProject("TEST", "Test Project", "template_id")
-
-        mock_exit.assert_called_once_with(-1)
 
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
@@ -280,9 +258,8 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    @patch("python_sbb_polarion.testing.temp_project.sys.exit")
-    def test_create_temp_project_set_name_failure_does_not_exit(self, mock_exit: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test name-setting failure is best-effort (warns, does not exit)."""
+    def test_create_temp_project_set_name_failure_does_not_raise(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test name-setting failure is best-effort (warns, does not raise)."""
         # Arrange
         mock_uuid.return_value = Mock()
         mock_uuid.return_value.__str__ = Mock(return_value="warn-uuid")
@@ -291,12 +268,12 @@ class TestTempProject(unittest.TestCase):
         mock_api.update_project.return_value = _response(HTTPStatus.INTERNAL_SERVER_ERROR)
         mock_create_api.return_value = mock_api
 
-        # Act
+        # Act - project is created, name update fails but is swallowed
         temp_project = TempProject("TEST", "Test Project", "template_id")
 
-        # Assert - project created, name update failed but no exit
+        # Assert
         self.assertIsNotNone(temp_project.temp_project_id)
-        mock_exit.assert_not_called()
+        mock_api.update_project.assert_called_once()
 
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
@@ -321,9 +298,8 @@ class TestTempProject(unittest.TestCase):
 
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
-    @patch("python_sbb_polarion.testing.temp_project.sys.exit")
-    def test_tear_down_delete_error(self, mock_exit: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test tear_down error handling when delete returns a non-202 status."""
+    def test_tear_down_delete_error(self, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test tear_down raises when delete returns a non-202 status."""
         # Arrange
         mock_api: Mock = _success_polarion_api()
         mock_api.delete_project.return_value = _response(HTTPStatus.INTERNAL_SERVER_ERROR)
@@ -335,21 +311,15 @@ class TestTempProject(unittest.TestCase):
 
             temp_project = TempProject("TEST", "Test Project", "template_id")
 
-            # sys.exit raises SystemExit in production; make the mock stop execution too
-            mock_exit.side_effect = SystemExit
-
             # Act & Assert
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(TempProjectError):
                 temp_project.tear_down()
-
-            mock_exit.assert_called_once_with(-1)
 
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.time.sleep")
-    @patch("python_sbb_polarion.testing.temp_project.sys.exit")
-    def test_tear_down_deletion_timeout(self, mock_exit: Mock, mock_sleep: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test tear_down exits when the deletion job never reaches a terminal status."""
+    def test_tear_down_deletion_timeout(self, mock_sleep: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test tear_down raises when the deletion job never reaches a terminal status."""
         # Arrange
         mock_api: Mock = _success_polarion_api()
         # creation job finishes (OK), deletion job never reaches a terminal status
@@ -362,36 +332,25 @@ class TestTempProject(unittest.TestCase):
 
             temp_project = TempProject("TEST", "Test Project", "template_id")
 
-            # sys.exit raises SystemExit in production; make the mock stop execution too
-            mock_exit.side_effect = SystemExit
-
             # Act & Assert
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(TempProjectError):
                 temp_project.tear_down()
-
-            mock_exit.assert_called_once_with(-1)
 
     @patch("python_sbb_polarion.testing.project_template_uploader.Path.exists", return_value=False)
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    @patch("python_sbb_polarion.testing.project_template_uploader.sys.exit")
-    def test_upload_project_template_file_not_exists(self, mock_exit: Mock, mock_uuid: Mock, mock_create_extension: Mock, mock_create_polarion: Mock, mock_exists: Mock) -> None:
-        """Test _upload_project_template exits when file does not exist."""
+    def test_upload_project_template_file_not_exists(self, mock_uuid: Mock, mock_create_extension: Mock, mock_create_polarion: Mock, mock_exists: Mock) -> None:
+        """Test _upload_project_template raises when file does not exist."""
         # Arrange
         mock_uuid.return_value = Mock()
         mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
         mock_create_extension.return_value = Mock()
         mock_create_polarion.return_value = _success_polarion_api()
 
-        # Make sys.exit raise SystemExit to stop execution
-        mock_exit.side_effect = SystemExit
-
         # Act & Assert
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(TempProjectError):
             TempProject("TEST", "Test Project", "template_id", template_location=Path("/tmp/nonexistent"))
-
-        mock_exit.assert_called_with(1)
 
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
@@ -478,9 +437,8 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    @patch("python_sbb_polarion.testing.project_template_uploader.sys.exit")
-    def test_upload_project_template_upload_fails(self, mock_exit: Mock, mock_uuid: Mock, mock_create_extension: Mock, mock_create_polarion: Mock, mock_exists: Mock) -> None:
-        """Test _upload_project_template exits when upload fails."""
+    def test_upload_project_template_upload_fails(self, mock_uuid: Mock, mock_create_extension: Mock, mock_create_polarion: Mock, mock_exists: Mock) -> None:
+        """Test _upload_project_template raises when upload fails."""
         # Arrange
         mock_uuid.return_value = Mock()
         mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
@@ -494,15 +452,9 @@ class TestTempProject(unittest.TestCase):
         mock_create_extension.return_value = mock_test_data_api
         mock_create_polarion.return_value = _success_polarion_api()
 
-        # Make sys.exit raise SystemExit to stop execution
-        mock_exit.side_effect = SystemExit
-
         # Act & Assert
-        with patch("python_sbb_polarion.testing.project_template_uploader.ProjectTemplateUploader.calculate_folder_hash", return_value=local_hash):
-            with self.assertRaises(SystemExit):
-                TempProject("TEST", "Test Project", "template_id", template_location=Path("/tmp/template"))
-
-            mock_exit.assert_called_with(1)
+        with patch("python_sbb_polarion.testing.project_template_uploader.ProjectTemplateUploader.calculate_folder_hash", return_value=local_hash), self.assertRaises(TempProjectError):
+            TempProject("TEST", "Test Project", "template_id", template_location=Path("/tmp/template"))
 
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
@@ -519,22 +471,16 @@ class TestTempProject(unittest.TestCase):
 
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
-    @patch("python_sbb_polarion.testing.temp_project.sys.exit")
-    def test_create_temp_project_job_id_missing(self, mock_exit: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test _create_temp_project exits when the 202 body has a data object but no job id."""
+    def test_create_temp_project_job_id_missing(self, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test _create_temp_project raises when the 202 body has a data object but no job id."""
         # Arrange
         mock_api: Mock = _success_polarion_api()
         mock_api.create_project.return_value = _response(HTTPStatus.ACCEPTED, {"data": {"type": "jobs"}})
         mock_create_api.return_value = mock_api
 
-        # sys.exit raises SystemExit in production; make the mock stop execution too
-        mock_exit.side_effect = SystemExit
-
         # Act & Assert
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(TempProjectError):
             TempProject("TEST", "Test Project", "template_id", mutate_project_id=False)
-
-        mock_exit.assert_called_once_with(-1)
 
     def test_job_status_handles_malformed_bodies(self) -> None:
         """Test _job_status returns (None, None) for bodies without a terminal status object."""

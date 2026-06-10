@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import logging
-import sys
 import time
 import uuid
 from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from python_sbb_polarion.testing.errors import TempProjectError
 from python_sbb_polarion.testing.generic_test_case import GenericTestCase
 from python_sbb_polarion.testing.project_template_uploader import ProjectTemplateUploader
 
@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 
 # Standard project create/delete endpoints are asynchronous (HTTP 202): the response carries a
 # job descriptor, so we poll that job (GET /jobs/{id}) until it reaches a terminal status.
-POLL_INTERVAL_SECONDS: float = 2.0
-POLL_MAX_ATTEMPTS: int = 60
+POLL_INTERVAL_SECONDS: float = 1.0
+POLL_MAX_ATTEMPTS: int = 120
 
 # Terminal job status types (jobsSingleGetResponse.data.attributes.status.type in the OpenAPI spec).
 JOB_STATUS_OK: str = "OK"
@@ -150,7 +150,7 @@ class TempProject:
         logger.debug("Response status: %s", response.status_code)
         logger.debug("Response headers: %s", response.headers)
         logger.debug("Response content: %s", response.content)
-        sys.exit(-1)
+        raise TempProjectError(f"Failed to {action} project '{self.temp_project_id}' (HTTP {response.status_code})")
 
     def _wait_for_job(self, response: Response, action: str) -> None:
         """Poll the job referenced by an async 202 response until it reaches a terminal status.
@@ -158,6 +158,9 @@ class TempProject:
         Args:
             response: The 202 (Accepted) response whose body carries the job descriptor
             action: Human-readable operation name for logging (e.g. "creation", "deletion")
+
+        Raises:
+            TempProjectError: If the job fails, is cancelled, or never reaches a terminal status
         """
         job_id: str = self._job_id_from_response(response, action)
         logger.info("Waiting for %s job '%s' of project '%s'...", action, job_id, self.temp_project_id)
@@ -170,19 +173,20 @@ class TempProject:
             if status_type == JOB_STATUS_OK:
                 return
             if status_type in JOB_STATUS_FAILURES:
-                logger.error("Job to %s project '%s' ended as %s: %s", action, self.temp_project_id, status_type, message)
-                sys.exit(-1)
+                raise TempProjectError(f"Job to {action} project '{self.temp_project_id}' ended as {status_type}: {message}")
             if attempt < POLL_MAX_ATTEMPTS - 1:
                 time.sleep(POLL_INTERVAL_SECONDS)
 
-        logger.error("Timed out waiting for %s job '%s' of project '%s'", action, job_id, self.temp_project_id)
-        sys.exit(-1)
+        raise TempProjectError(f"Timed out waiting for {action} job '{job_id}' of project '{self.temp_project_id}'")
 
     def _job_id_from_response(self, response: Response, action: str) -> str:
         """Extract the job id from an async 202 response body (jobsSinglePostResponse).
 
         Returns:
-            str: The job identifier; exits the process if the body has no usable job id
+            str: The job identifier
+
+        Raises:
+            TempProjectError: If the body has no usable job id
         """
         body: JsonDict = response.json()
         data: JsonValue = body.get("data")
@@ -191,7 +195,7 @@ class TempProject:
             if isinstance(job_id, str) and job_id:
                 return job_id
         logger.error("Unexpected async %s response for project '%s': %s", action, self.temp_project_id, body)
-        sys.exit(-1)
+        raise TempProjectError(f"Async {action} response for project '{self.temp_project_id}' carried no job id")
 
     @staticmethod
     def _job_status(job_body: JsonDict) -> tuple[str | None, str | None]:
