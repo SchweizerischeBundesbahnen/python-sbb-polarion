@@ -4250,5 +4250,125 @@ class TestLicenseOptionalParams(unittest.TestCase):
         self.assertEqual(params["include"], "licenseType")
 
 
+# =============================================================================
+# Polarion 2606 New Endpoints Tests (13 methods)
+# =============================================================================
+
+
+class TestPolarion2606New(unittest.TestCase):
+    """Test new operations introduced in Polarion 2606."""
+
+    def setUp(self) -> None:
+        """Set up test fixtures."""
+        from python_sbb_polarion.core.polarion_api import PolarionApiV1
+
+        self.mock_connection: MagicMock = MagicMock()
+        self.api: PolarionApiV1 = PolarionApiV1(self.mock_connection)
+
+    def test_delete_document_parts(self) -> None:
+        """Test delete_document_parts method."""
+        data: JsonDict = {
+            "data": [{"type": "document_parts", "id": "project1/space/doc1/part-1"}],
+        }
+        self.api.delete_document_parts("project1", "space", "doc1", data)
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_delete.call_args
+        self.assertIn("/projects/project1/spaces/space/documents/doc1/parts", call_args[0][0])
+
+    def test_overwrite_document_parts(self) -> None:
+        """Test overwrite_document_parts method."""
+        data: JsonDict = {
+            "data": [{"type": "document_parts"}],
+        }
+        self.api.overwrite_document_parts("project1", "space", "doc1", data)
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_post.call_args
+        self.assertIn("/projects/project1/spaces/space/documents/doc1/parts/actions/overwrite", call_args[0][0])
+
+    def test_import_word_document(self) -> None:
+        """Test import_word_document method."""
+        files: dict[str, tuple[str, bytes]] = {
+            "file": ("doc.docx", b"content"),
+        }
+        self.api.import_word_document("project1", "space", files)
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_post.call_args
+        self.assertIn("/projects/project1/spaces/space/documents/actions/importWordDocument", call_args[0][0])
+
+    def test_get_document_fields_metadata(self) -> None:
+        """Test get_document_fields_metadata method."""
+        self.api.get_document_fields_metadata("project1", "space", "doc1")
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
+        self.assertIn("/projects/project1/spaces/space/documents/doc1/actions/getFieldsMetadata", call_args[0][0])
+
+    def test_get_workitem_fields_metadata(self) -> None:
+        """Test get_workitem_fields_metadata method."""
+        self.api.get_workitem_fields_metadata("project1", "WI-123")
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
+        self.assertIn("/projects/project1/workitems/WI-123/actions/getFieldsMetadata", call_args[0][0])
+
+    def test_get_collection_fields_metadata(self) -> None:
+        """Test get_collection_fields_metadata method."""
+        self.api.get_collection_fields_metadata("project1", "coll-1")
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
+        self.assertIn("/projects/project1/collections/coll-1/actions/getFieldsMetadata", call_args[0][0])
+
+    def test_get_plan_fields_metadata(self) -> None:
+        """Test get_plan_fields_metadata method."""
+        self.api.get_plan_fields_metadata("project1", "plan-1")
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
+        self.assertIn("/projects/project1/plans/plan-1/actions/getFieldsMetadata", call_args[0][0])
+
+    def test_get_testrun_fields_metadata(self) -> None:
+        """Test get_testrun_fields_metadata method."""
+        self.api.get_testrun_fields_metadata("project1", "tr-1")
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
+        self.assertIn("/projects/project1/testruns/tr-1/actions/getFieldsMetadata", call_args[0][0])
+
+    def test_get_testrecord_fields_metadata(self) -> None:
+        """Test get_testrecord_fields_metadata method."""
+        self.api.get_testrecord_fields_metadata("project1", "tr-1", "tcproj", "tc-1", 0)
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
+        self.assertIn("/projects/project1/testruns/tr-1/testrecords/tcproj/tc-1/0/actions/getFieldsMetadata", call_args[0][0])
+
+    def test_update_license_assignment(self) -> None:
+        """Test update_license_assignment method."""
+        data: JsonDict = {
+            "data": {"type": "license_assignments"},
+        }
+        self.api.update_license_assignment("user1", data)
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_patch.call_args
+        self.assertIn("/license/assignments/user1", call_args[0][0])
+
+    def test_move_workitems_to_document(self) -> None:
+        """Test move_workitems_to_document method."""
+        data: JsonDict = {
+            "data": [{"type": "workitems", "id": "project1/WI-123"}],
+        }
+        self.api.move_workitems_to_document("project1", data)
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_post.call_args
+        self.assertIn("/projects/project1/workitems/actions/moveToDocument", call_args[0][0])
+
+    def test_get_llms(self) -> None:
+        """Test get_llms method."""
+        self.api.get_llms()
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
+        self.assertIn("/llms", call_args[0][0])
+
+    def test_get_llms_with_params(self) -> None:
+        """Test get_llms with pagination parameters."""
+        self.api.get_llms(page_size=10, page_number=1)
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
+        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        self.assertEqual(params[PAGE_SIZE], "10")
+        self.assertEqual(params[PAGE_NUMBER], "1")
+
+    def test_create_completion(self) -> None:
+        """Test create_completion method."""
+        data: JsonDict = {
+            "data": {"type": "completions"},
+        }
+        self.api.create_completion(data)
+        call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_post.call_args
+        self.assertIn("/llms/actions/generateCompletion", call_args[0][0])
+
+
 if __name__ == "__main__":
     unittest.main()

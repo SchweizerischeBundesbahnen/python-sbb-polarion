@@ -44,7 +44,7 @@ class ValidationStatus(StrEnum):
 
 
 # Valid starting verbs for method names (grouped by category)
-CRUD_VERBS = frozenset({"get", "create", "update", "delete", "save", "remove", "add", "set", "clear", "attach"})
+CRUD_VERBS = frozenset({"get", "create", "update", "delete", "save", "remove", "add", "set", "clear", "attach", "overwrite"})
 ACTION_VERBS = frozenset({"start", "stop", "cancel", "run", "execute", "trigger", "enable", "disable", "activate", "wait", "promote"})
 DATA_VERBS = frozenset({"fetch", "list", "find", "search", "query", "load", "read", "write", "inspect"})
 TRANSFER_VERBS = frozenset({"import", "export", "upload", "download", "send", "sync", "push", "pull", "receive"})
@@ -123,6 +123,7 @@ HTTP_METHOD_VERBS: dict[str, frozenset[str]] = {
             "persist",
             "rename",
             "set",
+            "overwrite",
             "cancel",
             # Checks/Search (POST for complex validation/search with body)
             "validate",
@@ -133,7 +134,7 @@ HTTP_METHOD_VERBS: dict[str, frozenset[str]] = {
             "find",
         }
     ),
-    "PUT": frozenset({"update", "save", "replace", "set", "write"}),
+    "PUT": frozenset({"update", "save", "replace", "set", "write", "overwrite"}),
     "PATCH": frozenset({"update", "patch", "modify", "change", "extend", "append"}),
     "DELETE": frozenset({"delete", "remove", "cancel", "clear", "disable"}),
 }

@@ -359,3 +359,28 @@ class WorkitemsCrudMixin(BaseMixin):
         """
         url: str = f"{self.base_url}/projects/{project_id}/workitems/{workitem_id}/actions/moveFromDocument"
         return self.polarion_connection.api_request_post(url, data=data)
+
+    # New endpoints in Polarion 2606
+
+    @restapi_endpoint(
+        method="POST",
+        path="/projects/{projectId}/workitems/actions/moveToDocument",
+        path_params={
+            "projectId": "project_id",
+        },
+        body_param="data",
+        required_params=["projectId"],
+        response_type="json",
+    )
+    def move_workitems_to_document(self, project_id: str, data: JsonDict) -> Response:
+        """Move multiple work items into a document.
+
+        Args:
+            project_id: Project identifier
+            data: Work items and target document specification in JSON:API format
+
+        Returns:
+            Response: Response from API
+        """
+        url: str = f"{self.base_url}/projects/{project_id}/workitems/actions/moveToDocument"
+        return self.polarion_connection.api_request_post(url, data=data)

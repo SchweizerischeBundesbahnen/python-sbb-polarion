@@ -316,3 +316,32 @@ class LicenseMixin(BaseMixin):
         """
         url: str = f"{self.base_url}/license/assignments"
         return self.polarion_connection.api_request_patch(url, data=data)
+
+    # New endpoints in Polarion 2606
+
+    @restapi_endpoint(
+        method="PATCH",
+        path="/license/assignments/{userId}",
+        path_params={"userId": "user_id"},
+        body_param="data",
+        required_params=["userId"],
+        response_type="json",
+    )
+    def update_license_assignment(
+        self,
+        user_id: str,
+        data: JsonDict,
+    ) -> Response:
+        """Update a user's license assignment.
+
+        Note: Not supported by cloud-based Polarion X.
+
+        Args:
+            user_id: User identifier
+            data: License assignment data in JSON:API format
+
+        Returns:
+            Response: Updated assignment data from API
+        """
+        url: str = f"{self.base_url}/license/assignments/{user_id}"
+        return self.polarion_connection.api_request_patch(url, data=data)

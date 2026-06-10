@@ -197,3 +197,71 @@ class DocumentsPartsMixin(BaseMixin):
         """
         url: str = f"{self.base_url}/projects/{project_id}/spaces/{space_id}/documents/{document_name}/parts/{part_id}/actions/move"
         return self.polarion_connection.api_request_post(url, data=data)
+
+    # New endpoints in Polarion 2606
+
+    @restapi_endpoint(
+        method="DELETE",
+        path="/projects/{projectId}/spaces/{spaceId}/documents/{documentName}/parts",
+        path_params={
+            "projectId": "project_id",
+            "spaceId": "space_id",
+            "documentName": "document_name",
+        },
+        body_param="data",
+        required_params=["projectId", "spaceId", "documentName"],
+        response_type="json",
+    )
+    def delete_document_parts(
+        self,
+        project_id: str,
+        space_id: str,
+        document_name: str,
+        data: JsonDict,
+    ) -> Response:
+        """Delete a list of document parts.
+
+        Args:
+            project_id: Project identifier
+            space_id: Space identifier
+            document_name: Document name
+            data: Document parts to delete in JSON:API format
+
+        Returns:
+            Response: Deletion result from API
+        """
+        url: str = f"{self.base_url}/projects/{project_id}/spaces/{space_id}/documents/{document_name}/parts"
+        return self.polarion_connection.api_request_delete(url, data=data)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/projects/{projectId}/spaces/{spaceId}/documents/{documentName}/parts/actions/overwrite",
+        path_params={
+            "projectId": "project_id",
+            "spaceId": "space_id",
+            "documentName": "document_name",
+        },
+        body_param="data",
+        required_params=["projectId", "spaceId", "documentName"],
+        response_type="json",
+    )
+    def overwrite_document_parts(
+        self,
+        project_id: str,
+        space_id: str,
+        document_name: str,
+        data: JsonDict,
+    ) -> Response:
+        """Overwrite multiple work item document parts.
+
+        Args:
+            project_id: Project identifier
+            space_id: Space identifier
+            document_name: Document name
+            data: Document parts data in JSON:API format
+
+        Returns:
+            Response: Overwrite operation result from API
+        """
+        url: str = f"{self.base_url}/projects/{project_id}/spaces/{space_id}/documents/{document_name}/parts/actions/overwrite"
+        return self.polarion_connection.api_request_post(url, data=data)

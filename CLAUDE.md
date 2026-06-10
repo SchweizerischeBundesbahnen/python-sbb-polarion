@@ -17,11 +17,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Class | Description | Status |
 |-------|-------------|--------|
-| `PolarionApiV1` | Full Polarion REST API v1 (based on Polarion 2512) | **CURRENT** - use this |
+| `PolarionApiV1` | Full Polarion REST API v1 (based on Polarion 2606) | **CURRENT** - use this |
 
 **Notes:**
 - `PolarionApiV1` provides complete coverage of Polarion REST API v1 endpoints
-- OpenAPI spec source: Polarion 2512
+- OpenAPI spec source: Polarion 2606
 
 **Error Handling Philosophy:**
 - Response-based approach - API methods ALWAYS return `Response` (never `None`)
@@ -785,7 +785,7 @@ Reusable utilities shared across all modules:
 ### Core Module (`python_sbb_polarion/core/`)
 Core Polarion API components:
 - `base.py` - Base classes: `PolarionGenericExtensionApi`, `PolarionGenericExtensionSettingsApi` (mixin), and `PolarionRestApiConnection`
-- `polarion_api/` - `PolarionApiV1` - Full Polarion REST API v1 (based on Polarion 2512 OpenAPI spec)
+- `polarion_api/` - `PolarionApiV1` - Full Polarion REST API v1 (based on Polarion 2606 OpenAPI spec)
 - `factory.py` - `ExtensionApiFactory` - Factory for creating extension API instances
 - `annotations.py` - `@restapi_endpoint` decorator for explicit OpenAPI endpoint mapping
 
@@ -964,4 +964,4 @@ Artifacts archived: `dist/*`, `.coverage`, `coverage.xml`, `junittest.xml`
 
 | Library Version | Polarion Version | OpenAPI Spec |
 |-----------------|------------------|--------------|
-| Current | 2512 | `PolarionApiV1` based on 2512 |
+| Current | 2606 | `PolarionApiV1` based on 2606 |
