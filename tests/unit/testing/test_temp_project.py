@@ -49,10 +49,10 @@ def _success_polarion_api() -> Mock:
 class TestTempProject(unittest.TestCase):
     """Test TempProject class."""
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_init_generates_unique_project_id(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_init_generates_unique_project_id(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test __init__ generates project ID with UUID suffix."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -67,10 +67,10 @@ class TestTempProject(unittest.TestCase):
         self.assertEqual(temp_project.temp_project_name, "Test Project")
         self.assertEqual(temp_project.temp_project_template_id, "template_id")
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_init_calls_create_project_with_template(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_init_calls_create_project_with_template(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test __init__ creates the project from the template via the standard API."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -91,10 +91,10 @@ class TestTempProject(unittest.TestCase):
             }
         )
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_get_temp_project_id(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_get_temp_project_id(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test get_temp_project_id returns project ID."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -109,10 +109,10 @@ class TestTempProject(unittest.TestCase):
         # Assert
         self.assertEqual(result, "ID_st_suffix")
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_create_temp_project_success(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_create_temp_project_success(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test _create_temp_project with successful async creation (202 -> job OK)."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -130,10 +130,10 @@ class TestTempProject(unittest.TestCase):
         mock_api.get_job.assert_called_with("job-1")
         mock_api.update_project.assert_called_once()
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_create_temp_project_already_exists(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_create_temp_project_already_exists(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test _create_temp_project skips creation when the project already exists (pre-check 200)."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -150,10 +150,10 @@ class TestTempProject(unittest.TestCase):
         self.assertIsNotNone(temp_project.temp_project_id)
         mock_api.create_project.assert_not_called()
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_create_temp_project_create_error(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_create_temp_project_create_error(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test _create_temp_project raises when create returns a non-202 status."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -168,10 +168,10 @@ class TestTempProject(unittest.TestCase):
         with self.assertRaises(TempProjectError):
             TempProject("TEST", "Test Project", "template_id")
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_create_temp_project_job_failed(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_create_temp_project_job_failed(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test _create_temp_project raises when the creation job reports a FAILED status."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -190,11 +190,11 @@ class TestTempProject(unittest.TestCase):
         # name is never set once the job failed
         mock_api.update_project.assert_not_called()
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
     @patch("python_sbb_polarion.testing.temp_project.time.sleep")
-    def test_create_temp_project_job_timeout(self, mock_sleep: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_create_temp_project_job_timeout(self, mock_sleep: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test _create_temp_project raises when the creation job never reaches a terminal status."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -211,10 +211,10 @@ class TestTempProject(unittest.TestCase):
         with self.assertRaises(TempProjectError):
             TempProject("TEST", "Test Project", "template_id")
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_create_temp_project_unexpected_job_body(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_create_temp_project_unexpected_job_body(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test _create_temp_project raises when the 202 response has no usable job id."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -229,10 +229,10 @@ class TestTempProject(unittest.TestCase):
         with self.assertRaises(TempProjectError):
             TempProject("TEST", "Test Project", "template_id")
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_create_temp_project_sets_name(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_create_temp_project_sets_name(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test _create_temp_project sets the project name via update_project after creation."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -255,10 +255,10 @@ class TestTempProject(unittest.TestCase):
         }
         mock_api.update_project.assert_called_once_with("TEST_st_uuid", expected_data)
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_create_temp_project_set_name_failure_does_not_raise(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_create_temp_project_set_name_failure_does_not_raise(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test name-setting failure is best-effort (warns, does not raise)."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -275,9 +275,9 @@ class TestTempProject(unittest.TestCase):
         self.assertIsNotNone(temp_project.temp_project_id)
         mock_api.update_project.assert_called_once()
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
-    def test_tear_down_success(self, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_tear_down_success(self, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test tear_down with successful async deletion (202 -> job OK)."""
         # Arrange
         mock_api: Mock = _success_polarion_api()
@@ -296,9 +296,9 @@ class TestTempProject(unittest.TestCase):
             mock_api.delete_project.assert_called_once_with("TEST_st_uuid")
             mock_api.get_job.assert_called_with("del-job")
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
-    def test_tear_down_delete_error(self, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_tear_down_delete_error(self, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test tear_down raises when delete returns a non-202 status."""
         # Arrange
         mock_api: Mock = _success_polarion_api()
@@ -315,10 +315,10 @@ class TestTempProject(unittest.TestCase):
             with self.assertRaises(TempProjectError):
                 temp_project.tear_down()
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.time.sleep")
-    def test_tear_down_deletion_timeout(self, mock_sleep: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_tear_down_deletion_timeout(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test tear_down raises when the deletion job never reaches a terminal status."""
         # Arrange
         mock_api: Mock = _success_polarion_api()
@@ -338,24 +338,24 @@ class TestTempProject(unittest.TestCase):
 
     @patch("python_sbb_polarion.testing.project_template_uploader.Path.exists", return_value=False)
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_upload_project_template_file_not_exists(self, mock_uuid: Mock, mock_create_extension: Mock, mock_create_polarion: Mock, mock_exists: Mock) -> None:
+    def test_upload_project_template_file_not_exists(self, mock_uuid: Mock, mock_factory: Mock, mock_create_polarion: Mock, mock_exists: Mock) -> None:
         """Test _upload_project_template raises when file does not exist."""
         # Arrange
         mock_uuid.return_value = Mock()
         mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
-        mock_create_extension.return_value = Mock()
+        mock_factory.return_value = Mock()
         mock_create_polarion.return_value = _success_polarion_api()
 
         # Act & Assert
         with self.assertRaises(TempProjectError):
             TempProject("TEST", "Test Project", "template_id", template_location=Path("/tmp/nonexistent"))
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_upload_project_template_no_location(self, mock_uuid: Mock, mock_create_polarion: Mock, mock_create_extension: Mock) -> None:
+    def test_upload_project_template_no_location(self, mock_uuid: Mock, mock_create_polarion: Mock, mock_factory: Mock) -> None:
         """Test _upload_project_template returns early when location is None."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -372,9 +372,9 @@ class TestTempProject(unittest.TestCase):
 
     @patch("python_sbb_polarion.testing.project_template_uploader.Path.exists", return_value=True)
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_upload_project_template_hash_match(self, mock_uuid: Mock, mock_create_extension: Mock, mock_create_polarion: Mock, mock_exists: Mock) -> None:
+    def test_upload_project_template_hash_match(self, mock_uuid: Mock, mock_factory: Mock, mock_create_polarion: Mock, mock_exists: Mock) -> None:
         """Test _upload_project_template skips upload when hash matches."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -383,7 +383,7 @@ class TestTempProject(unittest.TestCase):
         test_hash: str = "abc123hash"
         mock_test_data_api = Mock()
         mock_test_data_api.get_template_hash.return_value = Mock(status_code=HTTPStatus.OK, text=test_hash)
-        mock_create_extension.return_value = mock_test_data_api
+        mock_factory.return_value = mock_test_data_api
         mock_create_polarion.return_value = _success_polarion_api()
 
         # Act
@@ -397,12 +397,12 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.project_template_uploader.ProjectTemplateUploader.zip_folder")
     @patch("python_sbb_polarion.testing.project_template_uploader.Path.exists", return_value=True)
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
     def test_upload_project_template_hash_differs(
         self,
         mock_uuid: Mock,
-        mock_create_extension: Mock,
+        mock_factory: Mock,
         mock_create_polarion: Mock,
         mock_exists: Mock,
         mock_zip_folder: Mock,
@@ -420,7 +420,7 @@ class TestTempProject(unittest.TestCase):
         mock_test_data_api = Mock()
         mock_test_data_api.get_template_hash.return_value = Mock(status_code=HTTPStatus.OK, text=remote_hash)
         mock_test_data_api.save_project_template.return_value = Mock(status_code=HTTPStatus.CREATED)
-        mock_create_extension.return_value = mock_test_data_api
+        mock_factory.return_value = mock_test_data_api
         mock_create_polarion.return_value = _success_polarion_api()
 
         # Act
@@ -435,9 +435,9 @@ class TestTempProject(unittest.TestCase):
 
     @patch("python_sbb_polarion.testing.project_template_uploader.Path.exists", return_value=True)
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
-    def test_upload_project_template_upload_fails(self, mock_uuid: Mock, mock_create_extension: Mock, mock_create_polarion: Mock, mock_exists: Mock) -> None:
+    def test_upload_project_template_upload_fails(self, mock_uuid: Mock, mock_factory: Mock, mock_create_polarion: Mock, mock_exists: Mock) -> None:
         """Test _upload_project_template raises when upload fails."""
         # Arrange
         mock_uuid.return_value = Mock()
@@ -449,16 +449,16 @@ class TestTempProject(unittest.TestCase):
         mock_test_data_api = Mock()
         mock_test_data_api.get_template_hash.return_value = Mock(status_code=HTTPStatus.OK, text=remote_hash)
         mock_test_data_api.save_project_template.return_value = Mock(status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
-        mock_create_extension.return_value = mock_test_data_api
+        mock_factory.return_value = mock_test_data_api
         mock_create_polarion.return_value = _success_polarion_api()
 
         # Act & Assert
         with patch("python_sbb_polarion.testing.project_template_uploader.ProjectTemplateUploader.calculate_folder_hash", return_value=local_hash), self.assertRaises(TempProjectError):
             TempProject("TEST", "Test Project", "template_id", template_location=Path("/tmp/template"))
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
-    def test_init_keeps_project_id_when_not_mutated(self, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_init_keeps_project_id_when_not_mutated(self, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test __init__ keeps the given project id verbatim when mutate_project_id is False."""
         # Arrange
         mock_create_api.return_value = _success_polarion_api()
@@ -469,9 +469,9 @@ class TestTempProject(unittest.TestCase):
         # Assert
         self.assertEqual(temp_project.temp_project_id, "FIXED")
 
-    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
-    def test_create_temp_project_job_id_missing(self, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+    def test_create_temp_project_job_id_missing(self, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test _create_temp_project raises when the 202 body has a data object but no job id."""
         # Arrange
         mock_api: Mock = _success_polarion_api()
@@ -492,6 +492,71 @@ class TestTempProject(unittest.TestCase):
             TempProject._job_status({"data": {"attributes": {"status": {"type": "OK", "message": "done"}}}}),
             ("OK", "done"),
         )
+
+    def test_safe_json_handles_non_object_bodies(self) -> None:
+        """Test _safe_json returns {} for non-JSON or non-object bodies, and the dict otherwise."""
+        non_json: Mock = Mock()
+        non_json.json.side_effect = ValueError("no json")
+        self.assertEqual(TempProject._safe_json(non_json), {})
+
+        as_list: Mock = Mock()
+        as_list.json.return_value = [1, 2, 3]
+        self.assertEqual(TempProject._safe_json(as_list), {})
+
+        as_object: Mock = Mock()
+        as_object.json.return_value = {"a": 1}
+        self.assertEqual(TempProject._safe_json(as_object), {"a": 1})
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
+    def test_create_temp_project_precheck_error(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test _create_temp_project raises when the existence pre-check returns a non-200/non-404 status."""
+        # Arrange
+        mock_uuid.return_value = Mock()
+        mock_uuid.return_value.__str__ = Mock(return_value="precheck-uuid")
+
+        mock_api: Mock = _success_polarion_api()
+        mock_api.get_project.return_value = _response(HTTPStatus.FORBIDDEN)
+        mock_create_api.return_value = mock_api
+
+        # Act & Assert
+        with self.assertRaises(TempProjectError):
+            TempProject("TEST", "Test Project", "template_id")
+
+        # the obstacle is surfaced before any creation attempt
+        mock_api.create_project.assert_not_called()
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
+    @patch("python_sbb_polarion.testing.temp_project.time.sleep")
+    def test_wait_for_job_retries_transient_poll_errors(self, mock_sleep: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test _wait_for_job keeps polling through a non-200 then a non-JSON response before OK."""
+        # Arrange
+        mock_uuid.return_value = Mock()
+        mock_uuid.return_value.__str__ = Mock(return_value="transient-uuid")
+
+        bad_json: Mock = Mock()
+        bad_json.status_code = HTTPStatus.OK
+        bad_json.json.side_effect = ValueError("html error page")
+
+        mock_api: Mock = _success_polarion_api()
+        # transient 503, then a 200 with a non-JSON body, then a finished job
+        mock_api.get_job.side_effect = [
+            _response(HTTPStatus.SERVICE_UNAVAILABLE),
+            bad_json,
+            _job("OK"),
+        ]
+        mock_create_api.return_value = mock_api
+
+        # Act - should not raise
+        temp_project = TempProject("TEST", "Test Project", "template_id")
+
+        # Assert
+        self.assertIsNotNone(temp_project.temp_project_id)
+        self.assertEqual(mock_api.get_job.call_count, 3)
+        mock_api.update_project.assert_called_once()
 
 
 if __name__ == "__main__":

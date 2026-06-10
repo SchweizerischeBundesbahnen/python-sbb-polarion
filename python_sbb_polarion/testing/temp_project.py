@@ -7,6 +7,7 @@ from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from python_sbb_polarion.core import ExtensionApiFactory
 from python_sbb_polarion.testing.errors import TempProjectError
 from python_sbb_polarion.testing.generic_test_case import GenericTestCase
 from python_sbb_polarion.testing.project_template_uploader import ProjectTemplateUploader
@@ -75,9 +76,13 @@ class TempProject:
         self.temp_project_template_id: str = template_id
         self.temp_project_template_location: Path | None = template_location
 
-        # Build the API clients once up front; from here on they are always ready to use.
+        # Build the API clients once up front, sharing a single connection: the test-data extension
+        # client is derived from the standard API's connection instead of opening a second one.
         self.polarion_api: PolarionApiV1 = GenericTestCase.create_polarion_api()
-        self.test_data_api: PolarionTestDataApi = GenericTestCase.create_extension_api("test-data")
+        self.test_data_api: PolarionTestDataApi = ExtensionApiFactory.get_extension_api_by_name(
+            extension_name="test-data",
+            polarion_connection=self.polarion_api.polarion_connection,
+        )
 
         self._upload_project_template(transform_links)
         self._create_temp_project()
@@ -98,6 +103,10 @@ class TempProject:
         if existing_response.status_code == HTTPStatus.OK:
             logger.info("'%s' already exists... nothing to do", self.temp_project_id)
             return
+        # Anything other than "exists" (200) or "not found" (404) is an obstacle (auth, server error)
+        # that creation would not solve - surface it here with the real status instead of falling through.
+        if existing_response.status_code != HTTPStatus.NOT_FOUND:
+            self._fail("look up", existing_response)
 
         start_time: float = time.time()
         # createProject expects a flat body (not JSON:API); projectId, trackerPrefix and
@@ -166,7 +175,16 @@ class TempProject:
         logger.info("Waiting for %s job '%s' of project '%s'...", action, job_id, self.temp_project_id)
 
         for attempt in range(POLL_MAX_ATTEMPTS):
-            job_body: JsonDict = self.polarion_api.get_job(job_id).json()
+            job_response: Response = self.polarion_api.get_job(job_id)
+            # A non-200 or non-JSON poll (transient 5xx, gateway/SSO HTML page) is treated as
+            # "not ready yet" rather than crashing: we keep polling and, if it persists, time out
+            # with a clean TempProjectError instead of leaking a raw requests/JSON exception.
+            job_body: JsonDict
+            if job_response.status_code == HTTPStatus.OK:
+                job_body = self._safe_json(job_response)
+            else:
+                logger.debug("Poll of %s job '%s' returned HTTP %s; retrying", action, job_id, job_response.status_code)
+                job_body = {}
             status_type: str | None
             message: str | None
             status_type, message = self._job_status(job_body)
@@ -179,6 +197,22 @@ class TempProject:
 
         raise TempProjectError(f"Timed out waiting for {action} job '{job_id}' of project '{self.temp_project_id}'")
 
+    @staticmethod
+    def _safe_json(response: Response) -> JsonDict:
+        """Parse a response body as a JSON object, returning {} for non-JSON or non-object bodies.
+
+        Returns:
+            JsonDict: The parsed object, or an empty dict if the body is not a JSON object
+        """
+        try:
+            parsed: JsonValue = response.json()
+        except ValueError:
+            # requests raises JSONDecodeError (a ValueError subclass) for HTML/empty bodies.
+            return {}
+        if isinstance(parsed, dict):
+            return parsed
+        return {}
+
     def _job_id_from_response(self, response: Response, action: str) -> str:
         """Extract the job id from an async 202 response body (jobsSinglePostResponse).
 
@@ -188,7 +222,7 @@ class TempProject:
         Raises:
             TempProjectError: If the body has no usable job id
         """
-        body: JsonDict = response.json()
+        body: JsonDict = self._safe_json(response)
         data: JsonValue = body.get("data")
         if isinstance(data, dict):
             job_id: JsonValue = data.get("id")
