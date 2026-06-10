@@ -19,15 +19,19 @@ if TYPE_CHECKING:
 
     from python_sbb_polarion.core import PolarionApiV1
     from python_sbb_polarion.extensions.test_data import PolarionTestDataApi
-    from python_sbb_polarion.types import JsonDict, SparseFields
+    from python_sbb_polarion.types import JsonDict, JsonValue, SparseFields
 
 
 logger = logging.getLogger(__name__)
 
-# Standard project create/delete endpoints are asynchronous (HTTP 202): the project is not
-# ready immediately, so we poll the project resource until it reaches the desired state.
+# Standard project create/delete endpoints are asynchronous (HTTP 202): the response carries a
+# job descriptor, so we poll that job (GET /jobs/{id}) until it reaches a terminal status.
 POLL_INTERVAL_SECONDS: float = 2.0
 POLL_MAX_ATTEMPTS: int = 60
+
+# Terminal job status types (jobsSingleGetResponse.data.attributes.status.type in the OpenAPI spec).
+JOB_STATUS_OK: str = "OK"
+JOB_STATUS_FAILURES: frozenset[str] = frozenset({"FAILED", "CANCELLED"})
 
 
 class TempProject:
@@ -106,13 +110,13 @@ class TempProject:
         }
         response: Response = self.polarion_api.create_project(data)
 
-        # Project creation is asynchronous: the endpoint returns 202 (Accepted) with a job.
+        # Project creation is asynchronous: the endpoint returns 202 (Accepted) with a job descriptor.
         if response.status_code != HTTPStatus.ACCEPTED:
             self._fail("creation", response)
 
-        if not self._wait_for_project(should_exist=True):
-            logger.error("Timed out waiting for project '%s' to become available", self.temp_project_id)
-            sys.exit(-1)
+        # Wait for the job to finish: once it reports OK the project is fully created, so the
+        # name PATCH below is guaranteed to land on an existing, writable project.
+        self._wait_for_job(response, "creation")
 
         logger.info(
             "'%s' have been created in %.2f seconds",
@@ -148,26 +152,67 @@ class TempProject:
         logger.debug("Response content: %s", response.content)
         sys.exit(-1)
 
-    def _wait_for_project(self, should_exist: bool) -> bool:
-        """Poll the project resource until it reaches the desired presence state.
+    def _wait_for_job(self, response: Response, action: str) -> None:
+        """Poll the job referenced by an async 202 response until it reaches a terminal status.
 
         Args:
-            should_exist: True to wait until the project exists (200), False until it is gone (404)
-
-        Returns:
-            bool: True if the desired state was reached within the timeout, False otherwise
+            response: The 202 (Accepted) response whose body carries the job descriptor
+            action: Human-readable operation name for logging (e.g. "creation", "deletion")
         """
-        target_status: HTTPStatus = HTTPStatus.OK if should_exist else HTTPStatus.NOT_FOUND
-        logger.info("Waiting for project '%s' to be %s...", self.temp_project_id, "created" if should_exist else "deleted")
+        job_id: str = self._job_id_from_response(response, action)
+        logger.info("Waiting for %s job '%s' of project '%s'...", action, job_id, self.temp_project_id)
 
         for attempt in range(POLL_MAX_ATTEMPTS):
-            # While polling, the transient 404/200 mismatches are expected, so suppress the client's non-2xx warning.
-            response: Response = self.polarion_api.get_project(self.temp_project_id, print_error=False)
-            if response.status_code == target_status:
-                return True
+            job_body: JsonDict = self.polarion_api.get_job(job_id).json()
+            status_type: str | None
+            message: str | None
+            status_type, message = self._job_status(job_body)
+            if status_type == JOB_STATUS_OK:
+                return
+            if status_type in JOB_STATUS_FAILURES:
+                logger.error("Job to %s project '%s' ended as %s: %s", action, self.temp_project_id, status_type, message)
+                sys.exit(-1)
             if attempt < POLL_MAX_ATTEMPTS - 1:
                 time.sleep(POLL_INTERVAL_SECONDS)
-        return False
+
+        logger.error("Timed out waiting for %s job '%s' of project '%s'", action, job_id, self.temp_project_id)
+        sys.exit(-1)
+
+    def _job_id_from_response(self, response: Response, action: str) -> str:
+        """Extract the job id from an async 202 response body (jobsSinglePostResponse).
+
+        Returns:
+            str: The job identifier; exits the process if the body has no usable job id
+        """
+        body: JsonDict = response.json()
+        data: JsonValue = body.get("data")
+        if isinstance(data, dict):
+            job_id: JsonValue = data.get("id")
+            if isinstance(job_id, str) and job_id:
+                return job_id
+        logger.error("Unexpected async %s response for project '%s': %s", action, self.temp_project_id, body)
+        sys.exit(-1)
+
+    @staticmethod
+    def _job_status(job_body: JsonDict) -> tuple[str | None, str | None]:
+        """Return (status type, status message) from a job body, or (None, None) if absent.
+
+        A still-running job has no terminal status yet, hence the optional return.
+        """
+        data: JsonValue = job_body.get("data")
+        if not isinstance(data, dict):
+            return None, None
+        attributes: JsonValue = data.get("attributes")
+        if not isinstance(attributes, dict):
+            return None, None
+        status: JsonValue = attributes.get("status")
+        if not isinstance(status, dict):
+            return None, None
+        status_type: JsonValue = status.get("type")
+        message: JsonValue = status.get("message")
+        type_str: str | None = status_type if isinstance(status_type, str) else None
+        message_str: str | None = message if isinstance(message, str) else None
+        return type_str, message_str
 
     def _upload_project_template(self, transform_links: SparseFields | None = None) -> None:
         if self.temp_project_template_location is None:
@@ -186,12 +231,10 @@ class TempProject:
         start_time: float = time.time()
         response: Response = self.polarion_api.delete_project(self.temp_project_id)
 
-        # Project deletion is asynchronous: the endpoint returns 202 (Accepted).
+        # Project deletion is asynchronous: the endpoint returns 202 (Accepted) with a job descriptor.
         if response.status_code != HTTPStatus.ACCEPTED:
             self._fail("deletion", response)
 
-        if not self._wait_for_project(should_exist=False):
-            logger.error("Timed out waiting for project '%s' to be deleted", self.temp_project_id)
-            sys.exit(-1)
+        self._wait_for_job(response, "deletion")
 
         logger.info("'%s' have been deleted in %.2f seconds", self.temp_project_id, time.time() - start_time)

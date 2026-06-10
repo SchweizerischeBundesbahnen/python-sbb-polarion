@@ -5,24 +5,43 @@ from __future__ import annotations
 import unittest
 from http import HTTPStatus
 from pathlib import Path
+from typing import Any
 from unittest.mock import Mock, patch
 
 from python_sbb_polarion.testing.temp_project import TempProject
 
 
-def _response(status_code: HTTPStatus) -> Mock:
-    """Build a mock HTTP response with the given status code."""
+def _response(status_code: HTTPStatus, json_body: Any = None) -> Mock:
+    """Build a mock HTTP response with the given status code and JSON body."""
     response: Mock = Mock()
     response.status_code = status_code
+    response.json.return_value = json_body
     return response
 
 
+def _accepted_job(job_id: str = "job-1") -> Mock:
+    """Build a 202 (Accepted) response whose body carries an async job descriptor."""
+    return _response(HTTPStatus.ACCEPTED, {"data": {"type": "jobs", "id": job_id}})
+
+
+def _job(status_type: str | None, message: str | None = None) -> Mock:
+    """Build a GET /jobs/{id} response with the given terminal status type (None = still running)."""
+    status: dict[str, Any] = {}
+    if status_type is not None:
+        status["type"] = status_type
+    if message is not None:
+        status["message"] = message
+    return _response(HTTPStatus.OK, {"data": {"attributes": {"status": status}}})
+
+
 def _success_polarion_api() -> Mock:
-    """Mock PolarionApiV1 for a successful create flow (not-exists -> create 202 -> ready -> name set)."""
+    """Mock PolarionApiV1 for a successful create flow (not-exists -> create 202 -> job OK -> name set)."""
     api: Mock = Mock()
-    api.get_project.side_effect = [_response(HTTPStatus.NOT_FOUND), _response(HTTPStatus.OK)]
-    api.create_project.return_value = _response(HTTPStatus.ACCEPTED)
+    api.get_project.return_value = _response(HTTPStatus.NOT_FOUND)
+    api.create_project.return_value = _accepted_job()
+    api.get_job.return_value = _job("OK")
     api.update_project.return_value = _response(HTTPStatus.NO_CONTENT)
+    api.delete_project.return_value = _accepted_job("del-job")
     return api
 
 
@@ -93,7 +112,7 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
     def test_create_temp_project_success(self, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test _create_temp_project with successful async creation (202 -> ready)."""
+        """Test _create_temp_project with successful async creation (202 -> job OK)."""
         # Arrange
         mock_uuid.return_value = Mock()
         mock_uuid.return_value.__str__ = Mock(return_value="uuid-suffix")
@@ -106,7 +125,8 @@ class TestTempProject(unittest.TestCase):
         # Assert
         self.assertIsNotNone(temp_project.temp_project_id)
         mock_api.create_project.assert_called_once()
-        # name is set after the project becomes available
+        # the creation job is polled, then the name is set once it finishes
+        mock_api.get_job.assert_called_with("job-1")
         mock_api.update_project.assert_called_once()
 
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
@@ -156,18 +176,70 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
+    @patch("python_sbb_polarion.testing.temp_project.sys.exit")
+    def test_create_temp_project_job_failed(self, mock_exit: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test _create_temp_project exits when the creation job reports a FAILED status."""
+        # Arrange
+        mock_uuid.return_value = Mock()
+        mock_uuid.return_value.__str__ = Mock(return_value="failed-uuid")
+
+        mock_api: Mock = Mock()
+        mock_api.get_project.return_value = _response(HTTPStatus.NOT_FOUND)
+        mock_api.create_project.return_value = _accepted_job()
+        mock_api.get_job.return_value = _job("FAILED", "template broken")
+        mock_create_api.return_value = mock_api
+
+        # sys.exit raises SystemExit in production; make the mock stop execution too
+        mock_exit.side_effect = SystemExit
+
+        # Act & Assert
+        with self.assertRaises(SystemExit):
+            TempProject("TEST", "Test Project", "template_id")
+
+        mock_exit.assert_called_once_with(-1)
+        # name is never set once the job failed
+        mock_api.update_project.assert_not_called()
+
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
     @patch("python_sbb_polarion.testing.temp_project.time.sleep")
     @patch("python_sbb_polarion.testing.temp_project.sys.exit")
-    def test_create_temp_project_readiness_timeout(self, mock_exit: Mock, mock_sleep: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test _create_temp_project exits when the project never becomes available."""
+    def test_create_temp_project_job_timeout(self, mock_exit: Mock, mock_sleep: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test _create_temp_project exits when the creation job never reaches a terminal status."""
         # Arrange
         mock_uuid.return_value = Mock()
         mock_uuid.return_value.__str__ = Mock(return_value="timeout-uuid")
 
         mock_api: Mock = Mock()
-        # pre-check not-exists, then never becomes ready
         mock_api.get_project.return_value = _response(HTTPStatus.NOT_FOUND)
-        mock_api.create_project.return_value = _response(HTTPStatus.ACCEPTED)
+        mock_api.create_project.return_value = _accepted_job()
+        # job stays in a non-terminal state forever
+        mock_api.get_job.return_value = _job("UNKNOWN")
+        mock_create_api.return_value = mock_api
+
+        # sys.exit raises SystemExit in production; make the mock stop execution too
+        mock_exit.side_effect = SystemExit
+
+        # Act & Assert
+        with self.assertRaises(SystemExit):
+            TempProject("TEST", "Test Project", "template_id")
+
+        mock_exit.assert_called_once_with(-1)
+
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
+    @patch("python_sbb_polarion.testing.temp_project.sys.exit")
+    def test_create_temp_project_unexpected_job_body(self, mock_exit: Mock, mock_uuid: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test _create_temp_project exits when the 202 response has no usable job id."""
+        # Arrange
+        mock_uuid.return_value = Mock()
+        mock_uuid.return_value.__str__ = Mock(return_value="nojob-uuid")
+
+        mock_api: Mock = Mock()
+        mock_api.get_project.return_value = _response(HTTPStatus.NOT_FOUND)
+        mock_api.create_project.return_value = _response(HTTPStatus.ACCEPTED, {"unexpected": True})
         mock_create_api.return_value = mock_api
 
         # sys.exit raises SystemExit in production; make the mock stop execution too
@@ -215,9 +287,7 @@ class TestTempProject(unittest.TestCase):
         mock_uuid.return_value = Mock()
         mock_uuid.return_value.__str__ = Mock(return_value="warn-uuid")
 
-        mock_api: Mock = Mock()
-        mock_api.get_project.side_effect = [_response(HTTPStatus.NOT_FOUND), _response(HTTPStatus.OK)]
-        mock_api.create_project.return_value = _response(HTTPStatus.ACCEPTED)
+        mock_api: Mock = _success_polarion_api()
         mock_api.update_project.return_value = _response(HTTPStatus.INTERNAL_SERVER_ERROR)
         mock_create_api.return_value = mock_api
 
@@ -231,18 +301,9 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     def test_tear_down_success(self, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test tear_down with successful async deletion (202 -> gone)."""
+        """Test tear_down with successful async deletion (202 -> job OK)."""
         # Arrange
-        mock_api: Mock = Mock()
-        # __init__: pre-check 404, ready 200; tear_down: gone 404
-        mock_api.get_project.side_effect = [
-            _response(HTTPStatus.NOT_FOUND),
-            _response(HTTPStatus.OK),
-            _response(HTTPStatus.NOT_FOUND),
-        ]
-        mock_api.create_project.return_value = _response(HTTPStatus.ACCEPTED)
-        mock_api.update_project.return_value = _response(HTTPStatus.NO_CONTENT)
-        mock_api.delete_project.return_value = _response(HTTPStatus.ACCEPTED)
+        mock_api: Mock = _success_polarion_api()
         mock_create_api.return_value = mock_api
 
         with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
@@ -256,6 +317,7 @@ class TestTempProject(unittest.TestCase):
 
             # Assert
             mock_api.delete_project.assert_called_once_with("TEST_st_uuid")
+            mock_api.get_job.assert_called_with("del-job")
 
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
@@ -263,10 +325,7 @@ class TestTempProject(unittest.TestCase):
     def test_tear_down_delete_error(self, mock_exit: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
         """Test tear_down error handling when delete returns a non-202 status."""
         # Arrange
-        mock_api: Mock = Mock()
-        mock_api.get_project.side_effect = [_response(HTTPStatus.NOT_FOUND), _response(HTTPStatus.OK)]
-        mock_api.create_project.return_value = _response(HTTPStatus.ACCEPTED)
-        mock_api.update_project.return_value = _response(HTTPStatus.NO_CONTENT)
+        mock_api: Mock = _success_polarion_api()
         mock_api.delete_project.return_value = _response(HTTPStatus.INTERNAL_SERVER_ERROR)
         mock_create_api.return_value = mock_api
 
@@ -290,17 +349,11 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.time.sleep")
     @patch("python_sbb_polarion.testing.temp_project.sys.exit")
     def test_tear_down_deletion_timeout(self, mock_exit: Mock, mock_sleep: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
-        """Test tear_down exits when the project is never removed."""
+        """Test tear_down exits when the deletion job never reaches a terminal status."""
         # Arrange
-        mock_api: Mock = Mock()
-        # __init__: pre-check 404, ready 200; tear_down poll: always 200 (never gone)
-        mock_api.get_project.side_effect = [
-            _response(HTTPStatus.NOT_FOUND),
-            *[_response(HTTPStatus.OK) for _ in range(200)],
-        ]
-        mock_api.create_project.return_value = _response(HTTPStatus.ACCEPTED)
-        mock_api.update_project.return_value = _response(HTTPStatus.NO_CONTENT)
-        mock_api.delete_project.return_value = _response(HTTPStatus.ACCEPTED)
+        mock_api: Mock = _success_polarion_api()
+        # creation job finishes (OK), deletion job never reaches a terminal status
+        mock_api.get_job.side_effect = [_job("OK"), *[_job("UNKNOWN") for _ in range(200)]]
         mock_create_api.return_value = mock_api
 
         with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
@@ -450,6 +503,49 @@ class TestTempProject(unittest.TestCase):
                 TempProject("TEST", "Test Project", "template_id", template_location=Path("/tmp/template"))
 
             mock_exit.assert_called_with(1)
+
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    def test_init_keeps_project_id_when_not_mutated(self, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test __init__ keeps the given project id verbatim when mutate_project_id is False."""
+        # Arrange
+        mock_create_api.return_value = _success_polarion_api()
+
+        # Act
+        temp_project = TempProject("FIXED", "Test Project", "template_id", mutate_project_id=False)
+
+        # Assert
+        self.assertEqual(temp_project.temp_project_id, "FIXED")
+
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_extension_api")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.sys.exit")
+    def test_create_temp_project_job_id_missing(self, mock_exit: Mock, mock_create_api: Mock, mock_create_extension: Mock) -> None:
+        """Test _create_temp_project exits when the 202 body has a data object but no job id."""
+        # Arrange
+        mock_api: Mock = _success_polarion_api()
+        mock_api.create_project.return_value = _response(HTTPStatus.ACCEPTED, {"data": {"type": "jobs"}})
+        mock_create_api.return_value = mock_api
+
+        # sys.exit raises SystemExit in production; make the mock stop execution too
+        mock_exit.side_effect = SystemExit
+
+        # Act & Assert
+        with self.assertRaises(SystemExit):
+            TempProject("TEST", "Test Project", "template_id", mutate_project_id=False)
+
+        mock_exit.assert_called_once_with(-1)
+
+    def test_job_status_handles_malformed_bodies(self) -> None:
+        """Test _job_status returns (None, None) for bodies without a terminal status object."""
+        self.assertEqual(TempProject._job_status({}), (None, None))
+        self.assertEqual(TempProject._job_status({"data": "not-a-dict"}), (None, None))
+        self.assertEqual(TempProject._job_status({"data": {"attributes": "nope"}}), (None, None))
+        self.assertEqual(TempProject._job_status({"data": {"attributes": {"status": "nope"}}}), (None, None))
+        self.assertEqual(
+            TempProject._job_status({"data": {"attributes": {"status": {"type": "OK", "message": "done"}}}}),
+            ("OK", "done"),
+        )
 
 
 if __name__ == "__main__":
