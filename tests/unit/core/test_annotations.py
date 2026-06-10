@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import unittest
+import warnings
 from typing import TYPE_CHECKING, cast
 
-from python_sbb_polarion.core.annotations import RestApiEndpoint, restapi_endpoint
+from python_sbb_polarion.core.annotations import RestApiEndpoint, deprecated_method, restapi_endpoint
 
 
 if TYPE_CHECKING:
@@ -259,6 +260,51 @@ class TestRestApiEndpointDecorator(unittest.TestCase):
 
         # Function should have metadata attached
         self.assertTrue(hasattr(sample_function, "__restapi_endpoint__"))
+
+
+class TestDeprecatedMethod(unittest.TestCase):
+    """Test the deprecated_method decorator."""
+
+    def test_emits_deprecation_warning_and_preserves_return(self) -> None:
+        """Test the wrapped method warns and still returns the original result."""
+
+        @deprecated_method("PolarionApiV1.do_thing")
+        def sample(value: int) -> int:
+            return value * 2
+
+        with self.assertWarns(DeprecationWarning) as ctx:
+            result: int = sample(5)
+
+        self.assertEqual(result, 10)
+        self.assertIn("PolarionApiV1.do_thing", str(ctx.warning))
+        self.assertIn("sample", str(ctx.warning))
+
+    def test_records_replacement_and_preserves_metadata(self) -> None:
+        """Test the decorator records the replacement and preserves name/signature/annotations."""
+
+        @restapi_endpoint(method="GET", path="/api/test")
+        @deprecated_method("PolarionApiV1.do_thing")
+        def sample(value: int) -> int:
+            return value
+
+        self.assertEqual(sample.__deprecated_replacement__, "PolarionApiV1.do_thing")  # type: ignore[attr-defined]
+        self.assertEqual(sample.__name__, "sample")
+        # restapi_endpoint metadata applied on top of the deprecation wrapper is still reachable
+        self.assertTrue(hasattr(sample, "__restapi_endpoint__"))
+
+    def test_warning_points_at_caller(self) -> None:
+        """Test stacklevel=2 attributes the warning to the caller, not the wrapper."""
+
+        @deprecated_method("PolarionApiV1.do_thing")
+        def sample() -> None:
+            return None
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            sample()
+
+        self.assertEqual(len(caught), 1)
+        self.assertEqual(caught[0].filename, __file__)
 
 
 if __name__ == "__main__":

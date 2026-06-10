@@ -4,12 +4,43 @@ This module provides decorators for explicitly mapping Python methods to REST AP
 enabling precise validation against OpenAPI specifications without relying on method name heuristics.
 """
 
+import functools
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
 
 
 F = TypeVar("F", bound=Callable[..., Any])
+
+
+def deprecated_method(replacement: str) -> Callable[[F], F]:
+    """Mark a method as deprecated in favour of a standard Polarion REST API v1 method.
+
+    Emits a ``DeprecationWarning`` (pointing at the caller) when the wrapped method is
+    invoked, and records the replacement on the function as ``__deprecated_replacement__``
+    for documentation and tooling. The original signature and any other attributes
+    (e.g. ``__restapi_endpoint__``) are preserved via ``functools.wraps``.
+
+    Args:
+        replacement: Human-readable replacement, e.g. "PolarionApiV1.create_project"
+
+    Returns:
+        Decorator that wraps the method to emit the warning before delegating to it
+    """
+
+    def decorator(func: F) -> F:
+        message: str = f"{func.__qualname__} is deprecated and will be removed in a future major release; use {replacement} instead."
+
+        @functools.wraps(func)
+        def wrapper(*args: object, **kwargs: object) -> object:
+            warnings.warn(message, DeprecationWarning, stacklevel=2)
+            return func(*args, **kwargs)
+
+        wrapper.__deprecated_replacement__ = replacement  # type: ignore[attr-defined]
+        return wrapper  # type: ignore[return-value]
+
+    return decorator
 
 
 @dataclass

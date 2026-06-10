@@ -856,6 +856,26 @@ def run_web_report(self, node_id: str) -> Response:
     ...
 ```
 
+**Deprecating a method in favour of the standard API:**
+
+Use the `@deprecated_method` decorator (from `python_sbb_polarion.core.annotations`) for extension methods that duplicate a `PolarionApiV1` operation. It emits a `DeprecationWarning` (pointing at the caller) and records `__deprecated_replacement__` for tooling, while preserving the method signature and any `@restapi_endpoint` metadata via `functools.wraps`. Apply it as the innermost decorator (closest to `def`), below `@restapi_endpoint`:
+
+```python
+from python_sbb_polarion.core.annotations import deprecated_method, restapi_endpoint
+
+@restapi_endpoint(method="GET", path="/api/projects/{id}", path_params={"id": "project_id"}, required_params=["id"])
+@deprecated_method("PolarionApiV1.get_project")
+def get_project(self, project_id: str) -> Response:
+    """Get project info
+
+    .. deprecated::
+        Use ``PolarionApiV1.get_project`` instead.
+    """
+    ...
+```
+
+The `admin-utility` client (`PolarionAdminUtilityApi`) deprecates 16 methods this way (project/collection/document/custom-field/live-report duplicates) — see the migration table in `README.md`. A deprecated convenience method should issue its HTTP request directly rather than delegating to other deprecated methods, so callers see exactly one `DeprecationWarning` without the thread-unsafe `warnings.catch_warnings()` (warnings filter state is global before Python 3.12) — see `set_custom_field_type`.
+
 ### Extensions Module (`python_sbb_polarion/extensions/`)
 Client interfaces for SBB Polarion extensions. Each module corresponds to a specific extension from:
 `https://github.com/SchweizerischeBundesbahnen/ch.sbb.polarion.extension.*`

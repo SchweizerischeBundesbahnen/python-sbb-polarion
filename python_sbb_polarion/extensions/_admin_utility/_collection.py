@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from python_sbb_polarion.core.annotations import restapi_endpoint
+from python_sbb_polarion.core.annotations import deprecated_method, restapi_endpoint
 from python_sbb_polarion.extensions._base import BaseMixin
 
 
@@ -26,8 +26,13 @@ class CollectionMixin(BaseMixin):
         },
         required_params=["projectId", "collectionId"],
     )
+    @deprecated_method("PolarionApiV1.delete_collection")
     def delete_collection(self, project_id: str, collection_id: str) -> Response:
         """Delete collection
+
+        .. deprecated::
+            Use ``PolarionApiV1.delete_collection`` instead. The standard Polarion REST API v1
+            covers collection deletion since Polarion 2606.
 
         Returns:
             Response: Response object from the API call
@@ -46,8 +51,13 @@ class CollectionMixin(BaseMixin):
         helper_params=["module_id"],
         required_params=["projectId", "collectionId", "__request_body__"],
     )
+    @deprecated_method("PolarionApiV1.create_collection_relationships")
     def add_to_collection(self, project_id: str, collection_id: str, module_id: str) -> Response:
         """Add an element to the collection
+
+        .. deprecated::
+            Use ``PolarionApiV1.create_collection_relationships`` (relationship ``documents``)
+            instead. Express the module as a JSON:API id (``projectId/spaceId/documentName``).
 
         Returns:
             Response: Response object from the API call
@@ -68,8 +78,13 @@ class CollectionMixin(BaseMixin):
         helper_params=["collection_name"],
         required_params=["projectId", "__request_body__"],
     )
+    @deprecated_method("PolarionApiV1.create_collections")
     def create_collection(self, project_id: str, collection_name: str) -> Response:
         """Create collection
+
+        .. deprecated::
+            Use ``PolarionApiV1.create_collections`` instead. The standard Polarion REST API v1
+            covers collection creation since Polarion 2606.
 
         Returns:
             Response: Response object from the API call

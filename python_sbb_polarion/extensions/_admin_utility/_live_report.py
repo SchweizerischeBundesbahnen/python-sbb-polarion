@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from python_sbb_polarion.core.annotations import restapi_endpoint
+from python_sbb_polarion.core.annotations import deprecated_method, restapi_endpoint
 from python_sbb_polarion.extensions._base import BaseMixin
 from python_sbb_polarion.types import Header
 
@@ -30,8 +30,13 @@ class LiveReportMixin(BaseMixin):
         },
         required_params=["projectId", "spaceId", "name"],
     )
+    @deprecated_method("PolarionApiV1.create_page")
     def create_live_report(self, project_id: str, space_id: str, name: str, content_type: str, content: str) -> Response:
         """Create new live report in project
+
+        .. deprecated::
+            Use ``PolarionApiV1.create_page`` instead. In the standard Polarion REST API v1 a
+            rich/live-report page is a ``pages`` resource (project + space scoped) since Polarion 2606.
 
         Returns:
             Response: Response object from the API call
@@ -52,8 +57,13 @@ class LiveReportMixin(BaseMixin):
         },
         required_params=["projectId", "spaceId", "name"],
     )
+    @deprecated_method("PolarionApiV1.delete_page")
     def delete_live_report(self, project_id: str, space_id: str, name: str) -> Response:
         """Delete live report in project
+
+        .. deprecated::
+            Use ``PolarionApiV1.delete_page`` instead. In the standard Polarion REST API v1 a
+            rich/live-report page is a ``pages`` resource (project + space scoped) since Polarion 2606.
 
         Returns:
             Response: Response object from the API call
