@@ -604,7 +604,7 @@ class TestAdminUtilityDeprecation(unittest.TestCase):
         self.assertIn("PolarionApiV1.create_project", str(ctx.warning))
 
     def test_set_custom_field_type_emits_single_warning(self) -> None:
-        """Test the convenience method emits exactly one warning (delegated calls are suppressed)."""
+        """Test the convenience method emits exactly one warning (it issues the request directly)."""
         api: PolarionAdminUtilityApi = PolarionAdminUtilityApi(Mock())
 
         with warnings.catch_warnings(record=True) as caught:

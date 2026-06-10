@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING
 
 from python_sbb_polarion.core.annotations import deprecated_method, restapi_endpoint
@@ -174,10 +173,11 @@ class CustomFieldsMixin(BaseMixin):
                 },
             ],
         }
-        # The delegated methods are themselves deprecated; suppress their warning so callers of this
-        # convenience method see exactly one DeprecationWarning (the one for set_custom_field_type).
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            if project_id:
-                return self.update_custom_fields_for_project(project_id, data)
-            return self.update_custom_fields_for_default_repo(data)
+        # Issue the request directly rather than delegating to the (also deprecated) update methods:
+        # that keeps this to a single DeprecationWarning without the thread-unsafe warnings.catch_warnings()
+        # (warnings filter state is global before Python 3.12).
+        if project_id:
+            url: str = f"{self.rest_api_url}/projects/{project_id}/custom-fields"
+        else:
+            url = f"{self.rest_api_url}/custom-fields"
+        return self.polarion_connection.api_request_put(url, data=data)

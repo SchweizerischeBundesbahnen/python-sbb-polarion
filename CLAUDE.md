@@ -874,7 +874,7 @@ def get_project(self, project_id: str) -> Response:
     ...
 ```
 
-The `admin-utility` client (`PolarionAdminUtilityApi`) deprecates 16 methods this way (project/collection/document/custom-field/live-report duplicates) — see the migration table in `README.md`. When a convenience method delegates to deprecated public methods, suppress the inner warning with `warnings.catch_warnings()` so callers see exactly one warning (see `set_custom_field_type`).
+The `admin-utility` client (`PolarionAdminUtilityApi`) deprecates 16 methods this way (project/collection/document/custom-field/live-report duplicates) — see the migration table in `README.md`. A deprecated convenience method should issue its HTTP request directly rather than delegating to other deprecated methods, so callers see exactly one `DeprecationWarning` without the thread-unsafe `warnings.catch_warnings()` (warnings filter state is global before Python 3.12) — see `set_custom_field_type`.
 
 ### Extensions Module (`python_sbb_polarion/extensions/`)
 Client interfaces for SBB Polarion extensions. Each module corresponds to a specific extension from:
