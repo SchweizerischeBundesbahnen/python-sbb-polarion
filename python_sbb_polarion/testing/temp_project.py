@@ -15,12 +15,17 @@ from python_sbb_polarion.testing.project_template_uploader import ProjectTemplat
 if TYPE_CHECKING:
     from requests import Response
 
-    from python_sbb_polarion.extensions.admin_utility import PolarionAdminUtilityApi
+    from python_sbb_polarion.core import PolarionApiV1
     from python_sbb_polarion.extensions.test_data import PolarionTestDataApi
-    from python_sbb_polarion.types import SparseFields
+    from python_sbb_polarion.types import JsonDict, SparseFields
 
 
 logger = logging.getLogger(__name__)
+
+# Standard project create/delete endpoints are asynchronous (HTTP 202): the project is not
+# ready immediately, so we poll the project resource until it reaches the desired state.
+POLL_INTERVAL_SECONDS: float = 2.0
+POLL_MAX_ATTEMPTS: int = 60
 
 
 class TempProject:
@@ -64,6 +69,10 @@ class TempProject:
         self.temp_project_template_id: str = template_id
         self.temp_project_template_location: Path | None = template_location
 
+        # Build the API clients once up front; from here on they are always ready to use.
+        self.polarion_api: PolarionApiV1 = GenericTestCase.create_polarion_api()
+        self.test_data_api: PolarionTestDataApi = GenericTestCase.create_extension_api("test-data")
+
         self._upload_project_template(transform_links)
         self._create_temp_project()
 
@@ -71,8 +80,6 @@ class TempProject:
         return self.temp_project_id
 
     def _create_temp_project(self) -> None:
-        admin_utility_api: PolarionAdminUtilityApi = GenericTestCase.create_extension_api("admin-utility")
-
         logger.debug(
             "Creating project with id '%s' and name '%s' for template with id '%s'",
             self.temp_project_id,
@@ -80,35 +87,92 @@ class TempProject:
             self.temp_project_template_id,
         )
 
-        start_time: float = time.time()
-        response: Response = admin_utility_api.create_project(
-            project_id=self.temp_project_id,
-            project_name=self.temp_project_name,
-            template_id=self.temp_project_template_id,
-        )
-
-        if response.status_code == HTTPStatus.OK:
-            logger.info(
-                "'%s' have been created in %.2f seconds",
-                self.temp_project_id,
-                time.time() - start_time,
-            )
-        elif response.status_code == HTTPStatus.BAD_REQUEST and f"Project id '{self.temp_project_id}' clashes with existing project id '{self.temp_project_id}'." in response.text:
+        # A 404 here just means the project does not exist yet, so suppress the client's non-2xx warning.
+        existing_response: Response = self.polarion_api.get_project(self.temp_project_id, print_error=False)
+        if existing_response.status_code == HTTPStatus.OK:
             logger.info("'%s' already exists... nothing to do", self.temp_project_id)
-        else:
+            return
+
+        start_time: float = time.time()
+        # createProject expects a flat body (not JSON:API); projectId, trackerPrefix and
+        # location are required (nullable: false in the OpenAPI schema).
+        data: JsonDict = {
+            "projectId": self.temp_project_id,
+            "trackerPrefix": self.temp_project_id,
+            "location": self.temp_project_id,
+            "templateId": self.temp_project_template_id,
+        }
+        response: Response = self.polarion_api.create_project(data)
+
+        # Project creation is asynchronous: the endpoint returns 202 (Accepted) with a job.
+        if response.status_code != HTTPStatus.ACCEPTED:
             logger.error("Error during creation project '%s'", self.temp_project_id)
             logger.debug("Response status: %s", response.status_code)
             logger.debug("Response headers: %s", response.headers)
             logger.debug("Response content: %s", response.content)
             sys.exit(-1)
 
+        if not self._wait_for_project(should_exist=True):
+            logger.error("Timed out waiting for project '%s' to become available", self.temp_project_id)
+            sys.exit(-1)
+
+        logger.info(
+            "'%s' have been created in %.2f seconds",
+            self.temp_project_id,
+            time.time() - start_time,
+        )
+
+        self._set_project_name()
+
+    def _set_project_name(self) -> None:
+        # createProject does not accept a project name; set it afterwards via PATCH. Best-effort.
+        data: JsonDict = {
+            "data": {
+                "type": "projects",
+                "id": self.temp_project_id,
+                "attributes": {
+                    "name": self.temp_project_name,
+                },
+            },
+        }
+        response: Response = self.polarion_api.update_project(self.temp_project_id, data)
+        if response.status_code not in {HTTPStatus.OK, HTTPStatus.NO_CONTENT}:
+            logger.warning(
+                "Could not set name for project '%s' (status %s)",
+                self.temp_project_id,
+                response.status_code,
+            )
+
+    def _wait_for_project(self, should_exist: bool) -> bool:
+        """Poll the project resource until it reaches the desired presence state.
+
+        Args:
+            should_exist: True to wait until the project exists (200), False until it is gone (404)
+
+        Returns:
+            bool: True if the desired state was reached within the timeout, False otherwise
+        """
+        if should_exist:
+            logger.info("Waiting for project '%s' to be created...", self.temp_project_id)
+        else:
+            logger.info("Waiting for project '%s' to be deleted...", self.temp_project_id)
+
+        for _ in range(POLL_MAX_ATTEMPTS):
+            # While polling, the transient 404/200 mismatches are expected, so suppress the client's non-2xx warning.
+            response: Response = self.polarion_api.get_project(self.temp_project_id, print_error=False)
+            if should_exist and response.status_code == HTTPStatus.OK:
+                return True
+            if not should_exist and response.status_code == HTTPStatus.NOT_FOUND:
+                return True
+            time.sleep(POLL_INTERVAL_SECONDS)
+        return False
+
     def _upload_project_template(self, transform_links: SparseFields | None = None) -> None:
         if self.temp_project_template_location is None:
             logger.warning("Template location is not configured. Skipping upload.")
             return
 
-        test_data_api: PolarionTestDataApi = GenericTestCase.create_extension_api("test-data")
-        uploader: ProjectTemplateUploader = ProjectTemplateUploader(test_data_api=test_data_api)
+        uploader: ProjectTemplateUploader = ProjectTemplateUploader(test_data_api=self.test_data_api)
         uploader.upload_template(
             template_id=self.temp_project_template_id,
             template_location=self.temp_project_template_location,
@@ -117,16 +181,19 @@ class TempProject:
 
     def tear_down(self) -> None:
         # Delete the temporary project after testing
-        admin_utility_api: PolarionAdminUtilityApi = GenericTestCase.create_extension_api("admin-utility")
-
         start_time: float = time.time()
-        response: Response = admin_utility_api.delete_project(project_id=self.temp_project_id)
+        response: Response = self.polarion_api.delete_project(self.temp_project_id)
 
-        if response.status_code == HTTPStatus.NO_CONTENT:
-            logger.info("'%s' have been deleted in %.2f seconds", self.temp_project_id, time.time() - start_time)
-        else:
+        # Project deletion is asynchronous: the endpoint returns 202 (Accepted).
+        if response.status_code != HTTPStatus.ACCEPTED:
             logger.error("Error during deletion project '%s'", self.temp_project_id)
             logger.debug("Response status: %s", response.status_code)
             logger.debug("Response headers: %s", response.headers)
             logger.debug("Response content: %s", response.content)
             sys.exit(-1)
+
+        if not self._wait_for_project(should_exist=False):
+            logger.error("Timed out waiting for project '%s' to be deleted", self.temp_project_id)
+            sys.exit(-1)
+
+        logger.info("'%s' have been deleted in %.2f seconds", self.temp_project_id, time.time() - start_time)

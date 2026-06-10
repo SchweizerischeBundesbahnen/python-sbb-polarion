@@ -86,6 +86,7 @@ class ProjectsCrudMixin(BaseMixin):
             "include": "include",
             "revision": "revision",
         },
+        helper_params=["print_error"],
         required_params=["projectId"],
         response_type="json",
     )
@@ -95,6 +96,7 @@ class ProjectsCrudMixin(BaseMixin):
         fields: SparseFields | None = None,
         include: str | None = None,
         revision: str | None = None,
+        print_error: bool = True,
     ) -> Response:
         """Get a specific project.
 
@@ -103,6 +105,8 @@ class ProjectsCrudMixin(BaseMixin):
             fields: JSON:API sparse fieldsets dict (e.g., {"workitems": "@all"})
             include: Include related resources
             revision: Specific revision
+            print_error: Whether to log a warning for non-2xx responses. Set to False
+                when a 404 is expected (e.g. polling for a project to appear or disappear).
 
         Returns:
             Response: Project data from API
@@ -114,7 +118,7 @@ class ProjectsCrudMixin(BaseMixin):
             params["include"] = include
         if revision:
             params["revision"] = revision
-        return self.polarion_connection.api_request_get(url, params=params or None)
+        return self.polarion_connection.api_request_get(url, params=params or None, print_error=print_error)
 
     @restapi_endpoint(
         method="POST",

@@ -70,6 +70,27 @@ class TestGenericTestCase(unittest.TestCase):
         self.assertEqual(call_kwargs["extension_name"], "admin-utility")
         mock_polarion_api_v1.assert_called_once()
 
+    @patch("python_sbb_polarion.testing.generic_test_case.PolarionApiV1")
+    @patch("python_sbb_polarion.testing.generic_test_case.get_script_arguments")
+    @patch.dict("os.environ", {"APP_URL": "https://example.com", "APP_TOKEN": "test-token"})
+    def test_create_polarion_api(self, mock_get_args: Mock, mock_polarion_api_v1: Mock) -> None:
+        """Test create_polarion_api builds a connection and returns a PolarionApiV1."""
+        # Arrange
+        mock_args = SimpleNamespace(app_url=None, app_token=None)
+        mock_get_args.return_value = mock_args
+
+        mock_api = Mock()
+        mock_polarion_api_v1.return_value = mock_api
+
+        # Act
+        result: object = GenericTestCase.create_polarion_api()
+
+        # Assert
+        self.assertEqual(result, mock_api)
+        mock_polarion_api_v1.assert_called_once()
+        call_args: tuple[object, ...] = mock_polarion_api_v1.call_args[0]
+        self.assertIsInstance(call_args[0], PolarionRestApiConnection)
+
     @patch.dict("os.environ", {"TEST_PARAM": "env_value"})
     def test_get_parameter_from_env(self) -> None:
         """Test get_parameter returns environment variable when available."""
