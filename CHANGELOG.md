@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.0.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.1.1...v3.0.0) (2026-06-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* deprecate admin utility methods in favor of standard Polarion API ([#65](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/65))
+* add new endpoints for LLMs and document operations in Polarion 2606 ([#61](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/61))
+
+### Features
+
+* add new endpoints for LLMs and document operations in Polarion 2606 ([#61](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/61)) ([673cb34](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/673cb349363c64566b21d43890a7c70e41c69e94)), closes [#60](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/60)
+* deprecate admin utility methods in favor of standard Polarion API ([#65](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/65)) ([ed0c069](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/ed0c069c90ac0af6d5b05341f73162a62e325b7d)), closes [#62](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/62)
+* enhance project management with asynchronous creation and deletion using standard Polarion REST API ([#64](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/64)) ([072aae1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/072aae1f20384a5d54fe2a544ff6bb5527432977)), closes [#62](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/62)
+
 ## [2.1.1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.1.0...v2.1.1) (2026-06-09)
 
 
