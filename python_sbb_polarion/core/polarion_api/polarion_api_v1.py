@@ -34,6 +34,9 @@ from python_sbb_polarion.core.polarion_api._jobs import JobsManagementMixin
 # License
 from python_sbb_polarion.core.polarion_api._license import LicenseMixin
 
+# LLMs (new in Polarion 2606)
+from python_sbb_polarion.core.polarion_api._llms import LlmsMixin
+
 # Pages
 from python_sbb_polarion.core.polarion_api._pages import PagesMixin
 
@@ -110,6 +113,8 @@ class PolarionApiV1(
     PagesMixin,
     # License
     LicenseMixin,
+    # LLMs
+    LlmsMixin,
     # Custom Fields
     CustomFieldsMixin,
     # Global
@@ -124,8 +129,8 @@ class PolarionApiV1(
 ):
     """Polarion REST API v1 - Full implementation.
 
-    Provides comprehensive access to the Polarion REST API v1 with ~271 operations
-    covering all resources (based on Polarion 2512):
+    Provides comprehensive access to the Polarion REST API v1 with ~284 operations
+    covering all resources (based on Polarion 2606):
 
     - **Workitems**: CRUD, attachments, comments, links, backlinks, approvals, test steps, work records
     - **Testruns**: CRUD, attachments, comments, records, step results, parameters

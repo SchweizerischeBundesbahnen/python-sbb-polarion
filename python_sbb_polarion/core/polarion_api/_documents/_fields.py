@@ -159,3 +159,35 @@ class DocumentsFieldsMixin(BaseMixin):
         if document_type:
             params["type"] = document_type
         return self.polarion_connection.api_request_get(url, params=params or None)
+
+    # New endpoints in Polarion 2606
+
+    @restapi_endpoint(
+        method="GET",
+        path="/projects/{projectId}/spaces/{spaceId}/documents/{documentName}/actions/getFieldsMetadata",
+        path_params={
+            "projectId": "project_id",
+            "spaceId": "space_id",
+            "documentName": "document_name",
+        },
+        required_params=["projectId", "spaceId", "documentName"],
+        response_type="json",
+    )
+    def get_document_fields_metadata(
+        self,
+        project_id: str,
+        space_id: str,
+        document_name: str,
+    ) -> Response:
+        """Get fields metadata for a document.
+
+        Args:
+            project_id: Project identifier
+            space_id: Space identifier
+            document_name: Document name
+
+        Returns:
+            Response: Document fields metadata from API
+        """
+        url: str = f"{self.base_url}/projects/{project_id}/spaces/{space_id}/documents/{document_name}/actions/getFieldsMetadata"
+        return self.polarion_connection.api_request_get(url)

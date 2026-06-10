@@ -36,7 +36,7 @@ connection = PolarionRestApiConnection(
     token="your-api-token"
 )
 
-# Use Polarion REST API v1 (based on Polarion 2512 OpenAPI spec)
+# Use Polarion REST API v1 (based on Polarion 2606 OpenAPI spec)
 api = PolarionApiV1(connection)
 workitem = api.get_workitem("PROJECT", "ITEM-123")
 
@@ -52,9 +52,9 @@ result = pdf_api.convert({"projectId": "PROJECT", "documentName": "doc"})
 
 | Class | Description | Status |
 |-------|-------------|--------|
-| `PolarionApiV1` | Full Polarion REST API v1 (based on Polarion 2512) | **Current** - use this |
+| `PolarionApiV1` | Full Polarion REST API v1 (based on Polarion 2606) | **Current** - use this |
 
-**Current version:** Polarion 2512
+**Current version:** Polarion 2606
 
 ## Documentation
 
@@ -68,7 +68,7 @@ result = pdf_api.convert({"projectId": "PROJECT", "documentName": "doc"})
 python_sbb_polarion/
 ├── util/           # Shared utilities (HTTP, SSH, LDAP, SQL, OAuth, mailer, etc.)
 ├── core/           # Core Polarion API (base classes, main API, factory)
-│   └── polarion_api/       # PolarionApiV1 (current, based on Polarion 2512)
+│   └── polarion_api/       # PolarionApiV1 (current, based on Polarion 2606)
 │       ├── _documents/     # Document operations
 │       ├── _global/        # Global operations (users, enumerations)
 │       ├── _plans/         # Plan operations
