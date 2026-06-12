@@ -94,6 +94,63 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
+    def test_init_nests_project_under_parent_location(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test parent_location nests the project under the given group folder (appending the project id)."""
+        # Arrange
+        mock_uuid.return_value = Mock()
+        mock_uuid.return_value.__str__ = Mock(return_value="uuid-suffix")
+        mock_api: Mock = _success_polarion_api()
+        mock_create_api.return_value = mock_api
+
+        # Act - a trailing slash on the parent must not produce a doubled separator
+        temp_project = TempProject("PROJ", "Project Name", "template", parent_location="Demo Projects/")
+
+        # Assert
+        self.assertEqual(temp_project.temp_project_location, "Demo Projects/PROJ_st_suffix")
+        mock_api.create_project.assert_called_once_with(
+            {
+                "projectId": "PROJ_st_suffix",
+                "trackerPrefix": "PROJ_st_suffix",
+                "location": "Demo Projects/PROJ_st_suffix",
+                "templateId": "template",
+            }
+        )
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
+    def test_init_defaults_location_to_project_id(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test that without parent_location the project location stays the bare project id (root)."""
+        # Arrange
+        mock_uuid.return_value = Mock()
+        mock_uuid.return_value.__str__ = Mock(return_value="uuid-suffix")
+        mock_create_api.return_value = _success_polarion_api()
+
+        # Act
+        temp_project = TempProject("PROJ", "Project Name", "template")
+
+        # Assert
+        self.assertEqual(temp_project.temp_project_location, "PROJ_st_suffix")
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
+    def test_init_treats_blank_parent_location_as_root(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test an empty or whitespace-only parent_location is treated as root, not a doubled separator."""
+        # Arrange
+        mock_uuid.return_value = Mock()
+        mock_uuid.return_value.__str__ = Mock(return_value="uuid-suffix")
+        mock_create_api.return_value = _success_polarion_api()
+
+        # Act - whitespace-only parent must collapse to the bare project id (root)
+        temp_project = TempProject("PROJ", "Project Name", "template", parent_location="   ")
+
+        # Assert
+        self.assertEqual(temp_project.temp_project_location, "PROJ_st_suffix")
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
     def test_get_temp_project_id(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test get_temp_project_id returns project ID."""
         # Arrange
