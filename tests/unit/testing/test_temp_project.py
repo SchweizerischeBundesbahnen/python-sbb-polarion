@@ -135,6 +135,22 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
+    def test_init_treats_blank_parent_location_as_root(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test an empty or whitespace-only parent_location is treated as root, not a doubled separator."""
+        # Arrange
+        mock_uuid.return_value = Mock()
+        mock_uuid.return_value.__str__ = Mock(return_value="uuid-suffix")
+        mock_create_api.return_value = _success_polarion_api()
+
+        # Act - whitespace-only parent must collapse to the bare project id (root)
+        temp_project = TempProject("PROJ", "Project Name", "template", parent_location="   ")
+
+        # Assert
+        self.assertEqual(temp_project.temp_project_location, "PROJ_st_suffix")
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.uuid.uuid4")
     def test_get_temp_project_id(self, mock_uuid: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test get_temp_project_id returns project ID."""
         # Arrange

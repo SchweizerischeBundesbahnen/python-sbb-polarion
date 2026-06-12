@@ -82,10 +82,13 @@ class TempProject:
         self.temp_project_template_id: str = template_id
         self.temp_project_template_location: Path | None = template_location
         # A project's project-group membership is derived from its location in the repository tree.
-        # Nest the project under parent_location when given (so group-scoped behaviour applies), else
-        # keep it at the root using the bare project id.
-        if parent_location:
-            self.temp_project_location: str = f"{parent_location.rstrip('/')}/{self.temp_project_id}"
+        # Nest the project under parent_location when a non-blank value is given (so group-scoped
+        # behaviour applies); a missing, empty or whitespace-only value intentionally keeps the
+        # project at the root using the bare project id. Surrounding whitespace and trailing
+        # slashes are stripped so the resulting location never contains a doubled separator.
+        normalized_parent: str = (parent_location or "").strip().rstrip("/")
+        if normalized_parent:
+            self.temp_project_location: str = f"{normalized_parent}/{self.temp_project_id}"
         else:
             self.temp_project_location = self.temp_project_id
 
@@ -114,7 +117,7 @@ class TempProject:
         # A 404 here just means the project does not exist yet, so suppress the client's non-2xx warning.
         existing_response: Response = self.polarion_api.get_project(self.temp_project_id, print_error=False)
         if existing_response.status_code == HTTPStatus.OK:
-            logger.info("'%s' already exists... nothing to do", self.temp_project_id)
+            logger.info("'%s' already exists... nothing to do", self.temp_project_location)
             return
         # Anything other than "exists" (200) or "not found" (404) is an obstacle (auth, server error)
         # that creation would not solve - surface it here with the real status instead of falling through.
@@ -160,19 +163,19 @@ class TempProject:
             },
         }
         response: Response = self.polarion_api.update_project(self.temp_project_id, data)
-        if response.status_code not in {HTTPStatus.OK, HTTPStatus.NO_CONTENT}:
+        if response.status_code != HTTPStatus.NO_CONTENT:
             logger.warning(
                 "Could not set name for project '%s' (status %s)",
-                self.temp_project_id,
+                self.temp_project_location,
                 response.status_code,
             )
 
     def _fail(self, action: str, response: Response) -> NoReturn:
-        logger.error("Error during %s project '%s'", action, self.temp_project_id)
+        logger.error("Error during %s project '%s'", action, self.temp_project_location)
         logger.debug("Response status: %s", response.status_code)
         logger.debug("Response headers: %s", response.headers)
         logger.debug("Response content: %s", response.content)
-        raise TempProjectError(f"Failed to {action} project '{self.temp_project_id}' (HTTP {response.status_code})")
+        raise TempProjectError(f"Failed to {action} project '{self.temp_project_location}' (HTTP {response.status_code})")
 
     def _wait_for_job(self, response: Response, action: str) -> None:
         """Poll the job referenced by an async 202 response until it reaches a terminal status.
@@ -204,11 +207,11 @@ class TempProject:
             if status_type == JOB_STATUS_OK:
                 return
             if status_type in JOB_STATUS_FAILURES:
-                raise TempProjectError(f"Job to {action} project '{self.temp_project_id}' ended as {status_type}: {message}")
+                raise TempProjectError(f"Job to {action} project '{self.temp_project_location}' ended as {status_type}: {message}")
             if attempt < POLL_MAX_ATTEMPTS - 1:
                 time.sleep(POLL_INTERVAL_SECONDS)
 
-        raise TempProjectError(f"Timed out waiting for {action} job '{job_id}' of project '{self.temp_project_id}'")
+        raise TempProjectError(f"Timed out waiting for {action} job '{job_id}' of project '{self.temp_project_location}'")
 
     @staticmethod
     def _safe_json(response: Response) -> JsonDict:
@@ -241,8 +244,8 @@ class TempProject:
             job_id: JsonValue = data.get("id")
             if isinstance(job_id, str) and job_id:
                 return job_id
-        logger.error("Unexpected async %s response for project '%s': %s", action, self.temp_project_id, body)
-        raise TempProjectError(f"Async {action} response for project '{self.temp_project_id}' carried no job id")
+        logger.error("Unexpected async %s response for project '%s': %s", action, self.temp_project_location, body)
+        raise TempProjectError(f"Async {action} response for project '{self.temp_project_location}' carried no job id")
 
     @staticmethod
     def _job_status(job_body: JsonDict) -> tuple[str | None, str | None]:
