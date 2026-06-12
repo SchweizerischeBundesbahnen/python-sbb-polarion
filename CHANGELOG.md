@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.0.0...v3.1.0) (2026-06-12)
+
+
+### Features
+
+* support nesting temp projects under a project group via parent_location ([#66](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/66)) ([8e6b3f0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/8e6b3f04e9f3574e49361604cafed3b95b0b4aae)), closes [#67](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/67)
+
 ## [3.0.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.1.1...v3.0.0) (2026-06-10)
 
 
