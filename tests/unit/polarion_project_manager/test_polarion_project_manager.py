@@ -145,7 +145,7 @@ class TestPolarionProjectManager(unittest.TestCase):
         result: TempProject = PolarionProjectManager.create_project(template_path=str(template_path), template_id="test_template", project_id="test_proj", project_name="Test Project")
 
         self.assertEqual(result.temp_project_id, "temp_test_project")
-        mock_temp_project.assert_called_once_with(project_id="test_proj", project_name="Test Project", template_id="test_template", template_location=template_path)
+        mock_temp_project.assert_called_once_with(project_id="test_proj", project_name="Test Project", template_id="test_template", template_location=template_path, parent_location=None)
 
     def test_create_project_file_not_found(self) -> None:
         """Test error when template file doesn't exist."""
