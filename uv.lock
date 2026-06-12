@@ -948,7 +948,7 @@ wheels = [
 
 [[package]]
 name = "python-sbb-polarion"
-version = "2.1.1"
+version = "3.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "docker" },

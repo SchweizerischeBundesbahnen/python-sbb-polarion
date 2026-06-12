@@ -103,6 +103,7 @@ class PolarionProjectManager:
         template_id: str = "custom_project_template_for_st",
         project_id: str = "elibrary",
         project_name: str = "E-Library",
+        parent_location: str | None = None,
     ) -> TempProject:
         """
         Create a temporary Polarion project from a template.
@@ -112,6 +113,8 @@ class PolarionProjectManager:
             project_id: ID for the temporary project.
             project_name: Display name for the temporary project.
             template_id: Template identifier.
+            parent_location: Repository folder (project group) to create the project under; the
+                project id is appended to it. When omitted the project is created at the root.
 
         Returns:
             TempProject instance.
@@ -136,6 +139,7 @@ class PolarionProjectManager:
                 project_name=project_name,
                 template_id=template_id,
                 template_location=template_file,
+                parent_location=parent_location,
             )
         except Exception:
             logger.exception("Failed to create project from template '%s'", template_path)

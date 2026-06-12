@@ -55,6 +55,11 @@ class TempProject:
             )
         mutate_project_id: Whether to append a UUID suffix to project_id for uniqueness
         transform_links: mapping to transform links during template upload, e.g. {"old_project_id": "new_project_id"}
+        parent_location: Repository folder (project group) to create the project under. The project id
+            is appended to it, so e.g. parent_location="Demo Projects" places the project at
+            "Demo Projects/<project_id>" and thus inside the "Demo Projects" project group. When omitted
+            the project is created at the repository root (location == project id), preserving the
+            previous default behaviour.
     """
 
     def __init__(
@@ -65,6 +70,7 @@ class TempProject:
         template_location: Path | None = None,
         mutate_project_id: bool = True,
         transform_links: SparseFields | None = None,
+        parent_location: str | None = None,
     ) -> None:
         logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -75,6 +81,13 @@ class TempProject:
         self.temp_project_name: str = project_name
         self.temp_project_template_id: str = template_id
         self.temp_project_template_location: Path | None = template_location
+        # A project's project-group membership is derived from its location in the repository tree.
+        # Nest the project under parent_location when given (so group-scoped behaviour applies), else
+        # keep it at the root using the bare project id.
+        if parent_location:
+            self.temp_project_location: str = f"{parent_location.rstrip('/')}/{self.temp_project_id}"
+        else:
+            self.temp_project_location = self.temp_project_id
 
         # Build the API clients once up front, sharing a single connection: the test-data extension
         # client is derived from the standard API's connection instead of opening a second one.
@@ -114,7 +127,7 @@ class TempProject:
         data: JsonDict = {
             "projectId": self.temp_project_id,
             "trackerPrefix": self.temp_project_id,
-            "location": self.temp_project_id,
+            "location": self.temp_project_location,
             "templateId": self.temp_project_template_id,
         }
         response: Response = self.polarion_api.create_project(data)
@@ -129,7 +142,7 @@ class TempProject:
 
         logger.info(
             "'%s' have been created in %.2f seconds",
-            self.temp_project_id,
+            self.temp_project_location,
             time.time() - start_time,
         )
 
@@ -172,7 +185,7 @@ class TempProject:
             TempProjectError: If the job fails, is cancelled, or never reaches a terminal status
         """
         job_id: str = self._job_id_from_response(response, action)
-        logger.info("Waiting for %s job '%s' of project '%s'...", action, job_id, self.temp_project_id)
+        logger.info("Waiting for %s job '%s' of project '%s'...", action, job_id, self.temp_project_location)
 
         for attempt in range(POLL_MAX_ATTEMPTS):
             job_response: Response = self.polarion_api.get_job(job_id)
@@ -275,4 +288,4 @@ class TempProject:
 
         self._wait_for_job(response, "deletion")
 
-        logger.info("'%s' have been deleted in %.2f seconds", self.temp_project_id, time.time() - start_time)
+        logger.info("'%s' have been deleted in %.2f seconds", self.temp_project_location, time.time() - start_time)
