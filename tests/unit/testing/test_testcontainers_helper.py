@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import unittest
+import zoneinfo
 from http import HTTPStatus
 from unittest.mock import Mock, patch
 
@@ -716,11 +717,12 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
         mock_setup.assert_called_once_with("http://localhost:8080")
         self.assertEqual(helper.polarion_container, mock_container)
 
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.resolve_host_timezone")
     @patch("python_sbb_polarion.testing.testcontainers_helper.time.sleep")
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.setup_polarion_container")
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.prepare_systest_extensions")
     @patch("python_sbb_polarion.testing.testcontainers_helper.DockerContainer")
-    def test_create_polarion_container_with_weasyprint(self, mock_docker_container_class: Mock, mock_prepare: Mock, mock_setup: Mock, mock_sleep: Mock) -> None:
+    def test_create_polarion_container_with_weasyprint(self, mock_docker_container_class: Mock, mock_prepare: Mock, mock_setup: Mock, mock_sleep: Mock, mock_resolve_tz: Mock) -> None:
         """Test create_polarion_container with weasyprint endpoint."""
         # Arrange
         params = PolarionContainerParameters(
@@ -739,6 +741,7 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
         mock_docker_container_class.return_value = mock_container
 
         mock_setup.return_value = "test-token"
+        mock_resolve_tz.return_value = "Etc/UTC"
 
         helper = TestContainersHelper()
         helper.systest_extensions_root = "/tmp/systest"
@@ -747,7 +750,41 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
         helper.create_polarion_container("pdf-exporter", params, "http://weasyprint:9080")
 
         # Assert
-        mock_container.with_env.assert_called_once_with("WEASYPRINT_SERVICE_ENDPOINT", "http://weasyprint:9080")
+        mock_container.with_env.assert_any_call("WEASYPRINT_SERVICE_ENDPOINT", "http://weasyprint:9080")
+        mock_container.with_env.assert_any_call("TZ", "Etc/UTC")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.resolve_host_timezone")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.time.sleep")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.setup_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.prepare_systest_extensions")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.DockerContainer")
+    def test_create_polarion_container_forwards_tz(self, mock_docker_container_class: Mock, mock_prepare: Mock, mock_setup: Mock, mock_sleep: Mock, mock_resolve_tz: Mock) -> None:
+        """Test create_polarion_container forwards the resolved host timezone to the container."""
+        # Arrange
+        params = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0", test_data_version="3.1.1")
+
+        mock_container = Mock()
+        mock_wrapped = Mock()
+        mock_wrapped.short_id = "pol789"
+        mock_container.get_wrapped_container.return_value = mock_wrapped
+        mock_container.get_exposed_port.return_value = "8080"
+        mock_container.with_bind_ports.return_value = mock_container
+        mock_container.with_name.return_value = mock_container
+        mock_container.with_volume_mapping.return_value = mock_container
+        mock_container.with_env.return_value = mock_container
+        mock_docker_container_class.return_value = mock_container
+
+        mock_setup.return_value = "test-token-tz"
+        mock_resolve_tz.return_value = "Europe/Zurich"
+
+        helper = TestContainersHelper()
+        helper.systest_extensions_root = "/tmp/systest"
+
+        # Act
+        helper.create_polarion_container("pdf-exporter", params, None)
+
+        # Assert
+        mock_container.with_env.assert_called_once_with("TZ", "Europe/Zurich")
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.time.sleep")
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.setup_polarion_container")
@@ -812,6 +849,39 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
 
         self.assertIn("Cannot setup Polarion container", str(context.exception))
         mock_tear_down.assert_called_once()
+
+
+class TestTestContainersHelperResolveHostTimezone(unittest.TestCase):
+    """Test TestContainersHelper.resolve_host_timezone method."""
+
+    @patch.dict("os.environ", {"TZ": "Europe/Zurich"})
+    @patch("python_sbb_polarion.testing.testcontainers_helper.tzlocal.get_localzone_name")
+    def test_resolve_host_timezone_from_env(self, mock_get_localzone: Mock) -> None:
+        """Test resolve_host_timezone prefers the TZ environment variable."""
+        result: str = TestContainersHelper.resolve_host_timezone()
+
+        self.assertEqual(result, "Europe/Zurich")
+        mock_get_localzone.assert_not_called()
+
+    @patch.dict("os.environ", {}, clear=True)
+    @patch("python_sbb_polarion.testing.testcontainers_helper.tzlocal.get_localzone_name")
+    def test_resolve_host_timezone_from_system(self, mock_get_localzone: Mock) -> None:
+        """Test resolve_host_timezone falls back to the system timezone when TZ is absent."""
+        mock_get_localzone.return_value = "Europe/Berlin"
+
+        result: str = TestContainersHelper.resolve_host_timezone()
+
+        self.assertEqual(result, "Europe/Berlin")
+
+    @patch.dict("os.environ", {}, clear=True)
+    @patch("python_sbb_polarion.testing.testcontainers_helper.tzlocal.get_localzone_name")
+    def test_resolve_host_timezone_defaults_to_utc(self, mock_get_localzone: Mock) -> None:
+        """Test resolve_host_timezone falls back to Etc/UTC when the timezone cannot be resolved."""
+        mock_get_localzone.side_effect = zoneinfo.ZoneInfoNotFoundError("cannot resolve timezone")
+
+        result: str = TestContainersHelper.resolve_host_timezone()
+
+        self.assertEqual(result, "Etc/UTC")
 
 
 class TestTestContainersHelperSetupPolarionContainer(unittest.TestCase):
