@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.1.0...v3.1.1) (2026-06-17)
+
+
+### Bug Fixes
+
+* increase timeout and token expiration for Polarion API ([#70](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/70)) ([d38fbbd](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/d38fbbd6143bc95d9978426378b7657eb9497cf9)), closes [#69](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/69)
+
 ## [3.1.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.0.0...v3.1.0) (2026-06-12)
 
 
