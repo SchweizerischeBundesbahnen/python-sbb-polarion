@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from python_sbb_polarion.core.base import PolarionGenericExtensionApi
-from python_sbb_polarion.extensions._json_editor import WorkItemAttachmentsMixin
+from python_sbb_polarion.extensions._json_editor import DocumentAttachmentsMixin, WorkItemAttachmentsMixin
 
 
 if TYPE_CHECKING:
@@ -16,6 +16,7 @@ __all__ = ["PolarionJsonEditorApi"]
 
 
 class PolarionJsonEditorApi(
+    DocumentAttachmentsMixin,
     WorkItemAttachmentsMixin,
     PolarionGenericExtensionApi,
 ):
@@ -23,6 +24,7 @@ class PolarionJsonEditorApi(
 
     This class combines all JSON editor functionality through mixins:
     - WorkItemAttachmentsMixin: Work item attachment operations (create, update, get)
+    - DocumentAttachmentsMixin: Document attachment operations (create, update, get)
     """
 
     def __init__(self, polarion_connection: PolarionRestApiConnection) -> None:
