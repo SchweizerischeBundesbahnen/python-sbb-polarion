@@ -52,12 +52,12 @@ class PolarionProjectManager:
         Args:
             template_dir: Directory to store project templates.
         """
-        self.template_dir: Path = Path(template_dir)
         # Validate the (potentially CLI-supplied) directory stays within the working
         # directory before touching the file system, to prevent path-injection escapes.
-        _resolve_within_base(self.template_dir, Path.cwd())
+        # Store the resolved absolute path so later operations are independent of cwd changes.
+        self.template_dir: Path = _resolve_within_base(Path(template_dir), Path.cwd())
         self.template_dir.mkdir(parents=True, exist_ok=True)
-        logger.info("Using template directory: %s", self.template_dir.resolve())
+        logger.info("Using template directory: %s", self.template_dir)
 
     def download_project(
         self,
@@ -155,7 +155,9 @@ class PolarionProjectManager:
         if template_path is None:
             template_path = PolarionProjectManager._find_first_zip_file()
 
-        template_file = Path(template_path)
+        # Confine the (potentially CLI-supplied) template path within the working directory
+        # before reading it, to prevent path-injection escapes.
+        template_file: Path = _resolve_within_base(Path(template_path), Path.cwd())
 
         if not template_file.is_file():
             logger.error("Template file not found: %s", template_path)
@@ -183,6 +185,10 @@ class PolarionProjectManager:
         if template_path is None:
             template_path = PolarionProjectManager._find_first_zip_file()
 
+        # Confine the (potentially CLI-supplied) template path within the working directory
+        # before reading it, to prevent path-injection escapes.
+        template_file: Path = _resolve_within_base(Path(template_path), Path.cwd())
+
         test_data_api: PolarionTestDataApi = GenericTestCase.create_extension_api("test-data")
         uploader: ProjectTemplateUploader = ProjectTemplateUploader(test_data_api=test_data_api)
-        uploader.upload_template(template_id=template_id, template_location=Path(template_path))
+        uploader.upload_template(template_id=template_id, template_location=template_file)

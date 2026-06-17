@@ -36,24 +36,27 @@ class TestPolarionProjectManager(unittest.TestCase):
         """Test initialization with Path object."""
         path_obj = Path("./another-test-dir")
         manager = PolarionProjectManager(template_dir=path_obj)
-        self.assertEqual(manager.template_dir, path_obj)
+        self.assertEqual(manager.template_dir, path_obj.resolve())
         path_obj.rmdir()  # Clean up
 
     def test_init_rejects_parent_traversal(self) -> None:
         """Test that a template directory escaping the working directory is rejected."""
-        escaping_dir: Path = Path("../psp-escape-outside")
+        # Validation raises before any mkdir, so the path is never created regardless of name.
+        escaping_dir: Path = Path("..") / "psp-escape-outside"
         with self.assertRaises(ValueError) as context:
             PolarionProjectManager(template_dir=escaping_dir)
         self.assertIn("escapes the allowed base directory", str(context.exception))
-        self.assertFalse(escaping_dir.exists())  # nothing should have been created
 
     def test_init_rejects_absolute_path_outside_cwd(self) -> None:
         """Test that an absolute template directory outside the working directory is rejected."""
-        outside_dir: Path = Path(tempfile.gettempdir()) / "psp-escape-abs"
-        with self.assertRaises(ValueError) as context:
-            PolarionProjectManager(template_dir=outside_dir)
-        self.assertIn("escapes the allowed base directory", str(context.exception))
-        self.assertFalse(outside_dir.exists())
+        # A real, unique directory in the system temp area, guaranteed outside the project cwd.
+        outside_dir: Path = Path(tempfile.mkdtemp())
+        try:
+            with self.assertRaises(ValueError) as context:
+                PolarionProjectManager(template_dir=outside_dir)
+            self.assertIn("escapes the allowed base directory", str(context.exception))
+        finally:
+            outside_dir.rmdir()
 
     @patch("python_sbb_polarion.polarion_project_manager.project_manager.GenericTestCase")
     def test_download_project_success(self, mock_generic_test: Mock) -> None:
@@ -168,7 +171,7 @@ class TestPolarionProjectManager(unittest.TestCase):
         result: TempProject = PolarionProjectManager.create_project(template_path=str(template_path), template_id="test_template", project_id="test_proj", project_name="Test Project")
 
         self.assertEqual(result.temp_project_id, "temp_test_project")
-        mock_temp_project.assert_called_once_with(project_id="test_proj", project_name="Test Project", template_id="test_template", template_location=template_path, parent_location=None)
+        mock_temp_project.assert_called_once_with(project_id="test_proj", project_name="Test Project", template_id="test_template", template_location=template_path.resolve(), parent_location=None)
 
     def test_create_project_file_not_found(self) -> None:
         """Test error when template file doesn't exist."""
@@ -187,6 +190,20 @@ class TestPolarionProjectManager(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             PolarionProjectManager.create_project(template_path=str(template_path), project_id="test_proj")
         self.assertIn("creation failed", str(context.exception))
+
+    def test_create_project_rejects_path_outside_cwd(self) -> None:
+        """Test that a template path escaping the working directory is rejected before any read."""
+        outside_file: str = str(Path(tempfile.gettempdir()).resolve() / "psp-escape-template.zip")
+        with self.assertRaises(ValueError) as context:
+            PolarionProjectManager.create_project(template_path=outside_file, project_id="test_proj")
+        self.assertIn("escapes the allowed base directory", str(context.exception))
+
+    def test_upload_template_rejects_path_outside_cwd(self) -> None:
+        """Test that an upload template path escaping the working directory is rejected before any read."""
+        outside_file: str = str(Path(tempfile.gettempdir()).resolve() / "psp-escape-upload.zip")
+        with self.assertRaises(ValueError) as context:
+            PolarionProjectManager.upload_template(template_path=outside_file)
+        self.assertIn("escapes the allowed base directory", str(context.exception))
 
     @patch("python_sbb_polarion.polarion_project_manager.project_manager.PolarionProjectManager._find_first_zip_file")
     @patch("python_sbb_polarion.polarion_project_manager.project_manager.TempProject")
@@ -228,7 +245,7 @@ class TestPolarionProjectManager(unittest.TestCase):
 
         PolarionProjectManager.upload_template(template_path=str(template_path), template_id="custom_template")
 
-        mock_uploader.upload_template.assert_called_once_with(template_id="custom_template", template_location=template_path)
+        mock_uploader.upload_template.assert_called_once_with(template_id="custom_template", template_location=template_path.resolve())
 
     @patch("python_sbb_polarion.polarion_project_manager.project_manager.PolarionProjectManager._find_first_zip_file")
     @patch("python_sbb_polarion.polarion_project_manager.project_manager.ProjectTemplateUploader")
