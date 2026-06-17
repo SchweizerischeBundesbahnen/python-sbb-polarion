@@ -64,6 +64,39 @@ class TestPolarionJsonEditorApi(unittest.TestCase):
         expected_url: str = f"{self.api.rest_api_url}/projects/PROJ/workitems/WI-123/attachments/attach-1/content"
         self.mock_connection.api_request_get.assert_called_once_with(expected_url, headers={Header.ACCEPT: MediaType.PLAIN})
 
+    def test_create_document_attachment(self) -> None:
+        """Test create document attachment."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        response: Response = self.api.create_document_attachment("PROJ", "_default", "Doc", "test.json")
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/PROJ/documents/_default/Doc/attachments"
+        self.mock_connection.api_request_post.assert_called_once_with(expected_url, headers={Header.ACCEPT: MediaType.PLAIN}, files={"fileName": "test.json"})
+
+    def test_update_document_attachment(self) -> None:
+        """Test update document attachment content."""
+        mock_response = Mock()
+        self.mock_connection.api_request_patch.return_value = mock_response
+
+        response: Response = self.api.update_document_attachment("PROJ", "_default", "Doc", "attach-1", '{"key": "value"}')
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/PROJ/documents/_default/Doc/attachments/attach-1"
+        self.mock_connection.api_request_patch.assert_called_once_with(expected_url, headers={Header.ACCEPT: MediaType.PLAIN}, files={"content": '{"key": "value"}'})
+
+    def test_get_document_attachment(self) -> None:
+        """Test get document attachment content."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_document_attachment("PROJ", "_default", "Doc", "attach-1")
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/PROJ/documents/_default/Doc/attachments/attach-1/content"
+        self.mock_connection.api_request_get.assert_called_once_with(expected_url, headers={Header.ACCEPT: MediaType.PLAIN})
+
 
 if __name__ == "__main__":
     unittest.main()
