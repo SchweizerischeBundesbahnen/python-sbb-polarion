@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.2](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.1.1...v3.1.2) (2026-06-17)
+
+
+### Bug Fixes
+
+* forward host timezone to Polarion JVM in container ([#75](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/75)) ([2510b6d](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/2510b6d9702f7bbe3056eee23d50e9974e27b075)), closes [#74](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/74)
+
 ## [3.1.1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.1.0...v3.1.1) (2026-06-17)
 
 
