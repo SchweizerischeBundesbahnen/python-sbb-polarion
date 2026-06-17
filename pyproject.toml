@@ -148,6 +148,7 @@ ignore = [
     "PLR0913", # too-many-arguments (case-by-case, consider refactoring)
     "PLR0915", # too-many-statements (case-by-case)
     "PLR2004", # magic-value-comparison (case-by-case, consider constants)
+    "PLW0717", # too-many-try-statements (case-by-case, try blocks group related setup/teardown)
 
     # =========================================================================
     # Type Checking - KEEP ENABLED (DO NOT ADD TC001/TC002/TC003 HERE!)
