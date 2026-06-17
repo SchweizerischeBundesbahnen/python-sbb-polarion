@@ -137,6 +137,11 @@ class TestContainersHelper:
             if weasyprint_service_endpoint:
                 container = container.with_env("WEASYPRINT_SERVICE_ENDPOINT", weasyprint_service_endpoint)
 
+            # Forward the host timezone so the Polarion JVM matches it if defined; otherwise the container defaults to UTC.
+            tz: str | None = os.environ.get("TZ")
+            if tz:
+                container = container.with_env("TZ", tz)
+
             container.start()
             if self.network:
                 self.network.connect(container.get_wrapped_container().short_id)
