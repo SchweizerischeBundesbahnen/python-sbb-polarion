@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-TIMEOUT_IN_SEC = 120
+TIMEOUT_IN_SEC = 300
 INITIAL_LOGIN = "admin"
 POLARION_EXTENSIONS_PATH = "/opt/polarion/polarion/extensions/"
 DEFAULT_ADMIN_UTILITY_VERSION = "4.0.1"
@@ -224,8 +224,8 @@ class TestContainersHelper:
     @staticmethod
     def issue_security_token(polarion_admin_utility_api: PolarionAdminUtilityApi) -> str:
         now: datetime = datetime.now()
-        now_plus_10: datetime = now + timedelta(minutes=5)
-        response: Response = polarion_admin_utility_api.create_token("test", now_plus_10.strftime("%Y-%m-%dT%H:%M:%SZ"))
+        expires_at: datetime = now + timedelta(hours=1)
+        response: Response = polarion_admin_utility_api.create_token("test", expires_at.strftime("%Y-%m-%dT%H:%M:%SZ"))
         return str(response.json()["token"])
 
     @staticmethod
