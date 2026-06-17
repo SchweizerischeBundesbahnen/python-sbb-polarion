@@ -8,12 +8,14 @@ import shutil
 import subprocess  # noqa: S404 - subprocess is required for Maven integration
 import tempfile
 import time
+import zoneinfo
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import docker
+import tzlocal
 from testcontainers.core.container import DockerContainer
 
 from python_sbb_polarion.core.base import PolarionRestApiConnection
@@ -35,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 TIMEOUT_IN_SEC = 300
+DEFAULT_TIMEZONE = "Etc/UTC"
 INITIAL_LOGIN = "admin"
 POLARION_EXTENSIONS_PATH = "/opt/polarion/polarion/extensions/"
 DEFAULT_ADMIN_UTILITY_VERSION = "4.0.1"
@@ -126,6 +129,16 @@ class TestContainersHelper:
         else:
             return base_url
 
+    @staticmethod
+    def resolve_host_timezone() -> str:
+        tz: str | None = os.environ.get("TZ")
+        if tz:
+            return tz
+        try:
+            return tzlocal.get_localzone_name()
+        except zoneinfo.ZoneInfoNotFoundError:
+            return DEFAULT_TIMEZONE
+
     def create_polarion_container(self, extension_name: str, parameters: PolarionContainerParameters, weasyprint_service_endpoint: str | None) -> tuple[str, str]:
         container_name: str = "test-polarion-container"
         port: int = 80
@@ -136,6 +149,10 @@ class TestContainersHelper:
             container: DockerContainer = DockerContainer(image=parameters.polarion_image_name).with_bind_ports(port).with_name(container_name).with_volume_mapping(self.systest_extensions_root, POLARION_EXTENSIONS_PATH)
             if weasyprint_service_endpoint:
                 container = container.with_env("WEASYPRINT_SERVICE_ENDPOINT", weasyprint_service_endpoint)
+
+            # Forward the host timezone so the Polarion JVM matches it (defaults to Etc/UTC when it cannot be resolved).
+            tz: str = self.resolve_host_timezone()
+            container = container.with_env("TZ", tz)
 
             container.start()
             if self.network:
