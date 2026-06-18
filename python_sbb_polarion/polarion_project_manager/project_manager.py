@@ -17,6 +17,31 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 
+def _resolve_within_base(candidate: Path, base: Path) -> Path:
+    """Resolve a path against a trusted base and reject path-injection escapes.
+
+    Args:
+        candidate: The (possibly externally supplied) path to validate.
+        base: The trusted base directory the candidate must stay within.
+
+    Returns:
+        The resolved candidate path, guaranteed to be inside base.
+
+    Raises:
+        ValueError: If the resolved candidate escapes base (e.g. via ``..`` or an
+            absolute path), which would allow reading or writing outside the
+            intended directory.
+    """
+    resolved_base: Path = base.resolve()
+    if candidate.is_absolute():
+        resolved: Path = candidate.resolve()
+    else:
+        resolved = (resolved_base / candidate).resolve()
+    if not resolved.is_relative_to(resolved_base):
+        raise ValueError(f"Path '{candidate}' escapes the allowed base directory '{resolved_base}'")
+    return resolved
+
+
 class PolarionProjectManager:
     """Manages download and creation of temporary Polarion project templates."""
 
@@ -27,9 +52,12 @@ class PolarionProjectManager:
         Args:
             template_dir: Directory to store project templates.
         """
-        self.template_dir = Path(template_dir)
+        # Validate the (potentially CLI-supplied) directory stays within the working
+        # directory before touching the file system, to prevent path-injection escapes.
+        # Store the resolved absolute path so later operations are independent of cwd changes.
+        self.template_dir: Path = _resolve_within_base(Path(template_dir), Path.cwd())
         self.template_dir.mkdir(parents=True, exist_ok=True)
-        logger.info("Using template directory: %s", self.template_dir.resolve())
+        logger.info("Using template directory: %s", self.template_dir)
 
     def download_project(
         self,
@@ -52,7 +80,9 @@ class PolarionProjectManager:
             ValueError: If the response content is empty.
         """
         filename: str = output_filename or f"{project_id}_remote"
-        output_path: Path = self.template_dir / f"{filename}.zip"
+        # Confine the output file to template_dir so a crafted filename/project id cannot
+        # write outside the intended directory (path injection).
+        output_path: Path = _resolve_within_base(Path(f"{filename}.zip"), self.template_dir)
 
         logger.info("Downloading project '%s' to '%s'...", project_id, output_path)
 
@@ -125,7 +155,9 @@ class PolarionProjectManager:
         if template_path is None:
             template_path = PolarionProjectManager._find_first_zip_file()
 
-        template_file = Path(template_path)
+        # Confine the (potentially CLI-supplied) template path within the working directory
+        # before reading it, to prevent path-injection escapes.
+        template_file: Path = _resolve_within_base(Path(template_path), Path.cwd())
 
         if not template_file.is_file():
             logger.error("Template file not found: %s", template_path)
@@ -153,6 +185,10 @@ class PolarionProjectManager:
         if template_path is None:
             template_path = PolarionProjectManager._find_first_zip_file()
 
+        # Confine the (potentially CLI-supplied) template path within the working directory
+        # before reading it, to prevent path-injection escapes.
+        template_file: Path = _resolve_within_base(Path(template_path), Path.cwd())
+
         test_data_api: PolarionTestDataApi = GenericTestCase.create_extension_api("test-data")
         uploader: ProjectTemplateUploader = ProjectTemplateUploader(test_data_api=test_data_api)
-        uploader.upload_template(template_id=template_id, template_location=Path(template_path))
+        uploader.upload_template(template_id=template_id, template_location=template_file)
