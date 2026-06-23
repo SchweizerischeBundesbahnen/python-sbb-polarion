@@ -32,6 +32,17 @@ class TestPolarionRestApiConnection(unittest.TestCase):
         self.assertIsNotNone(conn._HttpConnection__authorization_headers)  # type: ignore[attr-defined]
         mock_session_class.assert_called_once()
 
+    def test_activate_trial(self) -> None:
+        """Test activate_trial posts to the standard Polarion activation servlet."""
+        conn: Mock = Mock(spec=PolarionRestApiConnection)
+        expected_response: Mock = Mock()
+        conn.api_request_post.return_value = expected_response
+
+        result: Response = PolarionRestApiConnection.activate_trial(conn)
+
+        self.assertEqual(result, expected_response)
+        conn.api_request_post.assert_called_once_with("/polarion/activate/entry")
+
 
 class TestPolarionGenericExtensionApi(unittest.TestCase):
     """Test PolarionGenericExtensionApi class."""

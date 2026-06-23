@@ -10,6 +10,27 @@ from python_sbb_polarion.util.http import HttpConnection
 class PolarionRestApiConnection(HttpConnection):
     """Generic Polarion Extension REST API Connection"""
 
+    # Standard Polarion activation servlet (built into every Polarion installation,
+    # no extension required -- so not annotated as a REST API v1 / OpenAPI endpoint).
+
+    def activate_trial(self) -> Response:
+        """Activate Polarion's built-in 30-day evaluation (trial) license.
+
+        Calls Polarion's standard activation servlet (``POST /polarion/activate/entry``),
+        which is available on any vanilla Polarion installation -- the admin-utility
+        extension is *not* required. This is the programmatic equivalent of clicking
+        "Start Trial" on the Polarion activation page.
+
+        The servlet answers with a ``text/plain`` body ``{"activated": true}`` on success,
+        or ``{"activated": false, "message": ...}`` when a trial cannot be (re)activated on
+        this instance (e.g. a trial was already used or SALT licensing is enforced).
+
+        Returns:
+            Response: Response object from the activation servlet
+        """
+        url: str = "/polarion/activate/entry"
+        return self.api_request_post(url)
+
 
 class PolarionGenericExtensionApi:
     """Generic Polarion Extension REST API (Base class without settings)"""
