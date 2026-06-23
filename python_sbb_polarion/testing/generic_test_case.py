@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from python_sbb_polarion.extensions.dms_doc_connector import PolarionDmsDocConnectorApi
     from python_sbb_polarion.extensions.dms_wi_connector import PolarionDmsWiConnectorApi
     from python_sbb_polarion.extensions.docx_exporter import PolarionDocxExporterApi
+    from python_sbb_polarion.extensions.enumeration_factories import PolarionEnumerationFactoriesApi
     from python_sbb_polarion.extensions.excel_importer import PolarionExcelImporterApi
     from python_sbb_polarion.extensions.fake_services import PolarionFakeServicesApi
     from python_sbb_polarion.extensions.integrity_scanner import PolarionIntegrityScannerApi
@@ -41,6 +42,7 @@ if TYPE_CHECKING:
     from python_sbb_polarion.extensions.requirements_inspector import PolarionRequirementsInspectorApi
     from python_sbb_polarion.extensions.strictdoc_exporter import PolarionStrictDocExporterApi
     from python_sbb_polarion.extensions.test_data import PolarionTestDataApi
+    from python_sbb_polarion.extensions.vcontext import PolarionVContextApi
     from python_sbb_polarion.extensions.xml_repair import PolarionXmlRepairApi
     from python_sbb_polarion.types import JsonDict, JsonValue
 
@@ -96,6 +98,10 @@ class GenericTestCase(unittest.TestCase):
 
     @overload
     @classmethod
+    def create_extension_api(cls, extension_name: Literal["enumerationfactories"]) -> PolarionEnumerationFactoriesApi: ...
+
+    @overload
+    @classmethod
     def create_extension_api(cls, extension_name: Literal["excel-importer"]) -> PolarionExcelImporterApi: ...
 
     @overload
@@ -137,6 +143,10 @@ class GenericTestCase(unittest.TestCase):
     @overload
     @classmethod
     def create_extension_api(cls, extension_name: Literal["integrity-scanner"]) -> PolarionIntegrityScannerApi: ...
+
+    @overload
+    @classmethod
+    def create_extension_api(cls, extension_name: Literal["vcontext"]) -> PolarionVContextApi: ...
 
     @overload
     @classmethod
@@ -252,7 +262,7 @@ class GenericTestCase(unittest.TestCase):
         logger.info("Bundle name: '%s', Automatic module name: '%s', Bundle version: '%s', Bundle Build timestamp: '%s'", bundle_name, automatic_module_name, bundle_version, bundle_build_timestamp)
 
         assert bundle_vendor == "SBB AG"
-        assert automatic_module_name == f"ch.sbb.polarion.extension.{self.extension_api.extension_name.replace('-', '_')}"
+        assert automatic_module_name == self.extension_api.automatic_module_name
         assert re.match(r"^\d+\.\d+\.\d+$", bundle_version)
         assert re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$", bundle_build_timestamp)
         assert re.match(r"^\d{4}\d{2}\d{2}\d{2}\d{2}$", bundle_build_timestamp_digits_only)

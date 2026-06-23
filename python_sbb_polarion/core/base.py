@@ -35,10 +35,14 @@ class PolarionRestApiConnection(HttpConnection):
 class PolarionGenericExtensionApi:
     """Generic Polarion Extension REST API (Base class without settings)"""
 
-    def __init__(self, extension_name: str, polarion_connection: PolarionRestApiConnection) -> None:
+    def __init__(self, extension_name: str, polarion_connection: PolarionRestApiConnection, automatic_module_name: str | None = None) -> None:
         self.polarion_connection = polarion_connection
         self.extension_name = extension_name
         self.rest_api_url = f"/polarion/{extension_name}/rest/api"
+        # Java automatic module name reported by the extension's /version endpoint.
+        # Defaults to the ch.sbb.polarion.extension.* convention; custom extensions
+        # (e.g. com.polarion.alm.*) override it explicitly.
+        self.automatic_module_name = automatic_module_name if automatic_module_name is not None else f"ch.sbb.polarion.extension.{extension_name.replace('-', '_')}"
 
     # Info endpoints
 

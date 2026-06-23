@@ -406,7 +406,7 @@ admin_api = cast(PolarionAdminUtilityApi, GenericTestCase.create_extension_api("
 - `cucumber`, `diff-tool`, `dms-doc-connector`, `dms-wi-connector`
 - `docx-exporter`, `excel-importer`, `interceptor-manager`, `json-editor`
 - `mailworkflow`, `pdf-exporter`, `requirements-inspector`, `strictdoc-exporter`
-- `test-data`
+- `test-data`, `enumerationfactories`, `vcontext`
 
 **Type Checking Examples:**
 ```python

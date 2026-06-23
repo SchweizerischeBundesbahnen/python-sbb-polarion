@@ -13,6 +13,7 @@ from python_sbb_polarion.extensions.diff_tool import PolarionDiffToolApi
 from python_sbb_polarion.extensions.dms_doc_connector import PolarionDmsDocConnectorApi
 from python_sbb_polarion.extensions.dms_wi_connector import PolarionDmsWiConnectorApi
 from python_sbb_polarion.extensions.docx_exporter import PolarionDocxExporterApi
+from python_sbb_polarion.extensions.enumeration_factories import PolarionEnumerationFactoriesApi
 from python_sbb_polarion.extensions.excel_importer import PolarionExcelImporterApi
 from python_sbb_polarion.extensions.fake_services import PolarionFakeServicesApi
 from python_sbb_polarion.extensions.integrity_scanner import PolarionIntegrityScannerApi
@@ -23,6 +24,7 @@ from python_sbb_polarion.extensions.pdf_exporter import PolarionPdfExporterApi
 from python_sbb_polarion.extensions.requirements_inspector import PolarionRequirementsInspectorApi
 from python_sbb_polarion.extensions.strictdoc_exporter import PolarionStrictDocExporterApi
 from python_sbb_polarion.extensions.test_data import PolarionTestDataApi
+from python_sbb_polarion.extensions.vcontext import PolarionVContextApi
 from python_sbb_polarion.extensions.xml_repair import PolarionXmlRepairApi
 
 
@@ -42,6 +44,7 @@ class ExtensionApiFactory:
         "diff-tool": PolarionDiffToolApi,
         "dms-doc-connector": PolarionDmsDocConnectorApi,
         "dms-wi-connector": PolarionDmsWiConnectorApi,
+        "enumerationfactories": PolarionEnumerationFactoriesApi,
         "excel-importer": PolarionExcelImporterApi,
         "fake-services": PolarionFakeServicesApi,
         "interceptor-manager": PolarionInterceptorManagerApi,
@@ -53,6 +56,7 @@ class ExtensionApiFactory:
         "strictdoc-exporter": PolarionStrictDocExporterApi,
         "test-data": PolarionTestDataApi,
         "integrity-scanner": PolarionIntegrityScannerApi,
+        "vcontext": PolarionVContextApi,
         "xml-repair": PolarionXmlRepairApi,
     }
 
@@ -87,6 +91,10 @@ class ExtensionApiFactory:
     @overload
     @classmethod
     def get_extension_api_by_name(cls, extension_name: Literal["dms-wi-connector"], polarion_connection: PolarionRestApiConnection) -> PolarionDmsWiConnectorApi: ...
+
+    @overload
+    @classmethod
+    def get_extension_api_by_name(cls, extension_name: Literal["enumerationfactories"], polarion_connection: PolarionRestApiConnection) -> PolarionEnumerationFactoriesApi: ...
 
     @overload
     @classmethod
@@ -131,6 +139,10 @@ class ExtensionApiFactory:
     @overload
     @classmethod
     def get_extension_api_by_name(cls, extension_name: Literal["integrity-scanner"], polarion_connection: PolarionRestApiConnection) -> PolarionIntegrityScannerApi: ...
+
+    @overload
+    @classmethod
+    def get_extension_api_by_name(cls, extension_name: Literal["vcontext"], polarion_connection: PolarionRestApiConnection) -> PolarionVContextApi: ...
 
     @overload
     @classmethod
