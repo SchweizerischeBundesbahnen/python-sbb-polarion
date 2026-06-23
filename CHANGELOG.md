@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.2.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.1.2...v3.2.0) (2026-06-23)
+
+
+### Features
+
+* add activate_trial method to PolarionRestApiConnection ([#81](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/81)) ([f6b70b3](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/f6b70b3b787fb2abd6201b7a99b5d01151623fc2)), closes [#80](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/80)
+* support custom com.polarion.alm.* extensions (enumerationfactories, vcontext) ([#83](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/83)) ([fe70e15](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/fe70e156569f14b3f2e2bc69e8c112f7cd2d5f87)), closes [#82](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/82)
+
+
+### Bug Fixes
+
+* prevent path injection in project manager ([#78](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/78)) ([be2eb4c](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/be2eb4c1a48077ea30122b5c23636405974b994a))
+
 ## [3.1.2](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.1.1...v3.1.2) (2026-06-17)
 
 
