@@ -34,7 +34,7 @@ class TestPolarionRestApiConnection(unittest.TestCase):
 
     def test_activate_trial(self) -> None:
         """Test activate_trial posts to the standard Polarion activation servlet."""
-        conn: PolarionRestApiConnection = Mock(spec=PolarionRestApiConnection)
+        conn: Mock = Mock(spec=PolarionRestApiConnection)
         expected_response: Mock = Mock()
         conn.api_request_post.return_value = expected_response
 
