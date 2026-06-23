@@ -25,6 +25,7 @@ class TestExtensionApiFactory(unittest.TestCase):
         "diff-tool",
         "dms-doc-connector",
         "dms-wi-connector",
+        "enumerationfactories",
         "excel-importer",
         "fake-services",
         "integrity-scanner",
@@ -36,6 +37,7 @@ class TestExtensionApiFactory(unittest.TestCase):
         "requirements-inspector",
         "strictdoc-exporter",
         "test-data",
+        "vcontext",
         "xml-repair",
     }
 
@@ -63,7 +65,7 @@ class TestExtensionApiFactory(unittest.TestCase):
         registered_extensions: set[str] = set(ExtensionApiFactory._ExtensionApiFactory__extension_api_classes.keys())  # type: ignore[attr-defined]
 
         self.assertEqual(registered_extensions, self.EXPECTED_EXTENSIONS)
-        self.assertEqual(len(registered_extensions), 20, "Factory should have exactly 20 registered extensions")
+        self.assertEqual(len(registered_extensions), 22, "Factory should have exactly 22 registered extensions")
 
     def test_all_registered_extensions_can_be_created(self) -> None:
         """Test that all registered extensions can be successfully instantiated."""
