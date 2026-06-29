@@ -31,7 +31,7 @@ python-sbb-polarion-lint = "python_sbb_polarion.linter:main"
 [dependency-groups]
 dev = [
     "pre-commit==4.6.0",
-    "ruff==0.15.19",
+    "ruff==0.15.20",
     "mypy==2.1.0",
     "types-requests>=2.32.4.20250913",
     "types-paramiko>=4.0.0.20250822",
