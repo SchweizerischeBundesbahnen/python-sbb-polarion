@@ -57,28 +57,30 @@ class TestContainersHelper:
         args: argparse.Namespace = get_script_arguments()
         parameters: PolarionContainerParameters = TestContainersHelper.get_parameters(args)
 
-        # WeasyPrint: prefer an already-running service (e.g. a GitHub Actions service container)
-        # over starting our own container. The endpoint is only consumed when we also start the
-        # Polarion container ourselves; when Polarion is an external SUT it already knows its service.
-        weasyprint_service_endpoint: str | None
-        if parameters.weasyprint_service_url:
-            logger.info("Using pre-started Weasyprint service at: %s", parameters.weasyprint_service_url)
-            weasyprint_service_endpoint = parameters.weasyprint_service_url
-        elif parameters.weasyprint_service_image_name:
-            self.create_network(WEASYPRINT_NETWORK)
-            weasyprint_service_endpoint = self.create_weasyprint_service_container(parameters)
-        else:
-            weasyprint_service_endpoint = None
-
         # Polarion: connect to an already-running SUT when its URL is given, otherwise start a
         # container. The SUT is expected to be provisioned (extensions installed) by the orchestrator;
         # here we only activate the trial license and issue a security token against it.
         if parameters.polarion_sut_url:
+            # The SUT manages its own WeasyPrint, so we neither start nor wire one here.
+            if parameters.weasyprint_service_url or parameters.weasyprint_service_image_name:
+                logger.info("Polarion SUT URL is set; ignoring WeasyPrint configuration (the SUT manages its own service)")
             logger.info("Using pre-started Polarion SUT at: %s", parameters.polarion_sut_url)
             token: str = self.setup_polarion_container(parameters.polarion_sut_url)
             os.environ["APP_URL"] = parameters.polarion_sut_url
             os.environ["APP_TOKEN"] = token
         elif parameters.polarion_image_name:
+            # Resolve the WeasyPrint endpoint only when we start Polarion ourselves: prefer an
+            # already-running service (e.g. a GitHub Actions service container) over starting one.
+            weasyprint_service_endpoint: str | None
+            if parameters.weasyprint_service_url:
+                logger.info("Using pre-started Weasyprint service at: %s", parameters.weasyprint_service_url)
+                weasyprint_service_endpoint = parameters.weasyprint_service_url
+            elif parameters.weasyprint_service_image_name:
+                self.create_network(WEASYPRINT_NETWORK)
+                weasyprint_service_endpoint = self.create_weasyprint_service_container(parameters)
+            else:
+                weasyprint_service_endpoint = None
+
             app_url: str
             app_token: str
             app_url, app_token = self.create_polarion_container(extension_name, parameters, weasyprint_service_endpoint)
@@ -271,7 +273,13 @@ class TestContainersHelper:
         # with a token left over from an earlier run.
         token_name: str = "systest-" + now.strftime("%Y%m%d%H%M%S%f")
         response: Response = polarion_admin_utility_api.create_token(token_name, expires_at.strftime("%Y-%m-%dT%H:%M:%SZ"))
-        token: JsonValue = response.json().get("token") if response.status_code == HTTPStatus.OK else None
+        token: JsonValue = None
+        if response.status_code == HTTPStatus.OK:
+            try:
+                token = response.json().get("token")
+            except ValueError:
+                # 200 with a non-JSON body (e.g. a maintenance/redirect page): handled below as a failure.
+                token = None
         if not isinstance(token, str):
             raise PolarionStartupError("Failed to issue security token: status = " + str(response.status_code) + "; message = " + response.text)
         return token
