@@ -20,7 +20,7 @@ from testcontainers.core.container import DockerContainer
 
 from python_sbb_polarion.core.base import PolarionRestApiConnection
 from python_sbb_polarion.core.factory import ExtensionApiFactory
-from python_sbb_polarion.types import Header, MediaType
+from python_sbb_polarion.types import Header, JsonValue, MediaType
 from python_sbb_polarion.util.argparse import get_script_arguments
 
 
@@ -56,14 +56,29 @@ class TestContainersHelper:
     def create_test_container_if_required(self, extension_name: str) -> None:
         args: argparse.Namespace = get_script_arguments()
         parameters: PolarionContainerParameters = TestContainersHelper.get_parameters(args)
+
+        # WeasyPrint: prefer an already-running service (e.g. a GitHub Actions service container)
+        # over starting our own container. The endpoint is only consumed when we also start the
+        # Polarion container ourselves; when Polarion is an external SUT it already knows its service.
         weasyprint_service_endpoint: str | None
-        if parameters.weasyprint_service_image_name:
+        if parameters.weasyprint_service_url:
+            logger.info("Using pre-started Weasyprint service at: %s", parameters.weasyprint_service_url)
+            weasyprint_service_endpoint = parameters.weasyprint_service_url
+        elif parameters.weasyprint_service_image_name:
             self.create_network(WEASYPRINT_NETWORK)
             weasyprint_service_endpoint = self.create_weasyprint_service_container(parameters)
         else:
             weasyprint_service_endpoint = None
 
-        if parameters.polarion_image_name:
+        # Polarion: connect to an already-running SUT when its URL is given, otherwise start a
+        # container. The SUT is expected to be provisioned (extensions installed) by the orchestrator;
+        # here we only activate the trial license and issue a security token against it.
+        if parameters.polarion_sut_url:
+            logger.info("Using pre-started Polarion SUT at: %s", parameters.polarion_sut_url)
+            token: str = self.setup_polarion_container(parameters.polarion_sut_url)
+            os.environ["APP_URL"] = parameters.polarion_sut_url
+            os.environ["APP_TOKEN"] = token
+        elif parameters.polarion_image_name:
             app_url: str
             app_token: str
             app_url, app_token = self.create_polarion_container(extension_name, parameters, weasyprint_service_endpoint)
@@ -78,6 +93,8 @@ class TestContainersHelper:
         additional_bundles_artifacts: str | None = TestContainersHelper.get_parameter("TC_ADDITIONAL_BUNDLES", args.tc_additional_bundles)
         admin_utility_version: str | None = TestContainersHelper.get_parameter("TC_ADMIN_UTILITY_VERSION", args.tc_admin_utility_version)
         test_data_version: str | None = TestContainersHelper.get_parameter("TC_TEST_DATA_VERSION", args.tc_test_data_version)
+        polarion_sut_url: str | None = TestContainersHelper.get_parameter("TC_POLARION_SUT_URL", args.tc_polarion_sut_url)
+        weasyprint_service_url: str | None = TestContainersHelper.get_parameter("TC_WEASYPRINT_SERVICE_URL", args.tc_weasyprint_service_url)
         additional_bundles_list: list[ArtifactInfo] | None = TestContainersHelper.parse_additional_bundles(additional_bundles_artifacts)
         return PolarionContainerParameters(
             polarion_image_name=polarion_image_name or "",
@@ -86,6 +103,8 @@ class TestContainersHelper:
             additional_bundles=additional_bundles_list,
             admin_utility_version=admin_utility_version or "",
             test_data_version=test_data_version or "",
+            polarion_sut_url=polarion_sut_url or "",
+            weasyprint_service_url=weasyprint_service_url or "",
         )
 
     @staticmethod
@@ -210,24 +229,30 @@ class TestContainersHelper:
     @staticmethod
     def wait_for_start_and_activate(polarion_admin_utility_api: PolarionAdminUtilityApi) -> None:
         polarion_admin_utility_api.polarion_connection.set_print_error(False)
-        activate_response: Response | None = None
+        ready: bool = False
         start: float = time.time()
         try:
             while time.time() - start < TIMEOUT_IN_SEC:
-                activate_response = polarion_admin_utility_api.activate_trial_license()
-                logger.debug("Waiting for Polarion container readiness, status: %s", activate_response.status_code)
+                activate_response: Response = polarion_admin_utility_api.activate_trial_license()
+                logger.debug("Waiting for Polarion readiness, status: %s", activate_response.status_code)
                 if activate_response.status_code == HTTPStatus.SERVICE_UNAVAILABLE:
                     time.sleep(1)
                     continue
                 if activate_response.status_code == HTTPStatus.OK:
                     TestContainersHelper.check_default_activation_response(activate_response)
+                    ready = True
+                    break
+                if activate_response.status_code == HTTPStatus.CONFLICT:
+                    # Already licensed (e.g. a reused, pre-started SUT): nothing to activate, instance is ready.
+                    logger.info("Polarion license already active (status 409); treating instance as ready")
+                    ready = True
                     break
                 error_message: str = ""
                 if activate_response.content is not None:
                     error_message = activate_response.content.decode("utf-8")
                 raise PolarionStartupError("Polarion license activation failure: status = " + str(activate_response.status_code) + "; message = " + error_message)
 
-            if activate_response is not None and activate_response.status_code != HTTPStatus.OK:
+            if not ready:
                 raise PolarionStartupError("Polarion start timeout")
         finally:
             polarion_admin_utility_api.polarion_connection.set_print_error(True)
@@ -242,8 +267,14 @@ class TestContainersHelper:
     def issue_security_token(polarion_admin_utility_api: PolarionAdminUtilityApi) -> str:
         now: datetime = datetime.now()
         expires_at: datetime = now + timedelta(hours=1)
-        response: Response = polarion_admin_utility_api.create_token("test", expires_at.strftime("%Y-%m-%dT%H:%M:%SZ"))
-        return str(response.json()["token"])
+        # Use a unique token name so repeated runs against a reused, pre-started SUT do not collide
+        # with a token left over from an earlier run.
+        token_name: str = "systest-" + now.strftime("%Y%m%d%H%M%S%f")
+        response: Response = polarion_admin_utility_api.create_token(token_name, expires_at.strftime("%Y-%m-%dT%H:%M:%SZ"))
+        token: JsonValue = response.json().get("token") if response.status_code == HTTPStatus.OK else None
+        if not isinstance(token, str):
+            raise PolarionStartupError("Failed to issue security token: status = " + str(response.status_code) + "; message = " + response.text)
+        return token
 
     @staticmethod
     def copy_dependency(systest_extensions_jars_path: str, group_id: str, artifact_id: str, version: str | None) -> None:
@@ -306,6 +337,8 @@ class PolarionContainerParameters:
     additional_bundles: list[ArtifactInfo] | None
     admin_utility_version: str | None = None
     test_data_version: str | None = None
+    polarion_sut_url: str = ""
+    weasyprint_service_url: str = ""
 
 
 @dataclass
