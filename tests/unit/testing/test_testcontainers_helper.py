@@ -409,7 +409,7 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
     def test_get_parameters_all_set(self, mock_parse: Mock, mock_get_param: Mock) -> None:
         """Test get_parameters with all parameters set."""
         # Arrange
-        mock_get_param.side_effect = ["polarion:latest", "weasyprint:latest", "1.0.0", "com.example:artifact:1.0", "3.0.0", "3.1.1"]
+        mock_get_param.side_effect = ["polarion:latest", "weasyprint:latest", "1.0.0", "com.example:artifact:1.0", "3.0.0", "3.1.1", "http://polarion-sut:80", "http://weasyprint:9080"]
         mock_parse.return_value = [ArtifactInfo("com.example", "artifact", "1.0")]
 
         args = Mock()
@@ -419,6 +419,8 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         args.tc_additional_bundles = "com.example:artifact:1.0"
         args.tc_admin_utility_version = "3.0.0"
         args.tc_test_data_version = "3.1.1"
+        args.tc_polarion_sut_url = "http://polarion-sut:80"
+        args.tc_weasyprint_service_url = "http://weasyprint:9080"
 
         # Act
         result: PolarionContainerParameters = TestContainersHelper.get_parameters(args)
@@ -430,6 +432,8 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         self.assertEqual(result.extension_version, "1.0.0")
         self.assertEqual(result.admin_utility_version, "3.0.0")
         self.assertEqual(result.test_data_version, "3.1.1")
+        self.assertEqual(result.polarion_sut_url, "http://polarion-sut:80")
+        self.assertEqual(result.weasyprint_service_url, "http://weasyprint:9080")
         self.assertIsNotNone(result.additional_bundles)
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameter")
@@ -447,6 +451,8 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         args.tc_additional_bundles = None
         args.tc_admin_utility_version = None
         args.tc_test_data_version = None
+        args.tc_polarion_sut_url = None
+        args.tc_weasyprint_service_url = None
 
         # Act
         result: PolarionContainerParameters = TestContainersHelper.get_parameters(args)
@@ -457,6 +463,8 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         self.assertEqual(result.extension_version, "")
         self.assertEqual(result.admin_utility_version, "")
         self.assertEqual(result.test_data_version, "")
+        self.assertEqual(result.polarion_sut_url, "")
+        self.assertEqual(result.weasyprint_service_url, "")
         self.assertIsNone(result.additional_bundles)
 
 
@@ -600,6 +608,146 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         helper.create_test_container_if_required("pdf-exporter")
 
         # Assert - method completes without creating containers
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.setup_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_weasyprint_service_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_network")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameters")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.get_script_arguments")
+    @patch.dict("os.environ", {}, clear=True)
+    def test_create_test_container_with_prestarted_services(self, mock_get_args: Mock, mock_get_params: Mock, mock_create_network: Mock, mock_create_weasyprint: Mock, mock_create_polarion: Mock, mock_setup: Mock) -> None:
+        """Test create_test_container_if_required connects to pre-started services without starting containers."""
+        # Arrange
+        mock_get_args.return_value = Mock()
+
+        params = PolarionContainerParameters(
+            polarion_image_name="",
+            weasyprint_service_image_name="",
+            extension_version="1.0.0",
+            additional_bundles=None,
+            admin_utility_version="2.0.0",
+            test_data_version="3.1.1",
+            polarion_sut_url="http://localhost:80",
+            weasyprint_service_url="http://localhost:9080",
+        )
+        mock_get_params.return_value = params
+        mock_setup.return_value = "sut-token"
+
+        helper = TestContainersHelper()
+
+        # Act
+        helper.create_test_container_if_required("pdf-exporter")
+
+        # Assert - no container is started, only the SUT is provisioned with a token
+        mock_create_network.assert_not_called()
+        mock_create_weasyprint.assert_not_called()
+        mock_create_polarion.assert_not_called()
+        mock_setup.assert_called_once_with("http://localhost:80")
+        self.assertEqual(os.environ.get("APP_URL"), "http://localhost:80")
+        self.assertEqual(os.environ.get("APP_TOKEN"), "sut-token")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.setup_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_weasyprint_service_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_network")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameters")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.get_script_arguments")
+    @patch.dict("os.environ", {}, clear=True)
+    def test_create_test_container_sut_url_ignores_weasyprint_image(self, mock_get_args: Mock, mock_get_params: Mock, mock_create_network: Mock, mock_create_weasyprint: Mock, mock_setup: Mock) -> None:
+        """Test a WeasyPrint image is NOT started when connecting to a pre-started Polarion SUT."""
+        # Arrange
+        mock_get_args.return_value = Mock()
+
+        params = PolarionContainerParameters(
+            polarion_image_name="",
+            weasyprint_service_image_name="weasyprint:latest",
+            extension_version="1.0.0",
+            additional_bundles=None,
+            admin_utility_version="2.0.0",
+            test_data_version="3.1.1",
+            polarion_sut_url="http://localhost:80",
+        )
+        mock_get_params.return_value = params
+        mock_setup.return_value = "sut-token"
+
+        helper = TestContainersHelper()
+
+        # Act
+        helper.create_test_container_if_required("pdf-exporter")
+
+        # Assert - SUT mode never starts a WeasyPrint container, even when an image is configured
+        mock_create_network.assert_not_called()
+        mock_create_weasyprint.assert_not_called()
+        mock_setup.assert_called_once_with("http://localhost:80")
+        self.assertEqual(os.environ.get("APP_TOKEN"), "sut-token")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.setup_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_weasyprint_service_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_network")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameters")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.get_script_arguments")
+    @patch.dict("os.environ", {}, clear=True)
+    def test_create_test_container_sut_url_without_weasyprint(self, mock_get_args: Mock, mock_get_params: Mock, mock_create_network: Mock, mock_create_weasyprint: Mock, mock_setup: Mock) -> None:
+        """Test connecting to a Polarion SUT with no WeasyPrint configuration at all."""
+        # Arrange
+        mock_get_args.return_value = Mock()
+
+        params = PolarionContainerParameters(
+            polarion_image_name="",
+            weasyprint_service_image_name="",
+            extension_version="1.0.0",
+            additional_bundles=None,
+            admin_utility_version="2.0.0",
+            test_data_version="3.1.1",
+            polarion_sut_url="http://localhost:80",
+        )
+        mock_get_params.return_value = params
+        mock_setup.return_value = "sut-token"
+
+        helper = TestContainersHelper()
+
+        # Act
+        helper.create_test_container_if_required("pdf-exporter")
+
+        # Assert - only the SUT is provisioned; no WeasyPrint container/network either
+        mock_create_network.assert_not_called()
+        mock_create_weasyprint.assert_not_called()
+        mock_setup.assert_called_once_with("http://localhost:80")
+        self.assertEqual(os.environ.get("APP_URL"), "http://localhost:80")
+        self.assertEqual(os.environ.get("APP_TOKEN"), "sut-token")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_weasyprint_service_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_network")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameters")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.get_script_arguments")
+    @patch.dict("os.environ", {}, clear=True)
+    def test_create_test_container_weasyprint_url_with_polarion_image(self, mock_get_args: Mock, mock_get_params: Mock, mock_create_network: Mock, mock_create_weasyprint: Mock, mock_create_polarion: Mock) -> None:
+        """Test a pre-started WeasyPrint URL is injected into a self-started Polarion container."""
+        # Arrange
+        mock_get_args.return_value = Mock()
+
+        params = PolarionContainerParameters(
+            polarion_image_name="polarion:latest",
+            weasyprint_service_image_name="",
+            extension_version="1.0.0",
+            additional_bundles=None,
+            admin_utility_version="2.0.0",
+            test_data_version="3.1.1",
+            weasyprint_service_url="http://localhost:9080",
+        )
+        mock_get_params.return_value = params
+        mock_create_polarion.return_value = ("http://localhost:8080", "test-token")
+
+        helper = TestContainersHelper()
+
+        # Act
+        helper.create_test_container_if_required("pdf-exporter")
+
+        # Assert - no WeasyPrint container/network is started; the URL is passed to the Polarion container
+        mock_create_network.assert_not_called()
+        mock_create_weasyprint.assert_not_called()
+        mock_create_polarion.assert_called_once_with("pdf-exporter", params, "http://localhost:9080")
 
 
 class TestTestContainersHelperCreateWeasyprintServiceContainer(unittest.TestCase):
@@ -940,6 +1088,28 @@ class TestTestContainersHelperWaitForStartAndActivate(unittest.TestCase):
         mock_connection.set_print_error.assert_any_call(False)
         mock_connection.set_print_error.assert_any_call(True)
 
+    @patch("python_sbb_polarion.testing.testcontainers_helper.time.sleep")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.time.time")
+    def test_wait_for_start_and_activate_already_active(self, mock_time: Mock, mock_sleep: Mock) -> None:
+        """Test wait_for_start_and_activate treats 409 (already licensed) as ready."""
+        # Arrange
+        mock_time.side_effect = [0, 1]
+
+        mock_admin_api = Mock()
+        mock_connection = Mock()
+        mock_admin_api.polarion_connection = mock_connection
+
+        mock_response = Mock()
+        mock_response.status_code = HTTPStatus.CONFLICT
+        mock_admin_api.activate_trial_license.return_value = mock_response
+
+        # Act - should not raise
+        TestContainersHelper.wait_for_start_and_activate(mock_admin_api)
+
+        # Assert - readiness reached without error
+        mock_connection.set_print_error.assert_any_call(False)
+        mock_connection.set_print_error.assert_any_call(True)
+
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.check_default_activation_response")
     @patch("python_sbb_polarion.testing.testcontainers_helper.time.sleep")
     @patch("python_sbb_polarion.testing.testcontainers_helper.time.time")
@@ -991,6 +1161,29 @@ class TestTestContainersHelperWaitForStartAndActivate(unittest.TestCase):
         self.assertIn("Polarion license activation failure", str(context.exception))
         self.assertIn("status = 500", str(context.exception))
         mock_connection.set_print_error.assert_any_call(True)  # Should be called in finally block
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.time.sleep")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.time.time")
+    def test_wait_for_start_and_activate_error_status_no_content(self, mock_time: Mock, mock_sleep: Mock) -> None:
+        """Test wait_for_start_and_activate raises with empty message when the response has no content."""
+        # Arrange
+        mock_time.side_effect = [0, 1]
+
+        mock_admin_api = Mock()
+        mock_connection = Mock()
+        mock_admin_api.polarion_connection = mock_connection
+
+        mock_response = Mock()
+        mock_response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
+        mock_response.content = None
+        mock_admin_api.activate_trial_license.return_value = mock_response
+
+        # Act & Assert
+        with self.assertRaises(PolarionStartupError) as context:
+            TestContainersHelper.wait_for_start_and_activate(mock_admin_api)
+
+        self.assertIn("Polarion license activation failure", str(context.exception))
+        self.assertIn("message = ", str(context.exception))
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.time.sleep")
     @patch("python_sbb_polarion.testing.testcontainers_helper.time.time")
@@ -1068,11 +1261,12 @@ class TestTestContainersHelperIssueSecurityToken(unittest.TestCase):
     @patch("python_sbb_polarion.testing.testcontainers_helper.timedelta")
     @patch("python_sbb_polarion.testing.testcontainers_helper.datetime")
     def test_issue_security_token_success(self, mock_datetime_class: Mock, mock_timedelta_class: Mock) -> None:
-        """Test issue_security_token creates security token."""
+        """Test issue_security_token creates a uniquely named security token."""
         # Arrange
         from datetime import timedelta as real_timedelta
 
         mock_now = Mock()
+        mock_now.strftime.return_value = "20240101120000000000"
         mock_future = Mock()
         mock_future.strftime.return_value = "2024-01-01T12:05:00Z"
         mock_now.__add__ = Mock(return_value=mock_future)
@@ -1081,6 +1275,7 @@ class TestTestContainersHelperIssueSecurityToken(unittest.TestCase):
 
         mock_admin_api = Mock()
         mock_response = Mock()
+        mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {"token": "test-token-123"}
         mock_admin_api.create_token.return_value = mock_response
 
@@ -1090,6 +1285,42 @@ class TestTestContainersHelperIssueSecurityToken(unittest.TestCase):
         # Assert
         self.assertEqual(result, "test-token-123")
         mock_admin_api.create_token.assert_called_once()
+        # Token name is unique (timestamped), not a fixed string that could collide on a reused SUT
+        token_name: str = mock_admin_api.create_token.call_args[0][0]
+        self.assertTrue(token_name.startswith("systest-"))
+
+    def test_issue_security_token_failure_raises(self) -> None:
+        """Test issue_security_token raises PolarionStartupError when no token is returned."""
+        # Arrange
+        mock_admin_api = Mock()
+        mock_response = Mock()
+        mock_response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
+        mock_response.text = "Illegal base64 character"
+        mock_admin_api.create_token.return_value = mock_response
+
+        # Act & Assert
+        with self.assertRaises(PolarionStartupError) as context:
+            TestContainersHelper.issue_security_token(mock_admin_api)
+
+        self.assertIn("Failed to issue security token", str(context.exception))
+        self.assertIn("status = 500", str(context.exception))
+
+    def test_issue_security_token_non_json_body_raises(self) -> None:
+        """Test issue_security_token raises PolarionStartupError on a non-JSON 200 body."""
+        # Arrange
+        mock_admin_api = Mock()
+        mock_response = Mock()
+        mock_response.status_code = HTTPStatus.OK
+        mock_response.json.side_effect = ValueError("No JSON object could be decoded")
+        mock_response.text = "<html>maintenance</html>"
+        mock_admin_api.create_token.return_value = mock_response
+
+        # Act & Assert
+        with self.assertRaises(PolarionStartupError) as context:
+            TestContainersHelper.issue_security_token(mock_admin_api)
+
+        self.assertIn("Failed to issue security token", str(context.exception))
+        self.assertIn("status = 200", str(context.exception))
 
 
 class TestTestContainersHelperCreateNetwork(unittest.TestCase):
