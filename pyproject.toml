@@ -43,7 +43,7 @@ dev = [
     "python-dotenv>=1.1.1",
 ]
 test = [
-    "tox==4.57.1",
+    "tox==4.57.2",
     "tox-uv==1.35.2",
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
