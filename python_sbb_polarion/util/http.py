@@ -14,6 +14,10 @@ from requests import Response, Session, exceptions
 from python_sbb_polarion.types import AuthScheme, FileUpload, Header, JsonValue, MediaType
 
 
+# HTTP groups statuses by their first digit; 2xx is the successful class.
+SUCCESS_STATUS_CLASS = 2
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -154,7 +158,7 @@ class HttpConnection:
                 allow_redirects=allow_redirects,
             )
             # Log non-2xx responses for debugging, but still return them
-            if response.status_code // 100 != 2:
+            if response.status_code // 100 != SUCCESS_STATUS_CLASS:
                 self.__set_requests_error_occurred()
                 if print_error:
                     logger.warning("Non-2xx response received: %s %s", response.status_code, response.reason)

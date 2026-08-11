@@ -165,12 +165,10 @@ This library uses Python's standard `logging` module. All print statements have 
 import logging
 
 # Enable INFO level for all python-sbb-polarion modules
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 from python_sbb_polarion.core import PolarionApiV1
+
 api = PolarionApiV1(url="...", auth_token="...")
 ```
 
@@ -182,10 +180,10 @@ import logging
 logging.basicConfig(level=logging.WARNING)
 
 # Enable DEBUG for specific module
-logging.getLogger('python_sbb_polarion.extensions.pdf_exporter').setLevel(logging.DEBUG)
+logging.getLogger("python_sbb_polarion.extensions.pdf_exporter").setLevel(logging.DEBUG)
 
 # Disable all logging
-logging.getLogger('python_sbb_polarion').setLevel(logging.CRITICAL + 1)
+logging.getLogger("python_sbb_polarion").setLevel(logging.CRITICAL + 1)
 ```
 
 **Log levels:**
@@ -398,6 +396,7 @@ test_data.save_project_template(...)  # Full autocomplete!
 
 # ❌ OLD way - don't use cast anymore
 from typing import cast
+
 admin_api = cast(PolarionAdminUtilityApi, GenericTestCase.create_extension_api("admin-utility"))
 ```
 
@@ -413,6 +412,7 @@ admin_api = cast(PolarionAdminUtilityApi, GenericTestCase.create_extension_api("
 from http import HTTPStatus
 
 from requests import exceptions
+
 
 # ✅ Correct - complete type annotations, response handling
 def fetch_data(project_id: str) -> dict | None:
@@ -440,6 +440,7 @@ def fetch_data(project_id: str) -> dict | None:
         logger.error("Network error: %s", e)
         return None
 
+
 # ✅ Correct - ALL variables must have explicit type annotations
 url: str = f"{base_url}/projects/{project_id}/items"
 headers: dict[str, str] = {
@@ -452,6 +453,7 @@ data: JsonDict = {
     "name": "value",
 }
 
+
 # ✅ Correct - proper type initialization (no Optional needed)
 class MyClass:
     def __init__(self, name: str, value: int) -> None:
@@ -459,25 +461,30 @@ class MyClass:
         self.value: int = value  # Always int, never None
         self.optional_field: str | None = None  # Explicitly Optional
 
+
 # ❌ Wrong - missing type annotations on variables
 url = f"{base_url}/items"  # Missing `: str`
 headers = {"Accept": "application/json"}  # Missing `: dict[str, str]`
 params = {"limit": "100"}  # Missing `: dict[str, str]`
 
+
 # ❌ Wrong - missing type annotations on functions
 def process_data(items, limit):
     return {"count": min(len(items), limit)}
+
 
 # ❌ Wrong - using assert for type narrowing in production code
 def process_item(item: str | None) -> None:
     assert item is not None  # Don't use assert in production!
     print(item.upper())
 
+
 # ✅ Correct - explicit check with raise
 def process_item(item: str | None) -> None:
     if item is None:
         raise ValueError("item cannot be None")
     print(item.upper())
+
 
 # ❌ Wrong - checking for None (API methods never return None)
 response = api.get_workitem(project_id, "WI-123")
@@ -675,6 +682,7 @@ uv remove package-name           # Remove dependency
       object_id: str
       html_table: str
 
+
   # ✅ Correct - explicit mapping to JSON camelCase keys
   data: JsonDict = {
       "objectType": params.object_type,
@@ -682,10 +690,12 @@ uv remove package-name           # Remove dependency
       "htmlTable": params.html_table,
   }
 
+
   # ✅ Acceptable - TypedDict with camelCase for API kwargs
   class CollectionCheckOptions(TypedDict, total=False):
       ignoreLinkRoles: list[str] | None  # Matches JSON API schema
       ignoreWorkItemIsContainedInMultipleRevisionsErrors: bool
+
 
   # ❌ Wrong - NamedTuple with camelCase
   class AttachTableParams(NamedTuple):
@@ -755,8 +765,8 @@ Extensions provide convenience wrapper methods that delegate to base class setti
 ```python
 # Convenience wrappers (feature is pre-filled)
 api.get_style_packages_names(scope="project/test")  # pdf_exporter, docx_exporter
-api.get_mapping_names(scope="project/test")          # excel_importer
-api.get_diff_settings(name="Default")                # diff_tool
+api.get_mapping_names(scope="project/test")  # excel_importer
+api.get_diff_settings(name="Default")  # diff_tool
 
 # Equivalent base class calls
 api.get_setting_names("style-package", scope="project/test")
@@ -811,6 +821,7 @@ The `@restapi_endpoint` decorator provides explicit mapping between Python metho
 ```python
 from python_sbb_polarion.core.annotations import restapi_endpoint
 
+
 @restapi_endpoint(
     method="POST",
     path="/api/projects/{projectId}/documents/{documentName}",
@@ -821,9 +832,7 @@ from python_sbb_polarion.core.annotations import restapi_endpoint
     required_params=["projectId", "documentName"],
     response_type="binary",
 )
-def export_document(self, project_id: str, document_name: str, export_params: JsonDict,
-                    quantity: int | None = None, file_path: str | None = None) -> Response:
-    ...
+def export_document(self, project_id: str, document_name: str, export_params: JsonDict, quantity: int | None = None, file_path: str | None = None) -> Response: ...
 ```
 
 **Decorator parameters:**
@@ -862,6 +871,7 @@ Use the `@deprecated_method` decorator (from `python_sbb_polarion.core.annotatio
 
 ```python
 from python_sbb_polarion.core.annotations import deprecated_method, restapi_endpoint
+
 
 @restapi_endpoint(method="GET", path="/api/projects/{id}", path_params={"id": "project_id"}, required_params=["id"])
 @deprecated_method("PolarionApiV1.get_project")

@@ -106,10 +106,11 @@ def _fetch_from_polarion(extension_name: str) -> dict[str, Any] | None:
             return result
         # Expected: 404 (not yet implemented) or other errors
         logger.debug("Polarion endpoint not yet available (status %d): %s", response.status_code, url)
-        return None
     except requests.exceptions.RequestException as e:
         # Network errors or endpoint not available yet
         logger.debug("Polarion fetch skipped (%s): %s", e.__class__.__name__, url)
+        return None
+    else:
         return None
 
 
@@ -203,11 +204,12 @@ def fetch_openapi_from_polarion_live(extension_name: str, app_url: str, token: s
         # Try to parse as JSON anyway
         try:
             result2: dict[str, Any] = response.json()
-            return result2
         except requests.exceptions.JSONDecodeError as err:
             msg = f"Response from {url} is not valid JSON (Content-Type: {content_type})"
             logger.warning(msg)
             raise OpenAPIFetchError(msg) from err
+        else:
+            return result2
 
     msg = f"Failed to fetch OpenAPI spec: HTTP {response.status_code} from {url}"
     logger.warning(msg)
@@ -340,7 +342,7 @@ def extract_unannotated_api_methods(module_name: str) -> list[str]:
         List of method names that should probably have @restapi_endpoint but don't
     """
     # API method name prefixes that suggest the method maps to an endpoint
-    API_PREFIXES: tuple[str, ...] = (
+    api_prefixes: tuple[str, ...] = (
         "get_",
         "create_",
         "delete_",
@@ -395,7 +397,7 @@ def extract_unannotated_api_methods(module_name: str) -> list[str]:
             continue
 
         # Check if method name suggests it's an API method
-        if not any(name.startswith(prefix) for prefix in API_PREFIXES):
+        if not any(name.startswith(prefix) for prefix in api_prefixes):
             continue
 
         # Check if method has @restapi_endpoint
@@ -600,8 +602,7 @@ def endpoint_to_method_name(path: str, method: str, operation_id: str = "") -> s
     # If operation_id is provided and looks like a Python method name, use it
     if operation_id:
         # Convert camelCase to snake_case
-        operation_id = re.sub(r"(?<!^)(?=[A-Z])", "_", operation_id).lower()
-        return operation_id
+        return re.sub(r"(?<!^)(?=[A-Z])", "_", operation_id).lower()
 
     # Remove base path and leading/trailing slashes
     path = re.sub(r"^/?(polarion/[^/]+/)?rest/api/?", "", path)
@@ -624,9 +625,9 @@ def endpoint_to_method_name(path: str, method: str, operation_id: str = "") -> s
     elif method == "GET" and len(parts) > 1:
         # For GET, prepend 'get_' if not already descriptive
         if not any(verb in parts[0] for verb in ["get", "fetch", "list", "find"]):
-            parts = ["get"] + parts
+            parts = ["get", *parts]
     elif method == "DELETE":
-        parts = ["delete"] + parts
+        parts = ["delete", *parts]
 
     return "_".join(parts)
 

@@ -5,12 +5,12 @@ import os
 import pathlib
 import re
 import shutil
-import subprocess  # noqa: S404 - subprocess is required for Maven integration
+import subprocess
 import tempfile
 import time
 import zoneinfo
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
@@ -267,7 +267,7 @@ class TestContainersHelper:
 
     @staticmethod
     def issue_security_token(polarion_admin_utility_api: PolarionAdminUtilityApi) -> str:
-        now: datetime = datetime.now()
+        now: datetime = datetime.now(tz=UTC)
         expires_at: datetime = now + timedelta(hours=1)
         # Use a unique token name so repeated runs against a reused, pre-started SUT do not collide
         # with a token left over from an earlier run.

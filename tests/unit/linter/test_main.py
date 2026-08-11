@@ -151,7 +151,6 @@ def func() -> None:
 """,
                 encoding="utf-8",
             )
-            cache_dir: Path = Path(tmp_dir) / ".psp-lint-cache"
 
             # First run - should create cache
             result1: int = main([str(tmp_dir)])

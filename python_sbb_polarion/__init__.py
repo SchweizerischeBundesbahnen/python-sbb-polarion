@@ -24,7 +24,7 @@ from python_sbb_polarion.core import (
 
 # Add NullHandler to prevent "No handlers could be found" warning
 # if the application doesn't configure logging
-logging.getLogger(__name__).addHandler(logging.NullHandler())  # noqa: RUF067 - stdlib NullHandler convention for libraries
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 
 __all__ = [

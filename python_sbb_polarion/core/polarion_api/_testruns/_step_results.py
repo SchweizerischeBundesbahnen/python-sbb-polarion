@@ -284,7 +284,7 @@ class TestrunsStepResultsMixin(BaseMixin):
         required_params=["projectId", "testRunId", "testCaseProjectId", "testCaseId", "iteration", "testStepIndex"],
         response_type="json",
     )
-    def get_test_step_result_attachments(  # noqa: PLR0917
+    def get_test_step_result_attachments(  # noqa: PLR0913 - the Polarion path needs every identifier
         self,
         project_id: str,
         testrun_id: str,
@@ -292,6 +292,7 @@ class TestrunsStepResultsMixin(BaseMixin):
         test_case_id: str,
         iteration: int,
         test_step_index: int,
+        *,
         page_size: int | None = None,
         page_number: int | None = None,
         fields: SparseFields | None = None,

@@ -44,10 +44,8 @@ class SshConnection:
             self.client.load_system_host_keys()
             self.client.set_missing_host_key_policy(paramiko.RejectPolicy())
             self.client.connect(host, port=port, username=ssh_username, passphrase=ssh_private_key_password)
-            # enable SSH agent forwarding for a session
-            # https://stackoverflow.com/questions/23666600/ssh-key-forwarding-using-python-paramiko
-            # self.session = self.client.get_transport().open_session()
-            # paramiko.agent.AgentRequestHandler(self.session)
+            # To forward the SSH agent, open a session on the transport and attach
+            # paramiko.agent.AgentRequestHandler to it.
             if print_info:
                 logger.info("SSH connection established to %s:%d", host, port)
         except (paramiko.SSHException, paramiko.AuthenticationException):
@@ -84,6 +82,6 @@ class SshConnection:
             try:
                 self.client.close()
                 logger.debug("SSH connection closed")
-            except Exception:  # noqa: S110
+            except Exception:  # noqa: S110, BLE001 - a destructor must not raise during interpreter shutdown
                 # Suppress all exceptions in destructor to avoid issues during interpreter shutdown
                 pass

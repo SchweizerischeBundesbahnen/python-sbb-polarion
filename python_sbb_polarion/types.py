@@ -69,9 +69,9 @@ SparseFields: TypeAlias = dict[str, str]
 FileContent: TypeAlias = str | bytes | IO[bytes] | IO[str] | SupportsRead[bytes]
 
 # FileTuple represents the various tuple formats accepted by requests for file uploads:
-# - (filename, content)
-# - (filename, content, content_type)
-# - (filename, content, content_type, headers)
+# - (filename, content)  # noqa: ERA001 - this documents the accepted shapes
+# - (filename, content, content_type)  # noqa: ERA001
+# - (filename, content, content_type, headers)  # noqa: ERA001
 FileTuple: TypeAlias = tuple[str | None, FileContent] | tuple[str | None, FileContent, str] | tuple[str | None, FileContent, str, Mapping[str, str]]
 
 # Match requests library expectations exactly:
