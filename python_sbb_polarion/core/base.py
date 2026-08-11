@@ -74,6 +74,70 @@ class PolarionGenericExtensionApi:
         url: str = f"{self.rest_api_url}/version"
         return self.polarion_connection.api_request_get(url)
 
+    @restapi_endpoint(
+        method="GET",
+        path="/api/configuration-properties",
+        response_type="json",
+    )
+    def get_configuration_properties(self) -> Response:
+        """Get configuration properties.
+
+        Returns:
+            Response: Configuration properties from API
+        """
+        url: str = f"{self.rest_api_url}/configuration-properties"
+        return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/configuration-status",
+        query_params={
+            "scope": "scope",
+        },
+        response_type="json",
+    )
+    def get_configuration_status(self, scope: str | None = None) -> Response:
+        """Get configuration status, optionally for a single scope.
+
+        Returns:
+            Response: Configuration status from API
+        """
+        url: str = f"{self.rest_api_url}/configuration-status"
+        params: dict[str, str] = {}
+        if scope:
+            params["scope"] = scope
+        return self.polarion_connection.api_request_get(url, params=params or None)
+
+    # Documentation endpoints
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/readme",
+        response_type="json",
+    )
+    def get_readme(self) -> Response:
+        """Get the extension readme.
+
+        Returns:
+            Response: Readme document from API
+        """
+        url: str = f"{self.rest_api_url}/readme"
+        return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/user-guide",
+        response_type="json",
+    )
+    def get_user_guide(self) -> Response:
+        """Get the extension user guide.
+
+        Returns:
+            Response: User guide document from API
+        """
+        url: str = f"{self.rest_api_url}/user-guide"
+        return self.polarion_connection.api_request_get(url)
+
     # Swagger endpoints (not included in OpenAPI spec -- so not annotated)
 
     def get_swagger(self) -> Response:
