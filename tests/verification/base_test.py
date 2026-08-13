@@ -168,15 +168,15 @@ class BaseExtensionAPIVerificationTest(unittest.TestCase):
         # Check for duplicate annotations (multiple methods annotated for same endpoint)
         for endpoint_key, methods in endpoint_to_methods.items():
             if len(methods) > 1:
-                for method_name in methods:
-                    annotation_issues.append(
-                        {
-                            "method": method_name,
-                            "annotation": annotated_methods[method_name],
-                            "endpoint": None,
-                            "errors": [f"DUPLICATE ANNOTATION: Endpoint '{endpoint_key}' is annotated by multiple methods: {methods}. Each endpoint should have exactly one @restapi_endpoint."],
-                        }
-                    )
+                annotation_issues.extend(
+                    {
+                        "method": method_name,
+                        "annotation": annotated_methods[method_name],
+                        "endpoint": None,
+                        "errors": [f"DUPLICATE ANNOTATION: Endpoint '{endpoint_key}' is annotated by multiple methods: {methods}. Each endpoint should have exactly one @restapi_endpoint."],
+                    }
+                    for method_name in methods
+                )
 
         # Check for unmatched OpenAPI endpoints (missing @restapi_endpoint annotations)
         for idx, endpoint in enumerate(endpoints):
@@ -204,15 +204,15 @@ class BaseExtensionAPIVerificationTest(unittest.TestCase):
 
         # Check for API-like methods in extension class that lack @restapi_endpoint
         unannotated_methods: list[str] = extract_unannotated_api_methods(extension_name)
-        for method_name in unannotated_methods:
-            annotation_issues.append(
-                {
-                    "method": method_name,
-                    "annotation": {"method": "UNKNOWN", "path": "UNKNOWN"},
-                    "endpoint": None,
-                    "errors": [f"MISSING ANNOTATION: Method '{method_name}' looks like an API method but lacks @restapi_endpoint decorator"],
-                }
-            )
+        annotation_issues.extend(
+            {
+                "method": method_name,
+                "annotation": {"method": "UNKNOWN", "path": "UNKNOWN"},
+                "endpoint": None,
+                "errors": [f"MISSING ANNOTATION: Method '{method_name}' looks like an API method but lacks @restapi_endpoint decorator"],
+            }
+            for method_name in unannotated_methods
+        )
 
         # Build report
         total_issues: int = len(missing_methods) + len(annotation_issues)

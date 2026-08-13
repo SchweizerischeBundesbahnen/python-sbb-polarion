@@ -37,7 +37,7 @@ class TestSshConnection(unittest.TestCase):
         mock_client = Mock()
         mock_ssh_client_class.return_value = mock_client
 
-        conn = SshConnection(self.host, ssh_username=self.ssh_username)
+        SshConnection(self.host, ssh_username=self.ssh_username)
 
         # Should use port 22 by default
         mock_client.connect.assert_called_once_with(self.host, port=22, username=self.ssh_username, passphrase=None)
@@ -49,7 +49,7 @@ class TestSshConnection(unittest.TestCase):
         mock_ssh_client_class.return_value = mock_client
         custom_port: int = 2222
 
-        conn = SshConnection(self.host, port=custom_port, ssh_username=self.ssh_username)
+        SshConnection(self.host, port=custom_port, ssh_username=self.ssh_username)
 
         mock_client.connect.assert_called_once_with(self.host, port=custom_port, username=self.ssh_username, passphrase=None)
 

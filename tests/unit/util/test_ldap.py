@@ -71,7 +71,7 @@ class TestLdapConnection(unittest.TestCase):
         mock_connection.return_value = mock_conn_instance
         custom_server: str = "custom.example.com"
 
-        conn = LdapConnection(self.user_name, self.user_password, server_name=custom_server)
+        LdapConnection(self.user_name, self.user_password, server_name=custom_server)
 
         mock_server.assert_called_once_with(custom_server, use_ssl=True, get_info=unittest.mock.ANY)
 

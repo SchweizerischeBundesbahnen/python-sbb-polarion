@@ -31,20 +31,14 @@ from python_sbb_polarion.core import PolarionApiV1, ExtensionApiFactory
 from python_sbb_polarion.core.base import PolarionRestApiConnection
 
 # Create connection
-connection = PolarionRestApiConnection(
-    url="https://polarion.example.com",
-    token="your-api-token"
-)
+connection = PolarionRestApiConnection(url="https://polarion.example.com", token="your-api-token")
 
 # Use Polarion REST API v1 (based on Polarion 2606 OpenAPI spec)
 api = PolarionApiV1(connection)
 workitem = api.get_workitem("PROJECT", "ITEM-123")
 
 # Use extension APIs via factory
-pdf_api = ExtensionApiFactory.get_extension_api_by_name(
-    "pdf-exporter",
-    connection
-)
+pdf_api = ExtensionApiFactory.get_extension_api_by_name("pdf-exporter", connection)
 result = pdf_api.convert({"projectId": "PROJECT", "documentName": "doc"})
 ```
 

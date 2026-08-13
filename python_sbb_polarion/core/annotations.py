@@ -89,7 +89,7 @@ class RestApiEndpoint:
     naming_ok: bool = False
 
 
-def restapi_endpoint(
+def restapi_endpoint(  # noqa: PLR0913 - each parameter maps to a REST endpoint field
     method: str,
     path: str,
     *,

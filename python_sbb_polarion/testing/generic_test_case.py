@@ -227,7 +227,8 @@ class GenericTestCase(unittest.TestCase):
 
         try:
             return type(script_argument_value)(env_value)  # type: ignore[call-arg]
-        except Exception:
+        # Any conversion failure means the environment value does not fit; keep the default.
+        except Exception:  # noqa: BLE001
             return script_argument_value
 
     def run_test_get_version(self) -> JsonDict:
