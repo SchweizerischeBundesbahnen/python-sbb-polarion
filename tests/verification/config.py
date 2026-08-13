@@ -40,7 +40,7 @@ SKIP_EXTENSIONS_GITHUB: list[str] = [
     # package extension_name, and /api/hello as its single own endpoint. Its
     # docs/openapi.json describes that template, not the deployed extension the
     # client is written against, so there is nothing to verify here.
-    # Remove this entry once the repository carries the real source.
+    # Remove this entry once the repository carries the real source, see issue #99.
     "integrity_scanner",
 ]
 
