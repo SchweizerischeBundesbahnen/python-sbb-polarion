@@ -100,18 +100,19 @@ def _fetch_from_polarion(extension_name: str) -> dict[str, Any] | None:
 
     try:
         response: requests.Response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
-        if response.status_code == HTTPStatus.OK:
-            logger.info("Fetched OpenAPI spec from Polarion: %s", url)
-            result: dict[str, Any] = response.json()
-            return result
-        # Expected: 404 (not yet implemented) or other errors
-        logger.debug("Polarion endpoint not yet available (status %d): %s", response.status_code, url)
     except requests.exceptions.RequestException as e:
         # Network errors or endpoint not available yet
         logger.debug("Polarion fetch skipped (%s): %s", e.__class__.__name__, url)
         return None
-    else:
-        return None
+
+    if response.status_code == HTTPStatus.OK:
+        logger.info("Fetched OpenAPI spec from Polarion: %s", url)
+        result: dict[str, Any] = response.json()
+        return result
+
+    # Expected: 404 (not yet implemented) or other errors
+    logger.debug("Polarion endpoint not yet available (status %d): %s", response.status_code, url)
+    return None
 
 
 def _fetch_from_github(repo_name: str) -> dict[str, Any] | None:
@@ -208,8 +209,7 @@ def fetch_openapi_from_polarion_live(extension_name: str, app_url: str, token: s
             msg = f"Response from {url} is not valid JSON (Content-Type: {content_type})"
             logger.warning(msg)
             raise OpenAPIFetchError(msg) from err
-        else:
-            return result2
+        return result2
 
     msg = f"Failed to fetch OpenAPI spec: HTTP {response.status_code} from {url}"
     logger.warning(msg)

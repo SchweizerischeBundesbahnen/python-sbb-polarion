@@ -579,7 +579,7 @@ uv remove package-name           # Remove dependency
 - **Line Length**: 240 characters (ruff)
 - **Linter**: Ruff (replaces black, isort, flake8, pylint, pyupgrade)
 - **Rule Selection**: `ALL` with intentional ignores (see `pyproject.toml`)
-- **Max Complexity**: 10 (McCabe C901)
+- **Max Complexity**: 15 (McCabe C901)
 - **Type Checking**: ENFORCED - All code must have complete type annotations
   - Checked by: `ruff` (ALL ANN rules) + `mypy` (strict mode)
   - **NO `Any` types allowed** - all types must be specific
@@ -624,7 +624,8 @@ uv remove package-name           # Remove dependency
   # ❌ Wrong - URL concatenation for query params
   url += f"?scope={scope}&revision={revision}"
   ```
-- **Control Flow**: Explicit `if-else` blocks preferred over ternary operators (SIM108 ignored)
+- **Control Flow**: Explicit `if-else` blocks preferred over ternary operators. SIM108 is
+  enabled, so a deliberate `if-else` carries `# noqa: SIM108` and the reason
   ```python
   # ✅ Preferred - params with `or None` pattern (converts empty dict to None)
   params: dict[str, str] = {}
@@ -667,8 +668,11 @@ uv remove package-name           # Remove dependency
   ```
 - **Key Ignored Rules**:
   - Documentation rules (D100-D415) - Too verbose for internal tools
-  - Complexity metrics (PLR*) - Handle case-by-case with inline `# noqa`
-  - SIM108 (if-else-instead-of-ternary) - Explicit if-else preferred for readability
+  - `ANN401` - `Any` is correct at JSON and `**kwargs` boundaries; PSP017 still
+    enforces the wider no-`Any` rule independently
+  - Complexity is gated by thresholds rather than ignored: `max-complexity = 15`
+    and `max-args = 10`. `PLR0912`, `PLR0915` and `PLR2004` are enforced in
+    production code and relaxed only for `tests/**`
 - **Formatter**: Ruff format (Black-compatible)
 - **Import Sorting**: Ruff (isort-compatible, Google-style docstrings)
 - **NamedTuple/TypedDict naming conventions**:

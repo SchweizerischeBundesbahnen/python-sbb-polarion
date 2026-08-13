@@ -292,7 +292,6 @@ class TestrunsStepResultsMixin(BaseMixin):
         test_case_id: str,
         iteration: int,
         test_step_index: int,
-        *,
         page_size: int | None = None,
         page_number: int | None = None,
         fields: SparseFields | None = None,

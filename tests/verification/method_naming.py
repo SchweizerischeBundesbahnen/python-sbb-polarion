@@ -579,7 +579,10 @@ def validate_path_keywords_present(method_name: str, path: str) -> NamingIssue |
             missing_kw: str = important_missing[0]
             # Keep verb and middle parts, replace last with missing keyword
             suggested_name: str
-            suggested_name = f"{verb}_{'_'.join(parts[1:-1])}_{missing_kw}" if len(parts) > 2 else f"{verb}_{missing_kw}"
+            if len(parts) > 2:  # noqa: SIM108 - explicit branches read better than a 240-char ternary
+                suggested_name = f"{verb}_{'_'.join(parts[1:-1])}_{missing_kw}"
+            else:
+                suggested_name = f"{verb}_{missing_kw}"
             return NamingIssue(
                 status=ValidationStatus.SUGGESTION,
                 rule="path_keywords",
