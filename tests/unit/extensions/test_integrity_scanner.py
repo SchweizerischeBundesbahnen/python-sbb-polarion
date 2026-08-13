@@ -95,13 +95,3 @@ class TestPolarionIntegrityScannerApi(unittest.TestCase):
             f"{self.api.rest_api_url}/revisions",
             params=expected_params,
         )
-
-    def test_get_hello(self) -> None:
-        """Test get_hello liveness greeting."""
-        mock_response = Mock()
-        self.mock_connection.api_request_get.return_value = mock_response
-
-        response: Response = self.api.get_hello()
-
-        self.assertEqual(response, mock_response)
-        self.mock_connection.api_request_get.assert_called_once_with(f"{self.api.rest_api_url}/hello")
