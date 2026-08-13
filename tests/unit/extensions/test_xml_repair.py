@@ -130,3 +130,64 @@ class TestPolarionXmlRepairApi(unittest.TestCase):
             f"{self.api.rest_api_url}/repair",
             data=repair_params,
         )
+
+    def test_list_entities(self) -> None:
+        """Test list_entities without the optional subtype."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.list_entities(project_id="project1", entity_type="WORKITEM")
+
+        self.assertEqual(response, mock_response)
+        expected_params: dict[str, str] = {
+            "projectId": "project1",
+            "entityType": "WORKITEM",
+        }
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/entities",
+            params=expected_params,
+        )
+
+    def test_list_entities_with_subtype(self) -> None:
+        """Test list_entities narrowed by subtype."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.list_entities(project_id="project1", entity_type="WORKITEM", entity_subtype="task")
+
+        self.assertEqual(response, mock_response)
+        expected_params: dict[str, str] = {
+            "projectId": "project1",
+            "entityType": "WORKITEM",
+            "entitySubtype": "task",
+        }
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/entities",
+            params=expected_params,
+        )
+
+    def test_get_roles_without_scope(self) -> None:
+        """Test get_roles from RolesMixin without scope."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_roles()
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/roles",
+            params=None,
+        )
+
+    def test_get_roles_with_scope(self) -> None:
+        """Test get_roles from RolesMixin with scope."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_roles(scope="project/project1/")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/roles",
+            params={"scope": "project/project1/"},
+        )
