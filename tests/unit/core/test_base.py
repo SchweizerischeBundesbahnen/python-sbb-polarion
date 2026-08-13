@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 from python_sbb_polarion.core.base import PolarionGenericExtensionApi, PolarionGenericExtensionSettingsApi, PolarionRestApiConnection
+from python_sbb_polarion.types import Header, MediaType
 
 
 if TYPE_CHECKING:
@@ -78,6 +79,66 @@ class TestPolarionGenericExtensionApi(unittest.TestCase):
 
         self.assertEqual(result, expected_response)
         self.mock_connection.api_request_get.assert_called_once_with("/polarion/test-extension/rest/api/version")
+
+    def test_get_configuration_properties(self) -> None:
+        """Test get_configuration_properties method."""
+        expected_response: JsonDict = {"properties": [], "obsoleteProperties": []}
+        self.mock_connection.api_request_get.return_value = expected_response
+
+        result: Response = self.api.get_configuration_properties()
+
+        self.assertEqual(result, expected_response)
+        self.mock_connection.api_request_get.assert_called_once_with("/polarion/test-extension/rest/api/configuration-properties")
+
+    def test_get_configuration_status_without_scope(self) -> None:
+        """Test get_configuration_status without scope sends no params."""
+        expected_response: JsonDict = {"status": "OK"}
+        self.mock_connection.api_request_get.return_value = expected_response
+
+        result: Response = self.api.get_configuration_status()
+
+        self.assertEqual(result, expected_response)
+        self.mock_connection.api_request_get.assert_called_once_with("/polarion/test-extension/rest/api/configuration-status", params=None)
+
+    def test_get_configuration_status_with_scope(self) -> None:
+        """Test get_configuration_status with scope parameter."""
+        expected_response: JsonDict = {"status": "OK"}
+        self.mock_connection.api_request_get.return_value = expected_response
+
+        result: Response = self.api.get_configuration_status(scope="project/TEST/")
+
+        self.assertEqual(result, expected_response)
+        self.mock_connection.api_request_get.assert_called_once_with("/polarion/test-extension/rest/api/configuration-status", params={"scope": "project/TEST/"})
+
+    def test_get_readme(self) -> None:
+        """Test get_readme requests the help article as HTML."""
+        expected_response: Mock = Mock()
+        self.mock_connection.api_request_get.return_value = expected_response
+
+        result: Response = self.api.get_readme()
+
+        self.assertEqual(result, expected_response)
+        self.mock_connection.api_request_get.assert_called_once_with("/polarion/test-extension/rest/api/readme", headers={Header.ACCEPT: MediaType.HTML})
+
+    def test_get_user_guide(self) -> None:
+        """Test get_user_guide requests the help article as HTML."""
+        expected_response: Mock = Mock()
+        self.mock_connection.api_request_get.return_value = expected_response
+
+        result: Response = self.api.get_user_guide()
+
+        self.assertEqual(result, expected_response)
+        self.mock_connection.api_request_get.assert_called_once_with("/polarion/test-extension/rest/api/user-guide", headers={Header.ACCEPT: MediaType.HTML})
+
+    def test_get_disclaimer(self) -> None:
+        """Test get_disclaimer requests the help article as HTML."""
+        expected_response: Mock = Mock()
+        self.mock_connection.api_request_get.return_value = expected_response
+
+        result: Response = self.api.get_disclaimer()
+
+        self.assertEqual(result, expected_response)
+        self.mock_connection.api_request_get.assert_called_once_with("/polarion/test-extension/rest/api/disclaimer", headers={Header.ACCEPT: MediaType.HTML})
 
     def test_get_settings_default_name(self) -> None:
         """Test get_setting_content with default name."""

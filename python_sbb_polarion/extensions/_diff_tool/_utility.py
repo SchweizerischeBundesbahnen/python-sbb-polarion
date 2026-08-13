@@ -281,3 +281,102 @@ class UtilityMixin(BaseMixin):
         """
         url: str = f"{self.rest_api_url}/extension/info"
         return self.polarion_connection.api_request_get(url)
+
+    # =========================================================================
+    # Search
+    # =========================================================================
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/projects/{projectId}/collections/search",
+        path_params={
+            "projectId": "project_id",
+        },
+        query_params={
+            "query": "query",
+            "page": "page",
+            "recordsPerPage": "records_per_page",
+        },
+        required_params=["projectId"],
+        response_type="json",
+    )
+    def search_collections(self, project_id: str, query: str | None = None, page: int | None = None, records_per_page: int | None = None) -> Response:
+        """Search collections of a project.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/projects/{project_id}/collections/search"
+        params: dict[str, str] = {}
+        if query:
+            params["query"] = query
+        if page is not None:
+            params["page"] = str(page)
+        if records_per_page is not None:
+            params["recordsPerPage"] = str(records_per_page)
+        return self.polarion_connection.api_request_get(url, params=params or None)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/projects/{projectId}/workitems/search",
+        path_params={
+            "projectId": "project_id",
+        },
+        query_params={
+            "query": "query",
+            "sortBy": "sort_by",
+            "page": "page",
+            "recordsPerPage": "records_per_page",
+        },
+        required_params=["projectId"],
+        response_type="json",
+    )
+    def search_work_items(self, project_id: str, query: str | None = None, sort_by: str | None = None, page: int | None = None, records_per_page: int | None = None) -> Response:
+        """Search work items of a project.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/projects/{project_id}/workitems/search"
+        params: dict[str, str] = {}
+        if query:
+            params["query"] = query
+        if sort_by:
+            params["sortBy"] = sort_by
+        if page is not None:
+            params["page"] = str(page)
+        if records_per_page is not None:
+            params["recordsPerPage"] = str(records_per_page)
+        return self.polarion_connection.api_request_get(url, params=params or None)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/projects/{projectId}/link-roles",
+        path_params={
+            "projectId": "project_id",
+        },
+        required_params=["projectId"],
+        response_type="json",
+    )
+    def get_link_roles(self, project_id: str) -> Response:
+        """Get link roles of a project.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/projects/{project_id}/link-roles"
+        return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/queue/configuration-meta",
+        response_type="json",
+    )
+    def get_queue_configuration_meta(self) -> Response:
+        """Get the queue configuration metadata.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/queue/configuration-meta"
+        return self.polarion_connection.api_request_get(url)

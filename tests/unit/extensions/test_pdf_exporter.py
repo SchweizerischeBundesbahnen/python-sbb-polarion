@@ -846,6 +846,44 @@ class TestPolarionPdfExporterApi(unittest.TestCase):
         self.mock_connection.api_request_post.assert_called_once_with("/polarion/pdf-exporter/rest/api/settings/cover-page/names/OldName", payload="NewName", params={"scope": "project/TEST/"})
         self.assertEqual(result, mock_response)
 
+    def test_find_widgets_bulk_export_items(self) -> None:
+        """Test find_widgets_bulk_export_items method"""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        request_params: JsonDict = {
+            "projectId": "elibrary",
+            "query": "type:testrun",
+        }
+        result: Response = self.api.find_widgets_bulk_export_items(request_params)
+
+        self.assertEqual(result, mock_response)
+        self.mock_connection.api_request_post.assert_called_once_with(
+            "/polarion/pdf-exporter/rest/api/widgets/bulk-export/items",
+            data=request_params,
+            headers={Header.ACCEPT: MediaType.JSON, Header.CONTENT_TYPE: MediaType.JSON},
+        )
+
+    def test_get_export_permission_without_project(self) -> None:
+        """Test get_export_permission from ExportPermissionMixin without project"""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        result: Response = self.api.get_export_permission()
+
+        self.assertEqual(result, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with("/polarion/pdf-exporter/rest/api/permissions/export", params=None)
+
+    def test_get_export_permission_with_project(self) -> None:
+        """Test get_export_permission from ExportPermissionMixin with project"""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        result: Response = self.api.get_export_permission(project_id="elibrary")
+
+        self.assertEqual(result, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with("/polarion/pdf-exporter/rest/api/permissions/export", params={"projectId": "elibrary"})
+
 
 if __name__ == "__main__":
     unittest.main()

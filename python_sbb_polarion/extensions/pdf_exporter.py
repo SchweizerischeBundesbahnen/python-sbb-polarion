@@ -10,6 +10,7 @@ The implementation is split into mixins for better organization:
 """
 
 from python_sbb_polarion.core.base import PolarionGenericExtensionApi, PolarionGenericExtensionSettingsApi, PolarionRestApiConnection
+from python_sbb_polarion.extensions._base import ExportPermissionMixin, RolesMixin
 from python_sbb_polarion.extensions._pdf_exporter import (
     ConfigurationMixin,
     ConversionMixin,
@@ -45,6 +46,8 @@ __all__ = [
 
 
 class PolarionPdfExporterApi(
+    ExportPermissionMixin,
+    RolesMixin,
     ConversionMixin,
     SettingsMixin,
     ConfigurationMixin,

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from python_sbb_polarion.core.base import PolarionGenericExtensionApi, PolarionGenericExtensionSettingsApi
+from python_sbb_polarion.extensions._base import RolesMixin
 from python_sbb_polarion.extensions._diff_tool import (
     ConversionMixin,
     DifferenceMixin,
@@ -24,6 +25,7 @@ __all__ = ["Orientation", "PaperSize", "PolarionDiffToolApi"]
 
 
 class PolarionDiffToolApi(
+    RolesMixin,
     ConversionMixin,
     DifferenceMixin,
     MergeMixin,

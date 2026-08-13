@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from python_sbb_polarion.core.base import PolarionGenericExtensionApi, PolarionGenericExtensionSettingsApi
+from python_sbb_polarion.extensions._base import ExportPermissionMixin, RolesMixin
 from python_sbb_polarion.extensions._docx_exporter import (
     ConfigurationMixin,
     ConversionMixin,
@@ -41,6 +42,8 @@ __all__ = [
 
 
 class PolarionDocxExporterApi(
+    ExportPermissionMixin,
+    RolesMixin,
     ConversionMixin,
     SettingsMixin,
     ConfigurationMixin,
