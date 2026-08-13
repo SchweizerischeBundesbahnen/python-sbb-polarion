@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from python_sbb_polarion.core.base import PolarionGenericExtensionApi
+from python_sbb_polarion.extensions._base import DisclaimerMixin
 from python_sbb_polarion.extensions._cucumber import ExportMixin, FeaturesMixin, ImportMixin
 
 
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
 
 
 class PolarionCucumberApi(
+    DisclaimerMixin,
     FeaturesMixin,
     ExportMixin,
     ImportMixin,

@@ -83,3 +83,17 @@ class IntegrityScannerMixin(BaseMixin):
         }
         url: str = f"{self.rest_api_url}/revisions"
         return self.polarion_connection.api_request_get(url, params=params)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/hello",
+        response_type="json",
+    )
+    def get_hello(self) -> Response:
+        """Get the extension liveness greeting.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/hello"
+        return self.polarion_connection.api_request_get(url)

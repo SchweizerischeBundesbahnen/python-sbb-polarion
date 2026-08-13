@@ -126,3 +126,29 @@ class RepairMixin(BaseMixin):
         """
         url: str = f"{self.rest_api_url}/repair"
         return self.polarion_connection.api_request_post(url, data=repair_params)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/entities",
+        query_params={
+            "projectId": "project_id",
+            "entityType": "entity_type",
+            "entitySubtype": "entity_subtype",
+        },
+        required_params=["projectId", "entityType"],
+        response_type="json",
+    )
+    def list_entities(self, project_id: str, entity_type: str, entity_subtype: str | None = None) -> Response:
+        """List entities of a project by type, optionally narrowed by subtype.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/entities"
+        params: dict[str, str] = {
+            "projectId": project_id,
+            "entityType": entity_type,
+        }
+        if entity_subtype:
+            params["entitySubtype"] = entity_subtype
+        return self.polarion_connection.api_request_get(url, params=params)
