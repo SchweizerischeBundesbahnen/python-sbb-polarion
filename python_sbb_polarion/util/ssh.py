@@ -82,6 +82,7 @@ class SshConnection:
             try:
                 self.client.close()
                 logger.debug("SSH connection closed")
-            except Exception:  # noqa: S110, BLE001 - a destructor must not raise during interpreter shutdown
+            # A destructor must not raise during interpreter shutdown.
+            except Exception:  # noqa: S110, BLE001
                 # Suppress all exceptions in destructor to avoid issues during interpreter shutdown
                 pass
