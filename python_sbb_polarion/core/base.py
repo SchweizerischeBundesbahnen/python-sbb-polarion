@@ -3,7 +3,7 @@
 from requests import Response
 
 from python_sbb_polarion.core.annotations import restapi_endpoint
-from python_sbb_polarion.types import JsonDict
+from python_sbb_polarion.types import Header, JsonDict, MediaType
 from python_sbb_polarion.util.http import HttpConnection
 
 
@@ -109,34 +109,60 @@ class PolarionGenericExtensionApi:
         return self.polarion_connection.api_request_get(url, params=params or None)
 
     # Documentation endpoints
+    #
+    # The generic extension builds these three help articles at build time and serves
+    # them as text/html, so they are text responses and not JSON.
 
     @restapi_endpoint(
         method="GET",
         path="/api/readme",
-        response_type="json",
+        response_type="text",
     )
     def get_readme(self) -> Response:
         """Get the extension readme.
 
         Returns:
-            Response: Readme document from API
+            Response: Readme help article from API
         """
         url: str = f"{self.rest_api_url}/readme"
-        return self.polarion_connection.api_request_get(url)
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.HTML,
+        }
+        return self.polarion_connection.api_request_get(url, headers=headers)
 
     @restapi_endpoint(
         method="GET",
         path="/api/user-guide",
-        response_type="json",
+        response_type="text",
     )
     def get_user_guide(self) -> Response:
         """Get the extension user guide.
 
         Returns:
-            Response: User guide document from API
+            Response: User guide help article from API
         """
         url: str = f"{self.rest_api_url}/user-guide"
-        return self.polarion_connection.api_request_get(url)
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.HTML,
+        }
+        return self.polarion_connection.api_request_get(url, headers=headers)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/disclaimer",
+        response_type="text",
+    )
+    def get_disclaimer(self) -> Response:
+        """Get the extension usage disclaimer.
+
+        Returns:
+            Response: Disclaimer help article from API
+        """
+        url: str = f"{self.rest_api_url}/disclaimer"
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.HTML,
+        }
+        return self.polarion_connection.api_request_get(url, headers=headers)
 
     # Swagger endpoints (not included in OpenAPI spec -- so not annotated)
 

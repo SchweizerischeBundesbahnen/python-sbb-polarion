@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from python_sbb_polarion.core.base import PolarionGenericExtensionApi, PolarionGenericExtensionSettingsApi
 from python_sbb_polarion.extensions._api_extender import CustomFieldsMixin, RecordsMixin, RegexMixin
-from python_sbb_polarion.extensions._base import DisclaimerMixin, RolesMixin
+from python_sbb_polarion.extensions._base import RolesMixin
 
 
 if TYPE_CHECKING:
@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
 
 class PolarionApiExtenderApi(
-    DisclaimerMixin,
     RolesMixin,
     CustomFieldsMixin,
     RecordsMixin,
