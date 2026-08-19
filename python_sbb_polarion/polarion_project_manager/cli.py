@@ -93,3 +93,7 @@ def main() -> None:
     except Exception as e:  # noqa: BLE001
         logger.critical("An unhandled error occurred: %s", e)
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
