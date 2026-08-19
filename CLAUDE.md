@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-- **Version `0.0.0` in `pyproject.toml` is intentional** — the CI/CD pipeline (Release Please) sets the real version from git tags. Never change it.
+- **The version in `pyproject.toml` is pipeline-managed — never hand-edit it** — Release Please (`release-type: python` in `ci.yml`) writes the bumped version into the file in its release PR, and `build-and-publish` runs a plain `uv build` over whatever is committed. The committed value is therefore the real released version, not a `0.0.0` placeholder; hand-editing it ships a mis-versioned artifact or fights the release PR.
 - **Custom AST linter (PSP001–PSP017)** runs in `uv run tox` alongside ruff/mypy. Suppress with `# psp-ignore: PSP0XX`, NOT `# noqa`. The linter catches project-specific rules that ruff cannot enforce.
 - **All local variables must have explicit type annotations** — even obvious ones: `url: str = f"..."` not `url = f"..."`. (PSP001)
 - **No `Any`, `cast()`, or `assert` in production code** — use `JsonDict` for `dict[str, Any]`, `@overload` for type-safe factories, `raise` instead of `assert`. OK in test files. Ruff's `ANN401` is ignored because `Any` is correct at JSON and `**kwargs` boundaries, but PSP017 still enforces the wider rule. (PSP015–PSP017)
