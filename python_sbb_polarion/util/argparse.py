@@ -37,6 +37,8 @@ def get_script_arguments() -> argparse.Namespace:
 
     parser.add_argument("--tc_polarion_image_name", type=str, help="Polarion docker image")
     parser.add_argument("--tc_weasyprint_service_image_name", type=str, help="Weasyprint service docker image")
+    parser.add_argument("--tc_polarion_sut_url", type=str, help="URL of an already-running Polarion SUT; when set, no Polarion container is started")
+    parser.add_argument("--tc_weasyprint_service_url", type=str, help="URL of an already-running Weasyprint service; when set, no Weasyprint container is started")
     parser.add_argument("--tc_extension_version", type=str, help="Version of testing extension in test container")
     parser.add_argument("--tc_additional_bundles", type=str, help="Comma separated list of additional bundles in format group_id:artifact_id:version")
     parser.add_argument("--tc_admin_utility_version", type=str, help="Admin utility version")

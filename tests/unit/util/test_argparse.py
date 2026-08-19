@@ -42,6 +42,8 @@ class TestGetScriptArguments(unittest.TestCase):
             self.assertIsNone(args.smtp_password)
             self.assertIsNone(args.tc_polarion_image_name)
             self.assertIsNone(args.tc_weasyprint_service_image_name)
+            self.assertIsNone(args.tc_polarion_sut_url)
+            self.assertIsNone(args.tc_weasyprint_service_url)
             self.assertIsNone(args.tc_extension_version)
             self.assertIsNone(args.tc_additional_bundles)
             self.assertIsNone(args.tc_admin_utility_version)
@@ -142,6 +144,18 @@ class TestGetScriptArguments(unittest.TestCase):
             args: argparse.Namespace = get_script_arguments()
             self.assertEqual(args.tc_polarion_image_name, "polarion:latest")
             self.assertEqual(args.tc_weasyprint_service_image_name, "weasyprint:latest")
+
+    def test_tc_polarion_sut_url_argument(self) -> None:
+        """Test --tc_polarion_sut_url argument."""
+        with patch.object(sys, "argv", ["script.py", "--tc_polarion_sut_url", "http://localhost:80"]):
+            args: argparse.Namespace = get_script_arguments()
+            self.assertEqual(args.tc_polarion_sut_url, "http://localhost:80")
+
+    def test_tc_weasyprint_service_url_argument(self) -> None:
+        """Test --tc_weasyprint_service_url argument."""
+        with patch.object(sys, "argv", ["script.py", "--tc_weasyprint_service_url", "http://localhost:9080"]):
+            args: argparse.Namespace = get_script_arguments()
+            self.assertEqual(args.tc_weasyprint_service_url, "http://localhost:9080")
 
     def test_tc_extension_version_argument(self) -> None:
         """Test --tc_extension_version argument."""

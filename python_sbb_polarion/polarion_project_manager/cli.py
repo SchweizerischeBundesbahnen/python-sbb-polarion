@@ -89,7 +89,8 @@ def main() -> None:
     except FileNotFoundError as e:
         logger.critical("File not found: %s", e)
         sys.exit(2)
-    except Exception as e:
+    # The CLI top level reports and exits non-zero.
+    except Exception as e:  # noqa: BLE001
         logger.critical("An unhandled error occurred: %s", e)
         sys.exit(1)
 

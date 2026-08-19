@@ -97,3 +97,90 @@ class WorkItemAttachmentsMixin(BaseMixin):
             Header.ACCEPT: MediaType.PLAIN,
         }
         return self.polarion_connection.api_request_get(url, headers=headers)
+
+
+class DocumentAttachmentsMixin(BaseMixin):
+    """Document attachments operations."""
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/projects/{projectId}/documents/{spaceId}/{documentName}/attachments",
+        path_params={
+            "projectId": "project_id",
+            "spaceId": "space_id",
+            "documentName": "document_name",
+        },
+        multipart_fields={
+            "fileName": "file_name",
+        },
+        required_params=["projectId", "spaceId", "documentName"],
+        response_type="text",
+    )
+    def create_document_attachment(self, project_id: str, space_id: str, document_name: str, file_name: str) -> Response:
+        """Create an attachment
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/projects/{project_id}/documents/{space_id}/{document_name}/attachments"
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.PLAIN,
+        }
+        files: FilesDict = {
+            "fileName": file_name,
+        }
+        return self.polarion_connection.api_request_post(url, headers=headers, files=files)
+
+    @restapi_endpoint(
+        method="PATCH",
+        path="/api/projects/{projectId}/documents/{spaceId}/{documentName}/attachments/{attachmentId}",
+        path_params={
+            "projectId": "project_id",
+            "spaceId": "space_id",
+            "documentName": "document_name",
+            "attachmentId": "attachment_id",
+        },
+        multipart_fields={
+            "content": "content",
+        },
+        required_params=["projectId", "spaceId", "documentName", "attachmentId"],
+        response_type="text",
+    )
+    def update_document_attachment(self, project_id: str, space_id: str, document_name: str, attachment_id: str, content: str) -> Response:
+        """Update attachment content
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/projects/{project_id}/documents/{space_id}/{document_name}/attachments/{attachment_id}"
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.PLAIN,
+        }
+        files: FilesDict = {
+            "content": content,
+        }
+        return self.polarion_connection.api_request_patch(url, headers=headers, files=files)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/projects/{projectId}/documents/{spaceId}/{documentName}/attachments/{attachmentId}/content",
+        path_params={
+            "projectId": "project_id",
+            "spaceId": "space_id",
+            "documentName": "document_name",
+            "attachmentId": "attachment_id",
+        },
+        required_params=["projectId", "spaceId", "documentName", "attachmentId"],
+        response_type="text",
+    )
+    def get_document_attachment(self, project_id: str, space_id: str, document_name: str, attachment_id: str) -> Response:
+        """Get attachment content
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/projects/{project_id}/documents/{space_id}/{document_name}/attachments/{attachment_id}/content"
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.PLAIN,
+        }
+        return self.polarion_connection.api_request_get(url, headers=headers)

@@ -1,5 +1,84 @@
 # Changelog
 
+## [3.3.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.2.0...v3.3.0) (2026-06-29)
+
+
+### Features
+
+* connect to pre-started polarion/weasyprint ([#84](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/84)) ([df7682e](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/df7682e186ecca2f8416bfed5843fc4cfa74d496)), closes [#85](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/85)
+
+## [3.2.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.1.2...v3.2.0) (2026-06-23)
+
+
+### Features
+
+* add activate_trial method to PolarionRestApiConnection ([#81](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/81)) ([f6b70b3](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/f6b70b3b787fb2abd6201b7a99b5d01151623fc2)), closes [#80](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/80)
+* support custom com.polarion.alm.* extensions (enumerationfactories, vcontext) ([#83](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/83)) ([fe70e15](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/fe70e156569f14b3f2e2bc69e8c112f7cd2d5f87)), closes [#82](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/82)
+
+
+### Bug Fixes
+
+* prevent path injection in project manager ([#78](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/78)) ([be2eb4c](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/be2eb4c1a48077ea30122b5c23636405974b994a))
+
+## [3.1.2](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.1.1...v3.1.2) (2026-06-17)
+
+
+### Bug Fixes
+
+* forward host timezone to Polarion JVM in container ([#75](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/75)) ([2510b6d](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/2510b6d9702f7bbe3056eee23d50e9974e27b075)), closes [#74](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/74)
+
+## [3.1.1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.1.0...v3.1.1) (2026-06-17)
+
+
+### Bug Fixes
+
+* increase timeout and token expiration for Polarion API ([#70](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/70)) ([d38fbbd](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/d38fbbd6143bc95d9978426378b7657eb9497cf9)), closes [#69](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/69)
+
+## [3.1.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.0.0...v3.1.0) (2026-06-12)
+
+
+### Features
+
+* support nesting temp projects under a project group via parent_location ([#66](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/66)) ([8e6b3f0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/8e6b3f04e9f3574e49361604cafed3b95b0b4aae)), closes [#67](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/67)
+
+## [3.0.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.1.1...v3.0.0) (2026-06-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* deprecate admin utility methods in favor of standard Polarion API ([#65](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/65))
+* add new endpoints for LLMs and document operations in Polarion 2606 ([#61](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/61))
+
+### Features
+
+* add new endpoints for LLMs and document operations in Polarion 2606 ([#61](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/61)) ([673cb34](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/673cb349363c64566b21d43890a7c70e41c69e94)), closes [#60](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/60)
+* deprecate admin utility methods in favor of standard Polarion API ([#65](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/65)) ([ed0c069](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/ed0c069c90ac0af6d5b05341f73162a62e325b7d)), closes [#62](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/62)
+* enhance project management with asynchronous creation and deletion using standard Polarion REST API ([#64](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/64)) ([072aae1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/072aae1f20384a5d54fe2a544ff6bb5527432977)), closes [#62](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/62)
+
+## [2.1.1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.1.0...v2.1.1) (2026-06-09)
+
+
+### Bug Fixes
+
+* xml-repair endpoints actualization ([#58](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/58)) ([4aaba5a](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/4aaba5a338ca8c5fd1cbc3327110706fe78f4bda))
+
+## [2.1.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.0.3...v2.1.0) (2026-06-01)
+
+
+### Features
+
+* Integrity-Scanner extension ([#55](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/55)) ([1759ca8](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/1759ca8723601356dc893f595868c1f83516f5d9)), closes [#54](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/54)
+
+## [2.0.3](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.0.2...v2.0.3) (2026-04-08)
+
+
+### Bug Fixes
+
+* add pull-requests:read to actionlint caller permissions ([#44](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/44)) ([83b486f](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/83b486f9528540c1b05f5432acda2097575d097c))
+* add pull-requests:read to actionlint caller permissions ([#46](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/46)) ([83b486f](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/83b486f9528540c1b05f5432acda2097575d097c))
+* not all endpoints declared for xml-repair ([#51](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/51)) ([9df641a](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/9df641af2f07d06cd1e0612ea7a0d37548782213)), closes [#50](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/50)
+* use github.ref_name for SonarCloud push scan branch name ([#42](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/42)) ([ffcdf47](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/ffcdf4776a5f789dff27e0961992f5d9ee5da25d)), closes [#27](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/27)
+
 ## [2.0.2](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v2.0.1...v2.0.2) (2026-03-30)
 
 

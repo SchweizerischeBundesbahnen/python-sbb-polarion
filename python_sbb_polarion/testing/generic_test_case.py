@@ -31,8 +31,10 @@ if TYPE_CHECKING:
     from python_sbb_polarion.extensions.dms_doc_connector import PolarionDmsDocConnectorApi
     from python_sbb_polarion.extensions.dms_wi_connector import PolarionDmsWiConnectorApi
     from python_sbb_polarion.extensions.docx_exporter import PolarionDocxExporterApi
+    from python_sbb_polarion.extensions.enumeration_factories import PolarionEnumerationFactoriesApi
     from python_sbb_polarion.extensions.excel_importer import PolarionExcelImporterApi
     from python_sbb_polarion.extensions.fake_services import PolarionFakeServicesApi
+    from python_sbb_polarion.extensions.integrity_scanner import PolarionIntegrityScannerApi
     from python_sbb_polarion.extensions.interceptor_manager import PolarionInterceptorManagerApi
     from python_sbb_polarion.extensions.json_editor import PolarionJsonEditorApi
     from python_sbb_polarion.extensions.mailworkflow import PolarionMailWorkflowApi
@@ -40,6 +42,7 @@ if TYPE_CHECKING:
     from python_sbb_polarion.extensions.requirements_inspector import PolarionRequirementsInspectorApi
     from python_sbb_polarion.extensions.strictdoc_exporter import PolarionStrictDocExporterApi
     from python_sbb_polarion.extensions.test_data import PolarionTestDataApi
+    from python_sbb_polarion.extensions.vcontext import PolarionVContextApi
     from python_sbb_polarion.extensions.xml_repair import PolarionXmlRepairApi
     from python_sbb_polarion.types import JsonDict, JsonValue
 
@@ -95,6 +98,10 @@ class GenericTestCase(unittest.TestCase):
 
     @overload
     @classmethod
+    def create_extension_api(cls, extension_name: Literal["enumerationfactories"]) -> PolarionEnumerationFactoriesApi: ...
+
+    @overload
+    @classmethod
     def create_extension_api(cls, extension_name: Literal["excel-importer"]) -> PolarionExcelImporterApi: ...
 
     @overload
@@ -135,6 +142,14 @@ class GenericTestCase(unittest.TestCase):
 
     @overload
     @classmethod
+    def create_extension_api(cls, extension_name: Literal["integrity-scanner"]) -> PolarionIntegrityScannerApi: ...
+
+    @overload
+    @classmethod
+    def create_extension_api(cls, extension_name: Literal["vcontext"]) -> PolarionVContextApi: ...
+
+    @overload
+    @classmethod
     def create_extension_api(cls, extension_name: Literal["xml-repair"]) -> PolarionXmlRepairApi: ...
 
     @overload
@@ -148,12 +163,34 @@ class GenericTestCase(unittest.TestCase):
         Returns:
             PolarionGenericExtensionApi: Configured extension API instance
         """
+        polarion_connection: PolarionRestApiConnection = cls.__create_connection()
+        return ExtensionApiFactory.get_extension_api_by_name(extension_name=extension_name, polarion_connection=polarion_connection)
+
+    @classmethod
+    def create_polarion_api(cls) -> PolarionApiV1:
+        """Create the standard Polarion REST API (PolarionApiV1) client.
+
+        Builds a connection from APP_URL/APP_TOKEN parameters, mirroring create_extension_api.
+
+        Returns:
+            PolarionApiV1: Configured standard Polarion REST API client
+        """
+        cls.__create_connection()
+        return cls.__polarion_api
+
+    @classmethod
+    def __create_connection(cls) -> PolarionRestApiConnection:
+        """Build a Polarion connection from APP_URL/APP_TOKEN and cache a PolarionApiV1 client.
+
+        Returns:
+            PolarionRestApiConnection: Configured connection to the Polarion REST API
+        """
         app_url: str
         app_token: str
         app_url, app_token = cls.__get_parameters()
         polarion_connection = PolarionRestApiConnection(url=app_url, token=app_token)
         cls.__polarion_api = PolarionApiV1(polarion_connection)
-        return ExtensionApiFactory.get_extension_api_by_name(extension_name=extension_name, polarion_connection=polarion_connection)
+        return polarion_connection
 
     @classmethod
     def __get_parameters(cls) -> tuple[str, str]:
@@ -190,7 +227,8 @@ class GenericTestCase(unittest.TestCase):
 
         try:
             return type(script_argument_value)(env_value)  # type: ignore[call-arg]
-        except Exception:
+        # Any conversion failure means the environment value does not fit; keep the default.
+        except Exception:  # noqa: BLE001
             return script_argument_value
 
     def run_test_get_version(self) -> JsonDict:
@@ -225,7 +263,7 @@ class GenericTestCase(unittest.TestCase):
         logger.info("Bundle name: '%s', Automatic module name: '%s', Bundle version: '%s', Bundle Build timestamp: '%s'", bundle_name, automatic_module_name, bundle_version, bundle_build_timestamp)
 
         assert bundle_vendor == "SBB AG"
-        assert automatic_module_name == f"ch.sbb.polarion.extension.{self.extension_api.extension_name.replace('-', '_')}"
+        assert automatic_module_name == self.extension_api.automatic_module_name
         assert re.match(r"^\d+\.\d+\.\d+$", bundle_version)
         assert re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$", bundle_build_timestamp)
         assert re.match(r"^\d{4}\d{2}\d{2}\d{2}\d{2}$", bundle_build_timestamp_digits_only)

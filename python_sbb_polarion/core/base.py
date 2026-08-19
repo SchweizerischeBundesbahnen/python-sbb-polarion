@@ -3,21 +3,46 @@
 from requests import Response
 
 from python_sbb_polarion.core.annotations import restapi_endpoint
-from python_sbb_polarion.types import JsonDict
+from python_sbb_polarion.types import Header, JsonDict, MediaType
 from python_sbb_polarion.util.http import HttpConnection
 
 
 class PolarionRestApiConnection(HttpConnection):
     """Generic Polarion Extension REST API Connection"""
 
+    # Standard Polarion activation servlet (built into every Polarion installation,
+    # no extension required -- so not annotated as a REST API v1 / OpenAPI endpoint).
+
+    def activate_trial(self) -> Response:
+        """Activate Polarion's built-in 30-day evaluation (trial) license.
+
+        Calls Polarion's standard activation servlet (``POST /polarion/activate/entry``),
+        which is available on any vanilla Polarion installation -- the admin-utility
+        extension is *not* required. This is the programmatic equivalent of clicking
+        "Start Trial" on the Polarion activation page.
+
+        The servlet answers with a ``text/plain`` body ``{"activated": true}`` on success,
+        or ``{"activated": false, "message": ...}`` when a trial cannot be (re)activated on
+        this instance (e.g. a trial was already used or SALT licensing is enforced).
+
+        Returns:
+            Response: Response object from the activation servlet
+        """
+        url: str = "/polarion/activate/entry"
+        return self.api_request_post(url)
+
 
 class PolarionGenericExtensionApi:
     """Generic Polarion Extension REST API (Base class without settings)"""
 
-    def __init__(self, extension_name: str, polarion_connection: PolarionRestApiConnection) -> None:
+    def __init__(self, extension_name: str, polarion_connection: PolarionRestApiConnection, automatic_module_name: str | None = None) -> None:
         self.polarion_connection = polarion_connection
         self.extension_name = extension_name
         self.rest_api_url = f"/polarion/{extension_name}/rest/api"
+        # Java automatic module name reported by the extension's /version endpoint.
+        # Defaults to the ch.sbb.polarion.extension.* convention; custom extensions
+        # (e.g. com.polarion.alm.*) override it explicitly.
+        self.automatic_module_name = automatic_module_name if automatic_module_name is not None else f"ch.sbb.polarion.extension.{extension_name.replace('-', '_')}"
 
     # Info endpoints
 
@@ -48,6 +73,96 @@ class PolarionGenericExtensionApi:
         """
         url: str = f"{self.rest_api_url}/version"
         return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/configuration-properties",
+        response_type="json",
+    )
+    def get_configuration_properties(self) -> Response:
+        """Get configuration properties.
+
+        Returns:
+            Response: Configuration properties from API
+        """
+        url: str = f"{self.rest_api_url}/configuration-properties"
+        return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/configuration-status",
+        query_params={
+            "scope": "scope",
+        },
+        response_type="json",
+    )
+    def get_configuration_status(self, scope: str | None = None) -> Response:
+        """Get configuration status, optionally for a single scope.
+
+        Returns:
+            Response: Configuration status from API
+        """
+        url: str = f"{self.rest_api_url}/configuration-status"
+        params: dict[str, str] = {}
+        if scope:
+            params["scope"] = scope
+        return self.polarion_connection.api_request_get(url, params=params or None)
+
+    # Documentation endpoints
+    #
+    # The generic extension builds these three help articles at build time and serves
+    # them as text/html, so they are text responses and not JSON.
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/readme",
+        response_type="text",
+    )
+    def get_readme(self) -> Response:
+        """Get the extension readme.
+
+        Returns:
+            Response: Readme help article from API
+        """
+        url: str = f"{self.rest_api_url}/readme"
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.HTML,
+        }
+        return self.polarion_connection.api_request_get(url, headers=headers)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/user-guide",
+        response_type="text",
+    )
+    def get_user_guide(self) -> Response:
+        """Get the extension user guide.
+
+        Returns:
+            Response: User guide help article from API
+        """
+        url: str = f"{self.rest_api_url}/user-guide"
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.HTML,
+        }
+        return self.polarion_connection.api_request_get(url, headers=headers)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/disclaimer",
+        response_type="text",
+    )
+    def get_disclaimer(self) -> Response:
+        """Get the extension usage disclaimer.
+
+        Returns:
+            Response: Disclaimer help article from API
+        """
+        url: str = f"{self.rest_api_url}/disclaimer"
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.HTML,
+        }
+        return self.polarion_connection.api_request_get(url, headers=headers)
 
     # Swagger endpoints (not included in OpenAPI spec -- so not annotated)
 

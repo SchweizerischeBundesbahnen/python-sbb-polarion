@@ -158,7 +158,7 @@ class TestSshTunnelConnection(unittest.TestCase):
         mock_tunnel.local_bind_port = 12345
         mock_open_tunnel.return_value = mock_tunnel
 
-        conn = SshTunnelConnection(
+        SshTunnelConnection(
             self.host,
             self.port,
             ssh_port=2222,

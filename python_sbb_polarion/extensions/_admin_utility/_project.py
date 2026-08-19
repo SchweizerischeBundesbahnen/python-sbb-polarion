@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from python_sbb_polarion.core.annotations import restapi_endpoint
+from python_sbb_polarion.core.annotations import deprecated_method, restapi_endpoint
 from python_sbb_polarion.extensions._base import BaseMixin
 
 
@@ -24,8 +24,14 @@ class ProjectMixin(BaseMixin):
         helper_params=["project_id", "project_name", "template_id"],
         required_params=["__request_body__"],
     )
+    @deprecated_method("PolarionApiV1.create_project")
     def create_project(self, project_id: str, project_name: str, template_id: str) -> Response:
         """Create project from specified project template
+
+        .. deprecated::
+            Use ``PolarionApiV1.create_project`` instead. The standard Polarion REST API v1
+            (``POST /projects/actions/createProject``) covers project creation since Polarion 2606.
+            Note: the standard endpoint requires an explicit ``location`` (this method hardcoded it).
 
         Returns:
             Response: Response object from the API call
@@ -48,8 +54,14 @@ class ProjectMixin(BaseMixin):
         helper_params=["template_id"],
         required_params=["projectId"],
     )
+    @deprecated_method("PolarionApiV1.create_testruns")
     def create_test_run_template(self, project_id: str, template_id: str) -> Response:
         """Create test run template
+
+        .. deprecated::
+            Use ``PolarionApiV1.create_testruns`` with ``isTemplate: true`` instead.
+            The standard Polarion REST API v1 creates a test run template via
+            ``POST /projects/{projectId}/testruns``.
 
         Returns:
             Response: Response object from the API call
@@ -68,8 +80,13 @@ class ProjectMixin(BaseMixin):
         },
         required_params=["id"],
     )
+    @deprecated_method("PolarionApiV1.get_project")
     def get_project(self, project_id: str) -> Response:
         """Get project info
+
+        .. deprecated::
+            Use ``PolarionApiV1.get_project`` instead. The standard Polarion REST API v1
+            (``GET /projects/{projectId}``) covers reading a project since Polarion 2606.
 
         Returns:
             Response: Response object from the API call
@@ -85,8 +102,13 @@ class ProjectMixin(BaseMixin):
         },
         required_params=["id"],
     )
+    @deprecated_method("PolarionApiV1.delete_project")
     def delete_project(self, project_id: str) -> Response:
         """Delete project info
+
+        .. deprecated::
+            Use ``PolarionApiV1.delete_project`` instead. The standard Polarion REST API v1
+            (``DELETE /projects/{projectId}``) covers project deletion since Polarion 2606.
 
         Returns:
             Response: Response object from the API call

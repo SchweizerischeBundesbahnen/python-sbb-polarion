@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from python_sbb_polarion.core.annotations import restapi_endpoint
+from python_sbb_polarion.core.annotations import deprecated_method, restapi_endpoint
 from python_sbb_polarion.extensions._base import BaseMixin
 from python_sbb_polarion.types import Header
 
@@ -30,8 +30,14 @@ class DocumentMixin(BaseMixin):
         },
         required_params=["projectId", "spaceId", "documentName"],
     )
+    @deprecated_method("PolarionApiV1.create_documents")
     def create_document(self, project_id: str, space_id: str, document_name: str, content_type: str, payload: str | bytes) -> Response:
         """Create module
+
+        .. deprecated::
+            Use ``PolarionApiV1.create_documents`` instead. The standard Polarion REST API v1
+            covers document creation since Polarion 2606 (note: it expects JSON:API document
+            type/structure, whereas this method takes a raw body).
 
         Returns:
             Response: Response object from the API call

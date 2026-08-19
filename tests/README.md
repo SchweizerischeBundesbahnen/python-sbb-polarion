@@ -166,14 +166,14 @@ The verification tests perform **annotation-based API compatibility checking**:
 ```python
 from python_sbb_polarion.core.annotations import restapi_endpoint
 
+
 @restapi_endpoint(
     method="GET",
     path="/api/projects/{projectId}/documents/{documentId}",
     path_params={"projectId": "project_id", "documentId": "document_id"},
     query_params={"revision": "revision"},
 )
-def get_document(self, project_id: str, document_id: str, revision: str | None = None) -> Response:
-    ...
+def get_document(self, project_id: str, document_id: str, revision: str | None = None) -> Response: ...
 ```
 
 **Benefits of annotation-based matching:**
@@ -486,6 +486,7 @@ The API verification tests are included in the standard `tox` test suite and run
 ```python
 import unittest
 from python_sbb_polarion.module import Class
+
 
 class TestFeature(unittest.TestCase):
     """Test feature X"""

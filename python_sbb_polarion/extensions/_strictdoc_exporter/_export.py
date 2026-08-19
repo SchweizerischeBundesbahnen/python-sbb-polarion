@@ -39,3 +39,25 @@ class ExportMixin(BaseMixin):
             Header.CONTENT_TYPE: MediaType.JSON,
         }
         return self.polarion_connection.api_request_post(url, headers=headers, data=export_params)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/export-github/livedoc",
+        body_param="export_params",
+        response_type="binary",
+    )
+    def export_github_livedoc(self, export_params: JsonDict) -> Response:
+        """Export a Polarion live document to StrictDoc format on GitHub.
+
+        Args:
+            export_params: Export parameters containing projectId, location, format, fileName
+
+        Returns:
+            Response: Response object with exported document content
+        """
+        url: str = f"{self.rest_api_url}/export-github/livedoc"
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.OCTET_STREAM,
+            Header.CONTENT_TYPE: MediaType.JSON,
+        }
+        return self.polarion_connection.api_request_post(url, headers=headers, data=export_params)

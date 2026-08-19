@@ -19,6 +19,66 @@ class RepairMixin(BaseMixin):
 
     @restapi_endpoint(
         method="GET",
+        path="/api/baselines",
+        query_params={
+            "projectId": "project_id",
+        },
+        required_params=["projectId"],
+    )
+    def get_baselines(self, project_id: str) -> Response:
+        """Gets list of baselines for the given project
+
+        Returns:
+            Response: Response object from the API call
+        """
+        params: dict[str, str] = {
+            "projectId": project_id,
+        }
+        url: str = f"{self.rest_api_url}/baselines"
+        return self.polarion_connection.api_request_get(url, params=params)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/work-item-types",
+        query_params={
+            "projectId": "project_id",
+        },
+        required_params=["projectId"],
+    )
+    def get_work_item_types(self, project_id: str) -> Response:
+        """Gets list of work item types for the given project
+
+        Returns:
+            Response: Response object from the API call
+        """
+        params: dict[str, str] = {
+            "projectId": project_id,
+        }
+        url: str = f"{self.rest_api_url}/work-item-types"
+        return self.polarion_connection.api_request_get(url, params=params)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/document-types",
+        query_params={
+            "projectId": "project_id",
+        },
+        required_params=["projectId"],
+    )
+    def get_document_types(self, project_id: str) -> Response:
+        """Gets list of document types for the given project
+
+        Returns:
+            Response: Response object from the API call
+        """
+        params: dict[str, str] = {
+            "projectId": project_id,
+        }
+        url: str = f"{self.rest_api_url}/document-types"
+        return self.polarion_connection.api_request_get(url, params=params)
+
+    @restapi_endpoint(
+        method="GET",
         path="/api/repairers",
         query_params={
             "entityType": "entity_type",
@@ -39,15 +99,56 @@ class RepairMixin(BaseMixin):
 
     @restapi_endpoint(
         method="POST",
+        path="/api/scan",
+        body_param="scan_params",
+        naming_ok=True,
+    )
+    def scan(self, scan_params: JsonDict) -> Response:
+        """Scans entities for XML issues
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/scan"
+        return self.polarion_connection.api_request_post(url, data=scan_params)
+
+    @restapi_endpoint(
+        method="POST",
         path="/api/repair",
         body_param="repair_params",
         naming_ok=True,
     )
     def repair(self, repair_params: JsonDict) -> Response:
-        """Checks or repairs XML issues based on provided parameters
+        """Repairs XML issues identified by scan
 
         Returns:
             Response: Response object from the API call
         """
         url: str = f"{self.rest_api_url}/repair"
         return self.polarion_connection.api_request_post(url, data=repair_params)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/entities",
+        query_params={
+            "projectId": "project_id",
+            "entityType": "entity_type",
+            "entitySubtype": "entity_subtype",
+        },
+        required_params=["projectId", "entityType"],
+        response_type="json",
+    )
+    def list_entities(self, project_id: str, entity_type: str, entity_subtype: str | None = None) -> Response:
+        """List entities of a project by type, optionally narrowed by subtype.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/entities"
+        params: dict[str, str] = {
+            "projectId": project_id,
+            "entityType": entity_type,
+        }
+        if entity_subtype:
+            params["entitySubtype"] = entity_subtype
+        return self.polarion_connection.api_request_get(url, params=params)

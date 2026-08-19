@@ -27,7 +27,7 @@ class TestSqlDatabaseConnection(unittest.TestCase):
         mock_cursor.fetchall.return_value = [("PostgreSQL 15.0",)]
         mock_connect.return_value = mock_conn
 
-        conn = SqlDatabaseConnection()
+        SqlDatabaseConnection()
 
         # Verify connection was created with defaults
         mock_connect.assert_called_once_with(database="postgres", user="postgres", password="", host="localhost", port=5432)
@@ -49,7 +49,7 @@ class TestSqlDatabaseConnection(unittest.TestCase):
 
         custom_params: SqlConnectionConfig = {"host": "db.example.com", "port": 5433, "database": "mydb", "user": "myuser", "password": "mypass"}
 
-        conn = SqlDatabaseConnection(**custom_params)
+        SqlDatabaseConnection(**custom_params)
 
         # Verify connection was created with custom params
         mock_connect.assert_called_once_with(**custom_params)
@@ -63,7 +63,7 @@ class TestSqlDatabaseConnection(unittest.TestCase):
         mock_cursor.fetchall.return_value = [("PostgreSQL 15.0",)]
         mock_connect.return_value = mock_conn
 
-        conn = SqlDatabaseConnection(host="custom.host", database="customdb")
+        SqlDatabaseConnection(host="custom.host", database="customdb")
 
         # Verify mix of custom and default params
         expected_params: dict[str, str | int] = {"host": "custom.host", "port": 5432, "database": "customdb", "user": "postgres", "password": ""}
@@ -201,7 +201,7 @@ class TestSqlDatabaseConnection(unittest.TestCase):
         mock_cursor.fetchall.return_value = [("PostgreSQL 15.0",)]
         mock_connect.return_value = mock_conn
 
-        conn = SqlDatabaseConnection()
+        SqlDatabaseConnection()
 
         # Verify autocommit was set to True
         self.assertTrue(mock_conn.autocommit)
@@ -216,7 +216,7 @@ class TestSqlDatabaseConnection(unittest.TestCase):
         mock_cursor.fetchall.return_value = [("PostgreSQL 15.0",)]
         mock_connect.return_value = mock_conn
 
-        conn = SqlDatabaseConnection()
+        SqlDatabaseConnection()
 
         # Verify server version was logged with lazy formatting
         info_calls: list[Mock] = [c for c in mock_logger.info.call_args_list if "PostgreSQL server version" in str(c)]
@@ -298,7 +298,7 @@ class TestSqlDatabaseConnection(unittest.TestCase):
         mock_cursor.fetchall.return_value = []
         mock_connect.return_value = mock_conn
 
-        conn = SqlDatabaseConnection()
+        SqlDatabaseConnection()
 
         # Verify no version was logged (only DB connected)
         info_calls: list[Mock] = [call for call in mock_logger.info.call_args_list if "PostgreSQL server version" in str(call)]

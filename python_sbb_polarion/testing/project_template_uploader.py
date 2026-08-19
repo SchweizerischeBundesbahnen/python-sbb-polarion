@@ -3,12 +3,13 @@ from __future__ import annotations
 import hashlib
 import logging
 import shutil
-import sys
 import tempfile
 import zipfile
 from http import HTTPStatus
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
+
+from python_sbb_polarion.testing.errors import TempProjectError
 
 
 if TYPE_CHECKING:
@@ -66,10 +67,13 @@ class ProjectTemplateUploader:
 
         Returns:
             Path to created temporary zip file
+
+        Raises:
+            TempProjectError: If folder_path is not a directory
         """
         if not folder_path.is_dir():
             logger.error("Path '%s' is not a directory", folder_path)
-            sys.exit(1)
+            raise TempProjectError(f"Template path '{folder_path}' is not a directory")
 
         with tempfile.NamedTemporaryFile(
             suffix=".zip",
@@ -123,10 +127,13 @@ class ProjectTemplateUploader:
             template_id: Template identifier
             template_location: Absolute path to template folder
             transform_links: Optional mapping for link transformation e.g. {"old_project_id": "new_project_id"}
+
+        Raises:
+            TempProjectError: If the template folder is missing or the upload fails
         """
         if not template_location.exists():
             logger.error("Template folder '%s' doesn't exist", template_location)
-            sys.exit(1)
+            raise TempProjectError(f"Template folder '{template_location}' doesn't exist")
 
         zip_path: Path | None = None
         temp_folder: Path | None = None
@@ -165,7 +172,7 @@ class ProjectTemplateUploader:
                 logger.info("Template '%s' uploaded successfully", template_id)
             else:
                 logger.error("Failed to upload template '%s'", template_id)
-                sys.exit(1)
+                raise TempProjectError(f"Failed to upload template '{template_id}' (HTTP {response.status_code})")
         finally:
             # Clean up temporary zip file if it was created
             if zip_path is not None and zip_path.exists():

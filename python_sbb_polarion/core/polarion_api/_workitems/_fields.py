@@ -428,3 +428,32 @@ class WorkitemsFieldsMixin(BaseMixin):
         if revision:
             params["revision"] = revision
         return self.polarion_connection.api_request_get(url, params=params or None)
+
+    # New endpoints in Polarion 2606
+
+    @restapi_endpoint(
+        method="GET",
+        path="/projects/{projectId}/workitems/{workItemId}/actions/getFieldsMetadata",
+        path_params={
+            "projectId": "project_id",
+            "workItemId": "workitem_id",
+        },
+        required_params=["projectId", "workItemId"],
+        response_type="json",
+    )
+    def get_workitem_fields_metadata(
+        self,
+        project_id: str,
+        workitem_id: str,
+    ) -> Response:
+        """Get fields metadata for a work item.
+
+        Args:
+            project_id: Project identifier
+            workitem_id: Work item identifier
+
+        Returns:
+            Response: Work item fields metadata from API
+        """
+        url: str = f"{self.base_url}/projects/{project_id}/workitems/{workitem_id}/actions/getFieldsMetadata"
+        return self.polarion_connection.api_request_get(url)

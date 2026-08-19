@@ -386,3 +386,32 @@ class PlansMixin(BaseMixin):
         """
         url: str = f"{self.base_url}/projects/{project_id}/plans/{plan_id}/relationships/{relationship_id}"
         return self.polarion_connection.api_request_delete(url, data=data)
+
+    # New endpoints in Polarion 2606
+
+    @restapi_endpoint(
+        method="GET",
+        path="/projects/{projectId}/plans/{planId}/actions/getFieldsMetadata",
+        path_params={
+            "projectId": "project_id",
+            "planId": "plan_id",
+        },
+        required_params=["projectId", "planId"],
+        response_type="json",
+    )
+    def get_plan_fields_metadata(
+        self,
+        project_id: str,
+        plan_id: str,
+    ) -> Response:
+        """Get fields metadata for a plan.
+
+        Args:
+            project_id: Project identifier
+            plan_id: Plan identifier
+
+        Returns:
+            Response: Plan fields metadata from API
+        """
+        url: str = f"{self.base_url}/projects/{project_id}/plans/{plan_id}/actions/getFieldsMetadata"
+        return self.polarion_connection.api_request_get(url)

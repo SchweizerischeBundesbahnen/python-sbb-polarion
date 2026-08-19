@@ -249,6 +249,54 @@ class TestPolarionDiffToolApi(unittest.TestCase):
     # Utility API - Spaces and Documents
     # =========================================================================
 
+    def test_get_projects(self) -> None:
+        """Test get projects."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_projects()
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects"
+        self.mock_connection.api_request_get.assert_called_once_with(expected_url)
+
+    def test_create_project_duplicate(self) -> None:
+        """Test create project duplicate."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+        data: JsonDict = {
+            "sourceProjectId": "PROJ",
+            "targetProjectId": "PROJ2",
+        }
+
+        response: Response = self.api.create_project_duplicate(data)
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/duplicate"
+        self.mock_connection.api_request_post.assert_called_once_with(expected_url, data=data)
+
+    def test_create_project_duplicate_without_data(self) -> None:
+        """Test create project duplicate without data."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        response: Response = self.api.create_project_duplicate()
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/duplicate"
+        self.mock_connection.api_request_post.assert_called_once_with(expected_url)
+
+    def test_get_duplication_jobs(self) -> None:
+        """Test get project duplication jobs."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_duplication_jobs()
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/projects/duplicate/jobs"
+        self.mock_connection.api_request_get.assert_called_once_with(expected_url)
+
     def test_get_spaces(self) -> None:
         """Test get spaces."""
         mock_response = Mock()
@@ -560,6 +608,95 @@ class TestPolarionDiffToolApi(unittest.TestCase):
             f"{self.api.rest_api_url}/settings/diff/names/Custom/content",
             params={"scope": "project/test"},
         )
+
+    # =========================================================================
+    # Search
+    # =========================================================================
+
+    def test_search_collections_without_params(self) -> None:
+        """Test search_collections without optional parameters."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.search_collections("project1")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/projects/project1/collections/search",
+            params=None,
+        )
+
+    def test_search_collections_with_params(self) -> None:
+        """Test search_collections with query and paging."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.search_collections("project1", query="name:test", page=2, records_per_page=50)
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/projects/project1/collections/search",
+            params={"query": "name:test", "page": "2", "recordsPerPage": "50"},
+        )
+
+    def test_search_collections_with_first_page(self) -> None:
+        """Test search_collections sends page zero, which is falsy but valid."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.search_collections("project1", page=0)
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/projects/project1/collections/search",
+            params={"page": "0"},
+        )
+
+    def test_search_work_items_without_params(self) -> None:
+        """Test search_work_items without optional parameters."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.search_work_items("project1")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/projects/project1/workitems/search",
+            params=None,
+        )
+
+    def test_search_work_items_with_params(self) -> None:
+        """Test search_work_items with query, sorting and paging."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.search_work_items("project1", query="type:task", sort_by="id", page=1, records_per_page=25)
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/projects/project1/workitems/search",
+            params={"query": "type:task", "sortBy": "id", "page": "1", "recordsPerPage": "25"},
+        )
+
+    def test_get_link_roles(self) -> None:
+        """Test get_link_roles method."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_link_roles("project1")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(f"{self.api.rest_api_url}/projects/project1/link-roles")
+
+    def test_get_queue_configuration_meta(self) -> None:
+        """Test get_queue_configuration_meta method."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_queue_configuration_meta()
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(f"{self.api.rest_api_url}/queue/configuration-meta")
 
 
 if __name__ == "__main__":

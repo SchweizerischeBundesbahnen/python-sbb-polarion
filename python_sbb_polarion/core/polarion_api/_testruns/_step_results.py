@@ -284,7 +284,8 @@ class TestrunsStepResultsMixin(BaseMixin):
         required_params=["projectId", "testRunId", "testCaseProjectId", "testCaseId", "iteration", "testStepIndex"],
         response_type="json",
     )
-    def get_test_step_result_attachments(  # noqa: PLR0917
+    # The Polarion path needs every identifier, and the signature is published.
+    def get_test_step_result_attachments(  # noqa: PLR0913, PLR0917
         self,
         project_id: str,
         testrun_id: str,

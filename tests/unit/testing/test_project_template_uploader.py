@@ -8,6 +8,7 @@ from http import HTTPStatus
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from python_sbb_polarion.testing.errors import TempProjectError
 from python_sbb_polarion.testing.project_template_uploader import ProjectTemplateUploader
 
 
@@ -86,19 +87,14 @@ class TestProjectTemplateUploader(unittest.TestCase):
             self.assertEqual(len(result), 128)
 
     def test_zip_folder_not_a_directory(self) -> None:
-        """Test zip_folder exits when path is not a directory."""
+        """Test zip_folder raises when path is not a directory."""
         with tempfile.NamedTemporaryFile(mode="wb", delete=False) as tmp_file:
             tmp_file.write(b"test")
             tmp_path: Path = Path(tmp_file.name)
 
         try:
-            with patch("python_sbb_polarion.testing.project_template_uploader.sys.exit") as mock_exit:
-                mock_exit.side_effect = SystemExit(1)
-
-                with self.assertRaises(SystemExit):
-                    ProjectTemplateUploader.zip_folder(tmp_path)
-
-                mock_exit.assert_called_once_with(1)
+            with self.assertRaises(TempProjectError):
+                ProjectTemplateUploader.zip_folder(tmp_path)
         finally:
             tmp_path.unlink()
 
@@ -132,14 +128,9 @@ class TestProjectTemplateUploader(unittest.TestCase):
                     zip_path.unlink()
 
     def test_upload_template_folder_not_exists(self) -> None:
-        """Test upload_template exits when folder doesn't exist."""
-        with patch("python_sbb_polarion.testing.project_template_uploader.sys.exit") as mock_exit:
-            mock_exit.side_effect = SystemExit(1)
-
-            with self.assertRaises(SystemExit):
-                self.uploader.upload_template("template1", Path("/non/existent/folder"))
-
-            mock_exit.assert_called_once_with(1)
+        """Test upload_template raises when folder doesn't exist."""
+        with self.assertRaises(TempProjectError):
+            self.uploader.upload_template("template1", Path("/non/existent/folder"))
 
     def test_upload_template_up_to_date(self) -> None:
         """Test upload_template skips upload when hashes match."""
@@ -229,21 +220,16 @@ class TestProjectTemplateUploader(unittest.TestCase):
             mock_save_response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
             self.mock_api.save_project_template.return_value = mock_save_response
 
-            with patch("python_sbb_polarion.testing.project_template_uploader.sys.exit") as mock_exit:
-                mock_exit.side_effect = SystemExit(1)
+            with patch.object(ProjectTemplateUploader, "zip_folder") as mock_zip:
+                mock_zip_path = Path("/tmp/test.zip")
+                mock_zip.return_value = mock_zip_path
 
-                with patch.object(ProjectTemplateUploader, "zip_folder") as mock_zip:
-                    mock_zip_path = Path("/tmp/test.zip")
-                    mock_zip.return_value = mock_zip_path
+                with patch.object(Path, "exists", return_value=True), patch.object(Path, "unlink") as mock_unlink:
+                    with self.assertRaises(TempProjectError):
+                        self.uploader.upload_template("template1", tmp_path)
 
-                    with patch.object(Path, "exists", return_value=True), patch.object(Path, "unlink") as mock_unlink:
-                        with self.assertRaises(SystemExit):
-                            self.uploader.upload_template("template1", tmp_path)
-
-                        # Verify cleanup happened even on error
-                        mock_unlink.assert_called_once()
-
-                mock_exit.assert_called_once_with(1)
+                    # Verify cleanup happened even on error
+                    mock_unlink.assert_called_once()
 
     def test_upload_template_cleanup_on_success(self) -> None:
         """Test upload_template cleans up zip file after successful upload."""

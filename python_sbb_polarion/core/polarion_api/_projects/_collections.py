@@ -467,3 +467,32 @@ class ProjectsCollectionsMixin(BaseMixin):
         if revision:
             params["revision"] = revision
         return self.polarion_connection.api_request_post(url, data=data, params=params or None)
+
+    # New endpoints in Polarion 2606
+
+    @restapi_endpoint(
+        method="GET",
+        path="/projects/{projectId}/collections/{collectionId}/actions/getFieldsMetadata",
+        path_params={
+            "projectId": "project_id",
+            "collectionId": "collection_id",
+        },
+        required_params=["projectId", "collectionId"],
+        response_type="json",
+    )
+    def get_collection_fields_metadata(
+        self,
+        project_id: str,
+        collection_id: str,
+    ) -> Response:
+        """Get fields metadata for a collection.
+
+        Args:
+            project_id: Project identifier
+            collection_id: Collection identifier
+
+        Returns:
+            Response: Collection fields metadata from API
+        """
+        url: str = f"{self.base_url}/projects/{project_id}/collections/{collection_id}/actions/getFieldsMetadata"
+        return self.polarion_connection.api_request_get(url)

@@ -221,3 +221,23 @@ class ConversionMixin(BaseMixin):
             Header.CONTENT_TYPE: MediaType.JSON,
         }
         return self.polarion_connection.api_request_post(url, data=export_params, headers=headers)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/widgets/bulk-export/items",
+        body_param="request_params",
+        required_params=["__request_body__"],
+        response_type="json",
+    )
+    def find_widgets_bulk_export_items(self, request_params: JsonDict) -> Response:
+        """Get the rows of a bulk export widget.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/widgets/bulk-export/items"
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.JSON,
+            Header.CONTENT_TYPE: MediaType.JSON,
+        }
+        return self.polarion_connection.api_request_post(url, data=request_params, headers=headers)

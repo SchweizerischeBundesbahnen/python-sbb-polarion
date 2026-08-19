@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import unittest
-from typing import TYPE_CHECKING
+import warnings
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from unittest.mock import Mock
 
 from python_sbb_polarion.extensions.admin_utility import PolarionAdminUtilityApi
@@ -528,3 +529,88 @@ class TestPolarionAdminUtilityApi(unittest.TestCase):
         self.mock_connection.api_request_delete.assert_called_once_with(
             f"{self.api.rest_api_url}/vault/my-key",
         )
+
+
+# Methods deprecated in favour of PolarionApiV1 (issue #62), with their expected replacement marker.
+DEPRECATED_METHODS: dict[str, str] = {
+    "get_project": "PolarionApiV1.get_project",
+    "create_project": "PolarionApiV1.create_project",
+    "delete_project": "PolarionApiV1.delete_project",
+    "create_test_run_template": "PolarionApiV1.create_testruns",
+    "create_collection": "PolarionApiV1.create_collections",
+    "delete_collection": "PolarionApiV1.delete_collection",
+    "add_to_collection": "PolarionApiV1.create_collection_relationships",
+    "create_document": "PolarionApiV1.create_documents",
+    "create_live_report": "PolarionApiV1.create_page",
+    "delete_live_report": "PolarionApiV1.delete_page",
+    "get_custom_field_declarations": "PolarionApiV1.get_global_custom_fields / PolarionApiV1.get_project_custom_fields",
+    "declare_custom_field": "PolarionApiV1.create_global_custom_fields / PolarionApiV1.create_project_custom_fields",
+    "update_custom_fields_for_default_repo": "PolarionApiV1.update_global_custom_fields",
+    "update_custom_fields_for_project": "PolarionApiV1.update_project_custom_field",
+    "delete_custom_field_declaration": "PolarionApiV1 custom fields API (emulate get + update of the remaining fields)",
+    "set_custom_field_type": "PolarionApiV1.update_project_custom_field / PolarionApiV1.update_global_custom_fields",
+}
+
+# Admin-only methods that must NOT be deprecated (no standard equivalent).
+KEEP_METHODS: list[str] = [
+    "create_token",
+    "delete_token",
+    "delete_all_tokens",
+    "create_vault_record",
+    "get_vault_record",
+    "delete_vault_record",
+    "create_wiki_page",
+    "delete_wiki_page",
+    "activate_trial_license",
+    "delete_document",
+    "create_live_report_in_default_space",
+    "delete_live_report_in_default_space",
+    "get_document_types_configuration",
+]
+
+
+@runtime_checkable
+class _DeprecatedMethod(Protocol):
+    """Structural type for methods carrying the deprecation marker."""
+
+    __deprecated_replacement__: str
+
+
+class TestAdminUtilityDeprecation(unittest.TestCase):
+    """Test deprecation markers on methods covered by PolarionApiV1 (issue #62)."""
+
+    def test_all_expected_methods_are_marked_deprecated(self) -> None:
+        """Test each confirmed duplicate carries the __deprecated_replacement__ marker."""
+        for name, replacement in DEPRECATED_METHODS.items():
+            method: object = getattr(PolarionAdminUtilityApi, name)
+            if isinstance(method, _DeprecatedMethod):
+                self.assertEqual(method.__deprecated_replacement__, replacement)
+            else:
+                self.fail(f"{name} is expected to be deprecated but has no marker")
+
+    def test_kept_methods_are_not_deprecated(self) -> None:
+        """Test admin-only methods (no standard equivalent) are NOT deprecated."""
+        for name in KEEP_METHODS:
+            method: object = getattr(PolarionAdminUtilityApi, name)
+            self.assertNotIsInstance(method, _DeprecatedMethod, f"{name} must not be deprecated (no standard equivalent)")
+
+    def test_calling_deprecated_method_emits_warning(self) -> None:
+        """Test a representative deprecated method emits a DeprecationWarning when called."""
+        api: PolarionAdminUtilityApi = PolarionAdminUtilityApi(Mock())
+
+        with self.assertWarns(DeprecationWarning) as ctx:
+            api.create_project("PROJ", "Project", "template")
+
+        self.assertIn("PolarionApiV1.create_project", str(ctx.warning))
+
+    def test_set_custom_field_type_emits_single_warning(self) -> None:
+        """Test the convenience method emits exactly one warning (it issues the request directly)."""
+        api: PolarionAdminUtilityApi = PolarionAdminUtilityApi(Mock())
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            api.set_custom_field_type("field1", "Field 1", "string", project_id="PROJ")
+
+        deprecation_warnings: list[warnings.WarningMessage] = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+        self.assertEqual(len(deprecation_warnings), 1)
+        self.assertIn("set_custom_field_type", str(deprecation_warnings[0].message))

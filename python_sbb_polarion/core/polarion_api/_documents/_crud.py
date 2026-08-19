@@ -11,7 +11,7 @@ from python_sbb_polarion.core.polarion_api._base import PAGE_NUMBER, PAGE_SIZE, 
 if TYPE_CHECKING:
     from requests import Response
 
-    from python_sbb_polarion.types import JsonDict, SparseFields
+    from python_sbb_polarion.types import FilesDict, JsonDict, SparseFields
 
 
 class DocumentsCrudMixin(BaseMixin):
@@ -312,3 +312,38 @@ class DocumentsCrudMixin(BaseMixin):
         if sort:
             params["sort"] = sort
         return self.polarion_connection.api_request_get(url, params=params or None)
+
+    # New endpoints in Polarion 2606
+
+    @restapi_endpoint(
+        method="POST",
+        path="/projects/{projectId}/spaces/{spaceId}/documents/actions/importWordDocument",
+        path_params={
+            "projectId": "project_id",
+            "spaceId": "space_id",
+        },
+        multipart_fields={
+            "file": "files",
+            "parameters": "files",
+        },
+        required_params=["projectId", "spaceId"],
+        response_type="json",
+    )
+    def import_word_document(
+        self,
+        project_id: str,
+        space_id: str,
+        files: FilesDict,
+    ) -> Response:
+        """Import a Word document to create a new Polarion document.
+
+        Args:
+            project_id: Project identifier
+            space_id: Space identifier
+            files: Files dict with 'file' (the .docx content) and 'parameters' (JSON import parameters)
+
+        Returns:
+            Response: Created document data from API
+        """
+        url: str = f"{self.base_url}/projects/{project_id}/spaces/{space_id}/documents/actions/importWordDocument"
+        return self.polarion_connection.api_request_post(url, files=files)

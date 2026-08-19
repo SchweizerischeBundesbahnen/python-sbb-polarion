@@ -9,10 +9,10 @@ from pathlib import Path
 
 from python_sbb_polarion.linter.code_style_linter import (
     Violation,
-    _contains_query_params,  # noqa: PLC2701
-    _get_method_name,  # noqa: PLC2701
-    _matches_pattern,  # noqa: PLC2701
-    _reconstruct_fstring,  # noqa: PLC2701
+    _contains_query_params,
+    _get_method_name,
+    _matches_pattern,
+    _reconstruct_fstring,
     find_python_files,
     lint_file,
 )

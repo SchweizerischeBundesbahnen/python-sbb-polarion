@@ -10,6 +10,10 @@ from ._helpers import contains_query_params, get_method_name, reconstruct_fstrin
 from ._violation import Violation
 
 
+# A dict[...] annotation always carries a key type and a value type.
+DICT_TYPE_ARG_COUNT = 2
+
+
 class CodeStyleLinter(ast.NodeVisitor):
     """AST visitor that checks for code style violations."""
 
@@ -860,7 +864,7 @@ def _is_dict_str_any(annotation: ast.Subscript) -> bool:
     """
     if not isinstance(annotation.value, ast.Name) or annotation.value.id != "dict":
         return False
-    if not isinstance(annotation.slice, ast.Tuple) or len(annotation.slice.elts) != 2:
+    if not isinstance(annotation.slice, ast.Tuple) or len(annotation.slice.elts) != DICT_TYPE_ARG_COUNT:
         return False
     first_elt: ast.expr = annotation.slice.elts[0]
     second_elt: ast.expr = annotation.slice.elts[1]

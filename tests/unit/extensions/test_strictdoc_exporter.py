@@ -50,6 +50,27 @@ class TestPolarionStrictDocExporterApi(unittest.TestCase):
             headers=expected_headers,
         )
 
+    def test_export_github_livedoc(self) -> None:
+        """Test export of a live document to StrictDoc format on GitHub."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        export_params: JsonDict = {
+            "projectId": "PROJ",
+            "location": "/Documents/Test",
+            "format": "sdoc",
+            "fileName": "export.sdoc",
+        }
+        response: Response = self.api.export_github_livedoc(export_params)
+
+        self.assertEqual(response, mock_response)
+        expected_headers: dict[str, str] = {Header.ACCEPT: MediaType.OCTET_STREAM, Header.CONTENT_TYPE: MediaType.JSON}
+        self.mock_connection.api_request_post.assert_called_once_with(
+            f"{self.api.rest_api_url}/export-github/livedoc",
+            data=export_params,
+            headers=expected_headers,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

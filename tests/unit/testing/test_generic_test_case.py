@@ -70,6 +70,27 @@ class TestGenericTestCase(unittest.TestCase):
         self.assertEqual(call_kwargs["extension_name"], "admin-utility")
         mock_polarion_api_v1.assert_called_once()
 
+    @patch("python_sbb_polarion.testing.generic_test_case.PolarionApiV1")
+    @patch("python_sbb_polarion.testing.generic_test_case.get_script_arguments")
+    @patch.dict("os.environ", {"APP_URL": "https://example.com", "APP_TOKEN": "test-token"})
+    def test_create_polarion_api(self, mock_get_args: Mock, mock_polarion_api_v1: Mock) -> None:
+        """Test create_polarion_api builds a connection and returns a PolarionApiV1."""
+        # Arrange
+        mock_args = SimpleNamespace(app_url=None, app_token=None)
+        mock_get_args.return_value = mock_args
+
+        mock_api = Mock()
+        mock_polarion_api_v1.return_value = mock_api
+
+        # Act
+        result: object = GenericTestCase.create_polarion_api()
+
+        # Assert
+        self.assertEqual(result, mock_api)
+        mock_polarion_api_v1.assert_called_once()
+        call_args: tuple[object, ...] = mock_polarion_api_v1.call_args[0]
+        self.assertIsInstance(call_args[0], PolarionRestApiConnection)
+
     @patch.dict("os.environ", {"TEST_PARAM": "env_value"})
     def test_get_parameter_from_env(self) -> None:
         """Test get_parameter returns environment variable when available."""
@@ -144,6 +165,7 @@ class TestGenericTestCase(unittest.TestCase):
 
         mock_api = Mock(spec=PolarionGenericExtensionApi)
         mock_api.extension_name = "pdf-exporter"
+        mock_api.automatic_module_name = "ch.sbb.polarion.extension.pdf_exporter"
         mock_api.get_version.return_value = mock_response
         test_case.extension_api = mock_api
 
@@ -153,6 +175,34 @@ class TestGenericTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(result["bundleVendor"], "SBB AG")
         self.assertEqual(result["bundleVersion"], "1.2.3")
+        mock_api.get_version.assert_called_once()
+
+    def test_run_test_get_version_custom_automatic_module_name(self) -> None:
+        """Test run_test_get_version accepts a custom (non ch.sbb.*) automatic module name."""
+        # Arrange
+        test_case = GenericTestCase()  # type: ignore[abstract]
+        mock_response = Mock()
+        mock_response.status_code = HTTPStatus.OK
+        mock_response.json.return_value = {
+            "bundleVendor": "SBB AG",
+            "bundleVersion": "2.0.1",
+            "bundleBuildTimestamp": "2024-10-23 12:34",
+            "bundleName": "Custom Enumeration Factories Extension for Polarion ALM",
+            "automaticModuleName": "com.polarion.alm.custom.enumerationfactories",
+            "bundleBuildTimestampDigitsOnly": "202410231234",
+        }
+
+        mock_api = Mock(spec=PolarionGenericExtensionApi)
+        mock_api.extension_name = "enumerationfactories"
+        mock_api.automatic_module_name = "com.polarion.alm.custom.enumerationfactories"
+        mock_api.get_version.return_value = mock_response
+        test_case.extension_api = mock_api
+
+        # Act
+        result: JsonDict = test_case.run_test_get_version()
+
+        # Assert
+        self.assertEqual(result["automaticModuleName"], "com.polarion.alm.custom.enumerationfactories")
         mock_api.get_version.assert_called_once()
 
     def test_run_test_get_version_validates_bundle_vendor(self) -> None:
@@ -172,6 +222,7 @@ class TestGenericTestCase(unittest.TestCase):
 
         mock_api = Mock(spec=PolarionGenericExtensionApi)
         mock_api.extension_name = "test"
+        mock_api.automatic_module_name = "ch.sbb.polarion.extension.test"
         mock_api.get_version.return_value = mock_response
         test_case.extension_api = mock_api
 
@@ -196,6 +247,7 @@ class TestGenericTestCase(unittest.TestCase):
 
         mock_api = Mock(spec=PolarionGenericExtensionApi)
         mock_api.extension_name = "test"
+        mock_api.automatic_module_name = "ch.sbb.polarion.extension.test"
         mock_api.get_version.return_value = mock_response
         test_case.extension_api = mock_api
 
@@ -220,6 +272,7 @@ class TestGenericTestCase(unittest.TestCase):
 
         mock_api = Mock(spec=PolarionGenericExtensionApi)
         mock_api.extension_name = "test"
+        mock_api.automatic_module_name = "ch.sbb.polarion.extension.test"
         mock_api.get_version.return_value = mock_response
         test_case.extension_api = mock_api
 
@@ -244,6 +297,7 @@ class TestGenericTestCase(unittest.TestCase):
 
         mock_api = Mock(spec=PolarionGenericExtensionApi)
         mock_api.extension_name = "test"
+        mock_api.automatic_module_name = "ch.sbb.polarion.extension.test"
         mock_api.get_version.return_value = mock_response
         test_case.extension_api = mock_api
 
@@ -268,6 +322,7 @@ class TestGenericTestCase(unittest.TestCase):
 
         mock_api = Mock(spec=PolarionGenericExtensionApi)
         mock_api.extension_name = "test"
+        mock_api.automatic_module_name = "ch.sbb.polarion.extension.test"
         mock_api.get_version.return_value = mock_response
         test_case.extension_api = mock_api
 

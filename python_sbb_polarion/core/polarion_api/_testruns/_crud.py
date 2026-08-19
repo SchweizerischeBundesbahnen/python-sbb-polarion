@@ -427,3 +427,32 @@ class TestrunsCrudMixin(BaseMixin):
         """
         url: str = f"{self.base_url}/projects/{project_id}/testruns/{testrun_id}/actions/importXUnitTestResults"
         return self.polarion_connection.api_request_post(url, files=files)
+
+    # New endpoints in Polarion 2606
+
+    @restapi_endpoint(
+        method="GET",
+        path="/projects/{projectId}/testruns/{testRunId}/actions/getFieldsMetadata",
+        path_params={
+            "projectId": "project_id",
+            "testRunId": "testrun_id",
+        },
+        required_params=["projectId", "testRunId"],
+        response_type="json",
+    )
+    def get_testrun_fields_metadata(
+        self,
+        project_id: str,
+        testrun_id: str,
+    ) -> Response:
+        """Get fields metadata for a test run.
+
+        Args:
+            project_id: Project identifier
+            testrun_id: Test run identifier
+
+        Returns:
+            Response: Test run fields metadata from API
+        """
+        url: str = f"{self.base_url}/projects/{project_id}/testruns/{testrun_id}/actions/getFieldsMetadata"
+        return self.polarion_connection.api_request_get(url)

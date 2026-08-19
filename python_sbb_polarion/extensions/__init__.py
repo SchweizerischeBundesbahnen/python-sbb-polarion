@@ -25,8 +25,10 @@ from python_sbb_polarion.extensions.diff_tool import PolarionDiffToolApi
 from python_sbb_polarion.extensions.dms_doc_connector import PolarionDmsDocConnectorApi
 from python_sbb_polarion.extensions.dms_wi_connector import PolarionDmsWiConnectorApi
 from python_sbb_polarion.extensions.docx_exporter import PolarionDocxExporterApi
+from python_sbb_polarion.extensions.enumeration_factories import PolarionEnumerationFactoriesApi
 from python_sbb_polarion.extensions.excel_importer import AttachTableParams, PolarionExcelImporterApi
 from python_sbb_polarion.extensions.fake_services import PolarionFakeServicesApi
+from python_sbb_polarion.extensions.integrity_scanner import PolarionIntegrityScannerApi
 from python_sbb_polarion.extensions.interceptor_manager import PolarionInterceptorManagerApi
 from python_sbb_polarion.extensions.json_editor import PolarionJsonEditorApi
 from python_sbb_polarion.extensions.mailworkflow import PolarionMailWorkflowApi
@@ -34,6 +36,7 @@ from python_sbb_polarion.extensions.pdf_exporter import PolarionPdfExporterApi
 from python_sbb_polarion.extensions.requirements_inspector import PolarionRequirementsInspectorApi
 from python_sbb_polarion.extensions.strictdoc_exporter import PolarionStrictDocExporterApi
 from python_sbb_polarion.extensions.test_data import PolarionTestDataApi
+from python_sbb_polarion.extensions.vcontext import PolarionVContextApi
 from python_sbb_polarion.extensions.xml_repair import PolarionXmlRepairApi
 
 
@@ -56,8 +59,10 @@ __all__ = [
     "PolarionDmsDocConnectorApi",
     "PolarionDmsWiConnectorApi",
     "PolarionDocxExporterApi",
+    "PolarionEnumerationFactoriesApi",
     "PolarionExcelImporterApi",
     "PolarionFakeServicesApi",
+    "PolarionIntegrityScannerApi",
     "PolarionInterceptorManagerApi",
     "PolarionJsonEditorApi",
     "PolarionMailWorkflowApi",
@@ -65,6 +70,7 @@ __all__ = [
     "PolarionRequirementsInspectorApi",
     "PolarionStrictDocExporterApi",
     "PolarionTestDataApi",
+    "PolarionVContextApi",
     "PolarionXmlRepairApi",
     "ReportFormat",
     "WebhookAuthType",

@@ -34,7 +34,15 @@ OPENAPI_BRANCH = "main"  # Try 'main' first, fallback to 'master'
 OPENAPI_PATH = "docs/openapi.json"
 REQUEST_TIMEOUT = 10  # seconds
 # Extensions to skip in GitHub-based verification (source code tests)
-SKIP_EXTENSIONS_GITHUB: list[str] = []
+SKIP_EXTENSIONS_GITHUB: list[str] = [
+    # The integrity-scanner repository holds an unmodified copy of
+    # open-source-polarion-java-repo-template as of its only commit, 2026-08-11:
+    # package extension_name, and /api/hello as its single own endpoint. Its
+    # docs/openapi.json describes that template, not the deployed extension the
+    # client is written against, so there is nothing to verify here.
+    # Remove this entry once the repository carries the real source, see issue #99.
+    "integrity_scanner",
+]
 
 # Extensions to skip in live Polarion verification (deployed instance tests)
 SKIP_EXTENSIONS_LIVE: list[str] = [
@@ -105,6 +113,7 @@ EXTENSION_MAPPING: dict[str, str] = {
     "requirements_inspector": "requirements-inspector",
     "strictdoc_exporter": "strictdoc-exporter",
     "test_data": "test-data",
+    "integrity_scanner": "integrity-scanner",
     "xml_repair": "xml-repair",
 }
 

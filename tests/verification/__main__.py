@@ -81,7 +81,8 @@ def run_naming_validation(extension: str | None = None, verbose: bool = False, j
             return False
 
         # Use snake_case for internal lookup
-        if extension_snake in EXTENSION_MAPPING:
+        # The else branch carries its own explanation.
+        if extension_snake in EXTENSION_MAPPING:  # noqa: SIM108
             extensions_to_check = [extension_snake]
         else:
             # Find by repo name
