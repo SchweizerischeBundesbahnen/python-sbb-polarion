@@ -10,10 +10,9 @@ tests/
 ├── unit/                              # Unit tests
 │   └── extensions/
 │       └── test_*.py                  # Individual extension tests
-├── verification/                       # API verification tests
-│   ├── test_github.py                 # GitHub-based OpenAPI verification
-│   └── test_polarion_live.py          # Live Polarion API verification
-└── integration/                       # Integration tests (future)
+└── verification/                       # API verification tests
+    ├── test_github.py                 # GitHub-based OpenAPI verification
+    └── test_polarion_live.py          # Live Polarion API verification
 ```
 
 ---
@@ -92,7 +91,7 @@ uv run tox -e verify-openapi-mapping
 
 2. **Polarion Token** (future):
    - When Polarion endpoints are implemented
-   - Will use existing Jenkins credential: `POLARION-system-test-token`
+   - Will use a repository secret holding the Polarion system test token
 
 **Security Note:** Never commit tokens to version control! The `.env` file is git-ignored.
 
@@ -423,7 +422,7 @@ The API verification tests are included in the standard `tox` test suite and run
 **Problem:** Tests fail with "Could not fetch OpenAPI spec"
 
 **Solutions:**
-- Check network connectivity to GitHub/Bitbucket
+- Check network connectivity to GitHub
 - Verify authentication tokens are set correctly
 - Check token has required permissions
 - Try accessing the URL manually in a browser
@@ -442,8 +441,8 @@ The API verification tests are included in the standard `tox` test suite and run
 
 1. Add extension to `EXTENSION_MAPPING` in test file
 2. Run verification test to see current status
-4. Implement missing critical methods
-5. Document any intentional omissions
+3. Implement missing critical methods
+4. Document any intentional omissions
 
 **When upstream API changes:**
 

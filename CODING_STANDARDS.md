@@ -50,7 +50,7 @@ This project uses the following tools to enforce coding standards:
 
 1. [Ruff](https://docs.astral.sh/ruff/) - Fast Python linter and formatter that replaces flake8, pylint, isort, pyupgrade, and black. Configured with `ALL` rules enabled and intentional ignores (see `pyproject.toml`).
 
-2. [mypy](http://mypy-lang.org/) - Static type checker for Python. Strict mode is enabled — all code must have complete type annotations.
+2. [mypy](http://mypy-lang.org/) - Static type checker for Python. Configured with selected strict checks and module-specific exceptions (see `[tool.mypy]` in `pyproject.toml`); functions and variables must carry complete type annotations.
 
 3. **python-sbb-polarion-lint** - Custom AST-based linter (PSP001–PSP017) enforcing project-specific code style rules beyond what ruff/mypy can check.
 
