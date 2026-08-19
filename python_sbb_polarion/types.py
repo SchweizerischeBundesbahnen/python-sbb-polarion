@@ -68,10 +68,11 @@ SparseFields: TypeAlias = dict[str, str]
 # The requests library uses duck typing at runtime and accepts any object with read().
 FileContent: TypeAlias = str | bytes | IO[bytes] | IO[str] | SupportsRead[bytes]
 
-# FileTuple represents the various tuple formats accepted by requests for file uploads:
-# - (filename, content)
-# - (filename, content, content_type)
-# - (filename, content, content_type, headers)
+# FileTuple represents the various tuple formats accepted by requests for file uploads.
+# The three lines below document those shapes; they are prose, not commented-out code.
+# - (filename, content)  # noqa: ERA001
+# - (filename, content, content_type)  # noqa: ERA001
+# - (filename, content, content_type, headers)  # noqa: ERA001
 FileTuple: TypeAlias = tuple[str | None, FileContent] | tuple[str | None, FileContent, str] | tuple[str | None, FileContent, str, Mapping[str, str]]
 
 # Match requests library expectations exactly:

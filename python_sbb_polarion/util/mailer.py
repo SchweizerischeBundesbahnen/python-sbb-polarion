@@ -11,6 +11,10 @@ from smtplib import SMTP, SMTPException
 from ssl import create_default_context
 
 
+# RFC 6409 submission port, which expects STARTTLS.
+SMTP_SUBMISSION_PORT = 587
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -86,7 +90,7 @@ class Mailer:
 
         try:
             with SMTP(host=self.smtp_host, port=self.smtp_port) as server:
-                if self.smtp_port == 587:
+                if self.smtp_port == SMTP_SUBMISSION_PORT:
                     server.starttls(context=ctx)
                 server.login(self.smtp_user, self.smtp_password)
                 server.send_message(msg)

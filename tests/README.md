@@ -10,10 +10,9 @@ tests/
 ├── unit/                              # Unit tests
 │   └── extensions/
 │       └── test_*.py                  # Individual extension tests
-├── verification/                       # API verification tests
-│   ├── test_github.py                 # GitHub-based OpenAPI verification
-│   └── test_polarion_live.py          # Live Polarion API verification
-└── integration/                       # Integration tests (future)
+└── verification/                       # API verification tests
+    ├── test_github.py                 # GitHub-based OpenAPI verification
+    └── test_polarion_live.py          # Live Polarion API verification
 ```
 
 ---
@@ -92,7 +91,7 @@ uv run tox -e verify-openapi-mapping
 
 2. **Polarion Token** (future):
    - When Polarion endpoints are implemented
-   - Will use existing Jenkins credential: `POLARION-system-test-token`
+   - Will use a repository secret holding the Polarion system test token
 
 **Security Note:** Never commit tokens to version control! The `.env` file is git-ignored.
 
@@ -166,14 +165,14 @@ The verification tests perform **annotation-based API compatibility checking**:
 ```python
 from python_sbb_polarion.core.annotations import restapi_endpoint
 
+
 @restapi_endpoint(
     method="GET",
     path="/api/projects/{projectId}/documents/{documentId}",
     path_params={"projectId": "project_id", "documentId": "document_id"},
     query_params={"revision": "revision"},
 )
-def get_document(self, project_id: str, document_id: str, revision: str | None = None) -> Response:
-    ...
+def get_document(self, project_id: str, document_id: str, revision: str | None = None) -> Response: ...
 ```
 
 **Benefits of annotation-based matching:**
@@ -271,8 +270,8 @@ test_admin_utility_completeness ... skipped 'No OpenAPI spec found'
 
 **Common skip reasons:**
 - No OpenAPI spec in repository (`docs/openapi.json` missing)
-- Network error (GitHub/Bitbucket unreachable)
-- Missing authentication token (Bitbucket extensions without `BITBUCKET_TOKEN`)
+- Network error (GitHub unreachable)
+- Missing authentication token
 
 ### Configuration
 
@@ -423,17 +422,10 @@ The API verification tests are included in the standard `tox` test suite and run
 **Problem:** Tests fail with "Could not fetch OpenAPI spec"
 
 **Solutions:**
-- Check network connectivity to GitHub/Bitbucket
+- Check network connectivity to GitHub
 - Verify authentication tokens are set correctly
 - Check token has required permissions
 - Try accessing the URL manually in a browser
-
-**Problem:** All Bitbucket tests skipped
-
-**Solution:**
-- Set `BITBUCKET_TOKEN` environment variable
-- Verify token has `Repository Read` permission
-- Test token by accessing the Bitbucket instance manually
 
 **Problem:** Test reports many missing methods
 
@@ -448,10 +440,9 @@ The API verification tests are included in the standard `tox` test suite and run
 **When adding a new extension:**
 
 1. Add extension to `EXTENSION_MAPPING` in test file
-2. If on Bitbucket, add to `BITBUCKET_EXTENSIONS`
-3. Run verification test to see current status
-4. Implement missing critical methods
-5. Document any intentional omissions
+2. Run verification test to see current status
+3. Implement missing critical methods
+4. Document any intentional omissions
 
 **When upstream API changes:**
 
@@ -494,6 +485,7 @@ The API verification tests are included in the standard `tox` test suite and run
 ```python
 import unittest
 from python_sbb_polarion.module import Class
+
 
 class TestFeature(unittest.TestCase):
     """Test feature X"""
@@ -568,7 +560,6 @@ uv run coverage html  # Generate HTML report
 
 ## Questions or Issues?
 
-- Check the [project TODO.md](../TODO.md) for planned improvements
 - Review test output for detailed error messages
 - Consult the OpenAPI specs in upstream repositories
 - Contact the team for access to private repositories

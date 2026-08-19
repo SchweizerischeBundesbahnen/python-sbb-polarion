@@ -133,7 +133,7 @@ class TestGetOAuth2ClientCredentials(unittest.TestCase):
         different_id: str = "another-client-id"
         different_secret: str = "another-client-secret"
 
-        token: str = get_oauth2_client_credentials(different_id, different_secret, self.token_endpoint)
+        get_oauth2_client_credentials(different_id, different_secret, self.token_endpoint)
 
         # Verify HTTPBasicAuth was called with different credentials
         mock_http_basic_auth.assert_called_once_with(different_id, different_secret)

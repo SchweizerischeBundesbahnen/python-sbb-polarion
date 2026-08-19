@@ -96,7 +96,8 @@ class PolarionProjectManager:
             response.raise_for_status()
 
             if not response.content:
-                raise ValueError(f"Empty content received for project '{project_id}'")
+                # The try wraps the request, not this guard.
+                raise ValueError(f"Empty content received for project '{project_id}'")  # noqa: TRY301
 
             output_path.write_bytes(response.content)
         except Exception:
