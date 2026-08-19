@@ -14,9 +14,19 @@ Provides utilities, core API access, extension clients, and testing helpers for 
 
 ## Installation
 
+The package is not published to PyPI. Each release attaches a wheel and a source
+distribution to its [GitHub release](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/releases),
+so install from there or directly from the repository.
+
 ```bash
+# From a release asset
+uv pip install https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/releases/download/v3.3.0/python_sbb_polarion-3.3.0-py3-none-any.whl
+
+# From the repository at a tag
+uv pip install "git+https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion.git@v3.3.0"
+
 # For development
-git clone <repository-url>
+git clone https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion.git
 cd python-sbb-polarion
 uv sync --all-extras  # Install all dependencies including dev tools
 ```
