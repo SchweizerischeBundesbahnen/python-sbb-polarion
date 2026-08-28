@@ -849,8 +849,9 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
 
         mock_setup.return_value = "test-token-abc"
 
+        mock_prepare.return_value = "/tmp/systest"
+
         helper = TestContainersHelper()
-        helper.systest_extensions_root = "/tmp/systest"
 
         # Act
         app_url: str
@@ -861,6 +862,7 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
         self.assertEqual(app_url, "http://localhost:8080")
         self.assertEqual(token, "test-token-abc")
         mock_prepare.assert_called_once_with("pdf-exporter", params)
+        mock_container.with_volume_mapping.assert_called_once_with("/tmp/systest", "/opt/polarion/polarion/extensions/")
         mock_container.start.assert_called_once()
         mock_setup.assert_called_once_with("http://localhost:8080")
         self.assertEqual(helper.polarion_container, mock_container)
@@ -891,8 +893,9 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
         mock_setup.return_value = "test-token"
         mock_resolve_tz.return_value = "Etc/UTC"
 
+        mock_prepare.return_value = "/tmp/systest"
+
         helper = TestContainersHelper()
-        helper.systest_extensions_root = "/tmp/systest"
 
         # Act
         helper.create_polarion_container("pdf-exporter", params, "http://weasyprint:9080")
@@ -925,8 +928,9 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
         mock_setup.return_value = "test-token-tz"
         mock_resolve_tz.return_value = "Europe/Zurich"
 
+        mock_prepare.return_value = "/tmp/systest"
+
         helper = TestContainersHelper()
-        helper.systest_extensions_root = "/tmp/systest"
 
         # Act
         helper.create_polarion_container("pdf-exporter", params, None)
@@ -958,8 +962,9 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
 
         mock_network = Mock()
 
+        mock_prepare.return_value = "/tmp/systest"
+
         helper = TestContainersHelper()
-        helper.systest_extensions_root = "/tmp/systest"
         helper.network = mock_network
 
         # Act
@@ -988,8 +993,9 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
         mock_container.start.side_effect = Exception("Docker error")
         mock_docker_container_class.return_value = mock_container
 
+        mock_prepare.return_value = "/tmp/systest"
+
         helper = TestContainersHelper()
-        helper.systest_extensions_root = "/tmp/systest"
 
         # Act & Assert
         with self.assertRaises(ContainerSetupError) as context:
@@ -1208,16 +1214,33 @@ class TestTestContainersHelperWaitForStartAndActivate(unittest.TestCase):
         mock_connection.set_print_error.assert_any_call(True)
 
 
+class TestTestContainersHelperCreateHostExtensionsRoot(unittest.TestCase):
+    """Test TestContainersHelper.create_host_extensions_root method."""
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.tempfile.gettempdir")
+    def test_create_host_extensions_root_returns_and_stores_root(self, mock_gettempdir: Mock) -> None:
+        """Test create_host_extensions_root returns the root and keeps it for tear down."""
+        # Arrange
+        mock_gettempdir.return_value = "/tmp"
+
+        helper = TestContainersHelper()
+
+        # Act
+        result: str = helper.create_host_extensions_root()
+
+        # Assert
+        self.assertEqual(result, "/tmp/systest")
+        self.assertEqual(helper.systest_extensions_root, "/tmp/systest")
+
+
 class TestTestContainersHelperCreateHostExtensionsPath(unittest.TestCase):
     """Test TestContainersHelper.create_host_extensions_path method."""
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.pathlib.Path")
     @patch("python_sbb_polarion.testing.testcontainers_helper.shutil.rmtree")
-    @patch("python_sbb_polarion.testing.testcontainers_helper.tempfile.gettempdir")
-    def test_create_host_extensions_path_creates_new_path(self, mock_gettempdir: Mock, mock_rmtree: Mock, mock_path_class: Mock) -> None:
+    def test_create_host_extensions_path_creates_new_path(self, mock_rmtree: Mock, mock_path_class: Mock) -> None:
         """Test create_host_extensions_path creates new directory."""
         # Arrange
-        mock_gettempdir.return_value = "/tmp"
         mock_path_instance = Mock()
         mock_path_instance.exists.return_value = False
         mock_path_class.return_value = mock_path_instance
@@ -1225,21 +1248,18 @@ class TestTestContainersHelperCreateHostExtensionsPath(unittest.TestCase):
         helper = TestContainersHelper()
 
         # Act
-        result: str = helper.create_host_extensions_path()
+        result: str = helper.create_host_extensions_path("/tmp/systest")
 
         # Assert
         self.assertEqual(result, "/tmp/systest/sbb-extensions/eclipse/plugins")
-        self.assertEqual(helper.systest_extensions_root, "/tmp/systest")
         mock_rmtree.assert_not_called()
         mock_path_instance.mkdir.assert_called_once_with(parents=True)
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.pathlib.Path")
     @patch("python_sbb_polarion.testing.testcontainers_helper.shutil.rmtree")
-    @patch("python_sbb_polarion.testing.testcontainers_helper.tempfile.gettempdir")
-    def test_create_host_extensions_path_removes_existing(self, mock_gettempdir: Mock, mock_rmtree: Mock, mock_path_class: Mock) -> None:
+    def test_create_host_extensions_path_removes_existing(self, mock_rmtree: Mock, mock_path_class: Mock) -> None:
         """Test create_host_extensions_path removes existing directory first."""
         # Arrange
-        mock_gettempdir.return_value = "/tmp"
         mock_path_instance = Mock()
         mock_path_instance.exists.return_value = True
         mock_path_class.return_value = mock_path_instance
@@ -1247,7 +1267,7 @@ class TestTestContainersHelperCreateHostExtensionsPath(unittest.TestCase):
         helper = TestContainersHelper()
 
         # Act
-        result: str = helper.create_host_extensions_path()
+        result: str = helper.create_host_extensions_path("/tmp/systest")
 
         # Assert
         self.assertEqual(result, "/tmp/systest/sbb-extensions/eclipse/plugins")
@@ -1402,9 +1422,11 @@ class TestTestContainersHelperPrepareSystemTestExtensions(unittest.TestCase):
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.copy_dependency")
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_host_extensions_path")
-    def test_prepare_systest_extensions_without_additional_bundles(self, mock_create_path: Mock, mock_copy: Mock) -> None:
-        """Test prepare_systest_extensions copies required extensions."""
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_host_extensions_root")
+    def test_prepare_systest_extensions_without_additional_bundles(self, mock_create_root: Mock, mock_create_path: Mock, mock_copy: Mock) -> None:
+        """Test prepare_systest_extensions copies required extensions and returns the root."""
         # Arrange
+        mock_create_root.return_value = "/tmp/systest"
         mock_create_path.return_value = "/tmp/systest/plugins"
 
         params = PolarionContainerParameters(
@@ -1419,9 +1441,11 @@ class TestTestContainersHelperPrepareSystemTestExtensions(unittest.TestCase):
         helper = TestContainersHelper()
 
         # Act
-        helper.prepare_systest_extensions("pdf-exporter", params)
+        systest_extensions_root: str = helper.prepare_systest_extensions("pdf-exporter", params)
 
         # Assert
+        self.assertEqual(systest_extensions_root, "/tmp/systest")
+        mock_create_path.assert_called_once_with("/tmp/systest")
         self.assertEqual(mock_copy.call_count, 3)
         mock_copy.assert_any_call("/tmp/systest/plugins", "ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.pdf-exporter", "1.0.0")
         mock_copy.assert_any_call("/tmp/systest/plugins", "ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.admin-utility", "2.0.0")
@@ -1429,9 +1453,11 @@ class TestTestContainersHelperPrepareSystemTestExtensions(unittest.TestCase):
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.copy_dependency")
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_host_extensions_path")
-    def test_prepare_systest_extensions_with_additional_bundles(self, mock_create_path: Mock, mock_copy: Mock) -> None:
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_host_extensions_root")
+    def test_prepare_systest_extensions_with_additional_bundles(self, mock_create_root: Mock, mock_create_path: Mock, mock_copy: Mock) -> None:
         """Test prepare_systest_extensions includes additional bundles."""
         # Arrange
+        mock_create_root.return_value = "/tmp/systest"
         mock_create_path.return_value = "/tmp/systest/plugins"
 
         additional: list[ArtifactInfo] = [ArtifactInfo("com.example", "extra-bundle", "3.0.0")]
