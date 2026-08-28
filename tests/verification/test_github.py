@@ -64,6 +64,10 @@ class GitHubAPIVerificationTest(BaseExtensionAPIVerificationTest):
         """Verify dms_doc_connector.py matches upstream DMS Connector API."""
         self._verify_extension("dms_doc_connector")
 
+    def test_dms_wi_connector_completeness(self) -> None:
+        """Verify dms_wi_connector.py matches upstream DMS Work Item Connector API."""
+        self._verify_extension("dms_wi_connector")
+
     def test_docx_exporter_completeness(self) -> None:
         """Verify docx_exporter.py matches upstream DOCX Exporter API."""
         self._verify_extension("docx_exporter")
