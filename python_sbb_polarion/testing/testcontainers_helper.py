@@ -165,9 +165,9 @@ class TestContainersHelper:
         port: int = 80
         try:
             logger.info("Starting %s ...", container_name)
-            self.prepare_systest_extensions(extension_name, parameters)
+            systest_extensions_root: str = self.prepare_systest_extensions(extension_name, parameters)
             # Define the custom Docker container using your image
-            container: DockerContainer = DockerContainer(image=parameters.polarion_image_name).with_bind_ports(port).with_name(container_name).with_volume_mapping(self.systest_extensions_root, POLARION_EXTENSIONS_PATH)
+            container: DockerContainer = DockerContainer(image=parameters.polarion_image_name).with_bind_ports(port).with_name(container_name).with_volume_mapping(systest_extensions_root, POLARION_EXTENSIONS_PATH)
             if weasyprint_service_endpoint:
                 container = container.with_env("WEASYPRINT_SERVICE_ENDPOINT", weasyprint_service_endpoint)
 
@@ -195,8 +195,9 @@ class TestContainersHelper:
         else:
             return base_url, token
 
-    def prepare_systest_extensions(self, extension_name: str, parameters: PolarionContainerParameters) -> None:
-        systest_extensions_jars_path: str = self.create_host_extensions_path()
+    def prepare_systest_extensions(self, extension_name: str, parameters: PolarionContainerParameters) -> str:
+        systest_extensions_root: str = self.create_host_extensions_root()
+        systest_extensions_jars_path: str = self.create_host_extensions_path(systest_extensions_root)
         systest_extensions: list[ArtifactInfo] = [
             ArtifactInfo("ch.sbb.polarion.extensions", f"ch.sbb.polarion.extension.{extension_name}", parameters.extension_version),
             ArtifactInfo("ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.admin-utility", parameters.admin_utility_version or DEFAULT_ADMIN_UTILITY_VERSION),
@@ -207,6 +208,8 @@ class TestContainersHelper:
 
         for systest_extension in systest_extensions:
             self.copy_dependency(systest_extensions_jars_path, systest_extension.group_id, systest_extension.artifact_id, systest_extension.version)
+
+        return systest_extensions_root
 
     def tear_down(self) -> None:
         # Stop and remove the container after the tests
@@ -326,9 +329,13 @@ class TestContainersHelper:
             raise MavenError("Maven is not available, please, install mvn and try again.")
         return mvn_path
 
-    def create_host_extensions_path(self) -> str:
-        self.systest_extensions_root = f"{tempfile.gettempdir()}/systest"
-        systest_extensions_jars_path: str = f"{self.systest_extensions_root}/sbb-extensions/eclipse/plugins"
+    def create_host_extensions_root(self) -> str:
+        systest_extensions_root: str = f"{tempfile.gettempdir()}/systest"
+        self.systest_extensions_root = systest_extensions_root
+        return systest_extensions_root
+
+    def create_host_extensions_path(self, systest_extensions_root: str) -> str:
+        systest_extensions_jars_path: str = f"{systest_extensions_root}/sbb-extensions/eclipse/plugins"
         if pathlib.Path(systest_extensions_jars_path).exists():
             shutil.rmtree(systest_extensions_jars_path)
         pathlib.Path(systest_extensions_jars_path).mkdir(parents=True)
