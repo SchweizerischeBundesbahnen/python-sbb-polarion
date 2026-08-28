@@ -60,6 +60,10 @@ class GitHubAPIVerificationTest(BaseExtensionAPIVerificationTest):
         """Verify diff_tool.py matches upstream Diff Tool API."""
         self._verify_extension("diff_tool")
 
+    def test_dms_doc_connector_completeness(self) -> None:
+        """Verify dms_doc_connector.py matches upstream DMS Connector API."""
+        self._verify_extension("dms_doc_connector")
+
     def test_docx_exporter_completeness(self) -> None:
         """Verify docx_exporter.py matches upstream DOCX Exporter API."""
         self._verify_extension("docx_exporter")
