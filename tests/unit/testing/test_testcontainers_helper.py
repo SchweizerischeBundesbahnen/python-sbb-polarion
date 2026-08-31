@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import shutil
 import tempfile
 import unittest
 import zoneinfo
@@ -925,6 +926,7 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
 
             # Act
             helper.create_polarion_container("pdf-exporter", params, None)
+            self.addCleanup(shutil.rmtree, str(helper.ca_certificates_root), True)
 
             # Assert
             staged: str = str(helper.ca_certificates_root)
@@ -1631,6 +1633,7 @@ class TestPolarionPreparation(unittest.TestCase):
             second.write_text("second")
 
             staged: str | None = helper.stage_ca_certificates([str(first), str(second)])
+            self.addCleanup(shutil.rmtree, str(staged), True)
 
             self.assertIsNotNone(staged)
             self.assertEqual({"0-first.pem", "1-second.pem"}, {path.name for path in pathlib.Path(str(staged)).iterdir()})
@@ -1680,6 +1683,7 @@ class TestPolarionPreparation(unittest.TestCase):
             second.write_text("second")
 
             staged: str | None = helper.stage_ca_certificates([str(first), str(second)])
+            self.addCleanup(shutil.rmtree, str(staged), True)
 
             contents: set[str] = {path.read_text() for path in pathlib.Path(str(staged)).iterdir()}
             self.assertEqual({"first", "second"}, contents)
