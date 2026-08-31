@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.4.0...v3.5.0) (2026-08-31)
+
+
+### Features
+
+* seed a Polarion secret before the container starts ([#109](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/109)) ([a48cff6](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/a48cff61882651a0d00874139270782c2fdb14ce))
+
 ## [3.4.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.3.0...v3.4.0) (2026-08-31)
 
 
