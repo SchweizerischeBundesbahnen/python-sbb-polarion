@@ -1706,22 +1706,39 @@ class TestPolarionPreparation(unittest.TestCase):
         self.assertNotIn("chown", command)
 
     def test_secrets_are_staged_as_files(self) -> None:
-        """Test that the values are written to a directory to mount, numbered as the command expects."""
+        """Test that each value is written to its own file and returned under the key it belongs to."""
         helper: TestContainersHelper = TestContainersHelper()
 
-        staged: str | None = helper.stage_secrets({"first.secret": "first value", "second.secret": "second value"})
-        self.addCleanup(shutil.rmtree, str(staged), True)
+        files: dict[str, str] = helper.stage_secrets({"first.secret": "first value", "second.secret": "second value"})
+        self.addCleanup(shutil.rmtree, str(helper.secrets_root), True)
 
-        self.assertEqual(["0", "1"], sorted(path.name for path in pathlib.Path(str(staged)).iterdir()))
-        self.assertEqual("first value", (pathlib.Path(str(staged)) / "0").read_text())
+        self.assertEqual({"first.secret": "/tmp/polarion-secrets/0", "second.secret": "/tmp/polarion-secrets/1"}, files)
+        staged: pathlib.Path = pathlib.Path(str(helper.secrets_root))
+        self.assertEqual("first value", (staged / "0").read_text())
+        self.assertEqual("second value", (staged / "1").read_text())
+
+    def test_a_staged_value_is_readable_by_nobody_else(self) -> None:
+        """Test that the value is on disk under a mode no umask can widen."""
+        helper: TestContainersHelper = TestContainersHelper()
+
+        helper.stage_secrets({"a.secret": "a value"})
+        self.addCleanup(shutil.rmtree, str(helper.secrets_root), True)
+
+        self.assertEqual(0o600, (pathlib.Path(str(helper.secrets_root)) / "0").stat().st_mode & 0o777)
 
     def test_nothing_is_staged_without_secrets(self) -> None:
         """Test that a run seeding nothing makes no directory."""
         helper: TestContainersHelper = TestContainersHelper()
 
-        self.assertIsNone(helper.stage_secrets(None))
-        self.assertIsNone(helper.stage_secrets({}))
+        self.assertEqual({}, helper.stage_secrets(None))
+        self.assertEqual({}, helper.stage_secrets({}))
         self.assertIsNone(helper.secrets_root)
+
+    def test_a_directory_which_cannot_be_read_stops_the_start(self) -> None:
+        """Test that unreadable secrets are said out loud rather than looking already read."""
+        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_files={"a.secret": "/tmp/polarion-secrets/0"})
+
+        self.assertIn("[ -d /tmp/polarion-secrets ] ||", command)
 
     def test_a_secret_without_a_value_is_refused(self) -> None:
         """Test that a key with no value is named rather than seeded empty."""

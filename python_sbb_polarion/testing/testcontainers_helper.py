@@ -237,10 +237,9 @@ class TestContainersHelper:
                 container = container.with_volume_mapping(certificates_directory, CA_CERTIFICATES_PATH)
             # A secret is read out of the store when Polarion starts and kept, so one written into a
             # running Polarion is never seen.
-            secrets_directory: str | None = self.stage_secrets(parameters.polarion_secrets)
-            if secrets_directory:
-                container = container.with_volume_mapping(secrets_directory, SECRETS_PATH, "rw")
-            secret_files: dict[str, str] = {key: f"{SECRETS_PATH}/{index}" for index, key in enumerate(parameters.polarion_secrets or {})}
+            secret_files: dict[str, str] = self.stage_secrets(parameters.polarion_secrets)
+            if secret_files:
+                container = container.with_volume_mapping(str(self.secrets_root), SECRETS_PATH, "rw")
             preparation: str = self.build_preparation_command(parameters.extra_properties, bool(certificates_directory), secret_files)
             if preparation:
                 # The entrypoint of the Polarion image is the start script and nothing else
@@ -323,25 +322,33 @@ class TestContainersHelper:
             shutil.copyfile(source, pathlib.Path(staged) / f"{position}-{source.name}")
         return staged
 
-    def stage_secrets(self, secrets: dict[str, str] | None) -> str | None:
+    def stage_secrets(self, secrets: dict[str, str] | None) -> dict[str, str]:
         """Write the values to one directory, so the container mounts a path rather than a value.
+
+        The names of the files are decided here and returned with the keys they belong to, so nothing
+        outside this method has to derive them a second time and agree by luck.
 
         Args:
             secrets: Secret key mapped to its value, empty or None where nothing is seeded.
 
         Returns:
-            The directory to mount, or None where there is nothing to seed.
+            Secret key mapped to the file inside the container which holds its value, empty where
+            there is nothing to seed. The directory to mount is `secrets_root`.
         """
         if not secrets:
-            return None
+            return {}
 
         staged: str = tempfile.mkdtemp(prefix="polarion-secrets-")
         self.secrets_root = staged
-        for index, value in enumerate(secrets.values()):
+        files: dict[str, str] = {}
+        for index, (key, value) in enumerate(secrets.items()):
             path: pathlib.Path = pathlib.Path(staged) / str(index)
-            path.write_text(value)
-            path.chmod(0o644)
-        return staged
+            # opened with the mode rather than chmod-ed after: the value is never on disk under a
+            # wider mode, and the mode of the directory mkdtemp made governs the rest
+            with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w") as handle:
+                handle.write(value)
+            files[key] = f"{SECRETS_PATH}/{index}"
+        return files
 
     @staticmethod
     def build_preparation_command(extra_properties: dict[str, str] | None, with_certificates: bool, secret_files: dict[str, str] | None = None) -> str:
@@ -356,6 +363,10 @@ class TestContainersHelper:
             A shell command ending in the start script of the image.
         """
         steps: list[str] = []
+        if secret_files:
+            # a directory the container cannot read would make every file below look already read,
+            # and Polarion would start without the secrets rather than say so
+            steps.append(f'[ -d {SECRETS_PATH} ] || {{ echo "the directory holding the secrets cannot be read"; exit 1; }}')
         for secret_key, path in (secret_files or {}).items():
             # The value is read out of a mounted file and the file is removed as it is read, so it is
             # in neither the command nor the environment of the container, both of which docker
