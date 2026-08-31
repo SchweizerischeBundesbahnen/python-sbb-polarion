@@ -155,7 +155,10 @@ class TestContainersHelper:
 
     @staticmethod
     def parse_secrets(secrets: str | None) -> dict[str, str]:
-        """Read 'key=value' pairs separated by ';', refusing a key with no value.
+        """Read 'key=value' pairs separated by ';', refusing anything this format cannot carry.
+
+        A value therefore cannot hold a ';': that character separates the pairs, and a value holding
+        one would arrive truncated.
 
         Args:
             secrets: The configured string, empty or None where nothing is seeded.
@@ -164,10 +167,15 @@ class TestContainersHelper:
             The secrets to write into the store of Polarion.
 
         Raises:
-            ContainerSetupError: If a key is named with no value. An empty secret is the state this
-                seeding exists to avoid, and a variable which expanded to nothing should say so here
-                rather than as an authentication error much later.
+            ContainerSetupError: If a key is named with no value, or a fragment carries no '='. A
+                wrong or empty secret is the state this seeding exists to avoid, and both should be
+                said here rather than reached as an authentication error much later. Neither message
+                quotes what it read: a fragment of a malformed entry is a piece of a secret.
         """
+        fragments: list[str] = [fragment for fragment in (part.strip() for part in (secrets or "").split(";")) if fragment]
+        if any("=" not in fragment for fragment in fragments):
+            raise ContainerSetupError("A Polarion secret is not a 'key=value' pair. A value cannot hold a ';', which separates the pairs.")
+
         parsed: dict[str, str] = TestContainersHelper.parse_properties(secrets)
         empty: list[str] = [key for key, value in parsed.items() if not value]
         if empty:

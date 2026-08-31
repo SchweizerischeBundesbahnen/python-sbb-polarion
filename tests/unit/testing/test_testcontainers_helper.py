@@ -1759,6 +1759,14 @@ class TestPolarionPreparation(unittest.TestCase):
 
         self.assertIn("a.secret", str(context.exception))
 
+    def test_a_value_holding_the_separator_is_refused(self) -> None:
+        """Test that a value carrying ';' is refused rather than seeded truncated."""
+        with self.assertRaises(ContainerSetupError) as context:
+            TestContainersHelper.parse_secrets("a.secret=first;second")
+
+        self.assertIn("key=value", str(context.exception))
+        self.assertNotIn("second", str(context.exception))
+
     def test_secrets_are_read_like_properties(self) -> None:
         """Test that the pairs are read the same way the properties are."""
         self.assertEqual({"a.secret": "a value"}, TestContainersHelper.parse_secrets("a.secret=a value"))
