@@ -51,8 +51,7 @@ POLARION_START_SCRIPT = "/opt/polarion/start-all.sh"
 POLARION_SECRETS_CLI = "/opt/polarion/polarion/secrets-cli/secrets-cli.sh"
 POLARION_SECRETS_STORE = "/opt/polarion/etc/secrets-manager"
 POLARION_SECRETS_OWNER = "polarion:psvnadm"
-# the name of the variable a value travels in, not a value itself
-SECRET_VALUE_VARIABLE = "POLARION_SECRET_VALUE_{index}"  # noqa: S105
+SECRETS_PATH = "/tmp/polarion-secrets"  # noqa: S108 - a path inside the container, removed as it is read
 CA_CERTIFICATES_PATH = "/tmp/ca-certificates"  # noqa: S108 - a path inside the container, read only
 
 
@@ -64,6 +63,7 @@ class TestContainersHelper:
     network: Network | None = None
     systest_extensions_root: str | None = None
     ca_certificates_root: str | None = None
+    secrets_root: str | None = None
 
     def create_test_container_if_required(self, extension_name: str) -> None:
         args: argparse.Namespace = get_script_arguments()
@@ -126,7 +126,7 @@ class TestContainersHelper:
             polarion_network=polarion_network or "",
             extra_properties=TestContainersHelper.parse_properties(extra_properties),
             ca_certificate_files=[path.strip() for path in (ca_certificates or "").split(",") if path.strip()],
-            polarion_secrets=TestContainersHelper.parse_properties(polarion_secrets),
+            polarion_secrets=TestContainersHelper.parse_secrets(polarion_secrets),
         )
 
     @staticmethod
@@ -151,6 +151,27 @@ class TestContainersHelper:
             pair: tuple[str, str, str] = entry.partition("=")
             if pair[1] and pair[0].strip():
                 parsed[pair[0].strip()] = pair[2].strip()
+        return parsed
+
+    @staticmethod
+    def parse_secrets(secrets: str | None) -> dict[str, str]:
+        """Read 'key=value' pairs separated by ';', refusing a key with no value.
+
+        Args:
+            secrets: The configured string, empty or None where nothing is seeded.
+
+        Returns:
+            The secrets to write into the store of Polarion.
+
+        Raises:
+            ContainerSetupError: If a key is named with no value. An empty secret is the state this
+                seeding exists to avoid, and a variable which expanded to nothing should say so here
+                rather than as an authentication error much later.
+        """
+        parsed: dict[str, str] = TestContainersHelper.parse_properties(secrets)
+        empty: list[str] = [key for key, value in parsed.items() if not value]
+        if empty:
+            raise ContainerSetupError(f"No value is given for the Polarion secret(s): {', '.join(empty)}")
         return parsed
 
     @staticmethod
@@ -215,14 +236,12 @@ class TestContainersHelper:
             if certificates_directory:
                 container = container.with_volume_mapping(certificates_directory, CA_CERTIFICATES_PATH)
             # A secret is read out of the store when Polarion starts and kept, so one written into a
-            # running Polarion is never seen. The value travels in an environment variable rather than
-            # in the command, which `docker inspect` prints in full.
-            secret_variables: dict[str, str] = {}
-            for index, (secret_key, secret_value) in enumerate((parameters.polarion_secrets or {}).items()):
-                variable: str = SECRET_VALUE_VARIABLE.format(index=index)
-                container = container.with_env(variable, secret_value)
-                secret_variables[secret_key] = variable
-            preparation: str = self.build_preparation_command(parameters.extra_properties, bool(certificates_directory), secret_variables)
+            # running Polarion is never seen.
+            secrets_directory: str | None = self.stage_secrets(parameters.polarion_secrets)
+            if secrets_directory:
+                container = container.with_volume_mapping(secrets_directory, SECRETS_PATH, "rw")
+            secret_files: dict[str, str] = {key: f"{SECRETS_PATH}/{index}" for index, key in enumerate(parameters.polarion_secrets or {})}
+            preparation: str = self.build_preparation_command(parameters.extra_properties, bool(certificates_directory), secret_files)
             if preparation:
                 # The entrypoint of the Polarion image is the start script and nothing else
                 # (`docker inspect` on polarion:2606-0 reports ["/opt/polarion/start-all.sh"] with no
@@ -304,23 +323,47 @@ class TestContainersHelper:
             shutil.copyfile(source, pathlib.Path(staged) / f"{position}-{source.name}")
         return staged
 
+    def stage_secrets(self, secrets: dict[str, str] | None) -> str | None:
+        """Write the values to one directory, so the container mounts a path rather than a value.
+
+        Args:
+            secrets: Secret key mapped to its value, empty or None where nothing is seeded.
+
+        Returns:
+            The directory to mount, or None where there is nothing to seed.
+        """
+        if not secrets:
+            return None
+
+        staged: str = tempfile.mkdtemp(prefix="polarion-secrets-")
+        self.secrets_root = staged
+        for index, value in enumerate(secrets.values()):
+            path: pathlib.Path = pathlib.Path(staged) / str(index)
+            path.write_text(value)
+            path.chmod(0o644)
+        return staged
+
     @staticmethod
-    def build_preparation_command(extra_properties: dict[str, str] | None, with_certificates: bool, secret_variables: dict[str, str] | None = None) -> str:
+    def build_preparation_command(extra_properties: dict[str, str] | None, with_certificates: bool, secret_files: dict[str, str] | None = None) -> str:
         """Build what runs before Polarion, or an empty string where nothing has to be prepared.
 
         Args:
             extra_properties: Properties appended to polarion.properties, which Polarion reads once.
             with_certificates: Whether certificates were mounted for the JVM to trust.
-            secret_variables: Secret key mapped to the environment variable holding its value.
+            secret_files: Secret key mapped to the file inside the container holding its value.
 
         Returns:
             A shell command ending in the start script of the image.
         """
         steps: list[str] = []
-        for secret_key, variable in (secret_variables or {}).items():
-            # the cli of the image asks for the value twice, and it writes the store Polarion reads
-            steps.append(f'printf "%s\\n%s\\n" "${variable}" "${variable}" | {POLARION_SECRETS_CLI} add --key {shlex.quote(secret_key)} > /dev/null || exit 1')
-        if secret_variables:
+        for secret_key, path in (secret_files or {}).items():
+            # The value is read out of a mounted file and the file is removed as it is read, so it is
+            # in neither the command nor the environment of the container, both of which docker
+            # inspect prints in full and Polarion would inherit. A file which is gone was already
+            # read: the store keeps what it was given, and a restarted container seeds nothing twice.
+            quoted_path: str = shlex.quote(path)
+            steps.append(f'if [ -f {quoted_path} ]; then printf "%s\\n%s\\n" "$(cat {quoted_path})" "$(cat {quoted_path})" | {POLARION_SECRETS_CLI} add --key {shlex.quote(secret_key)} > /dev/null || exit 1; rm -f {quoted_path}; fi')
+        if secret_files:
             # the cli runs as the user of the preparation, and Polarion runs as its own
             steps.append(f"chown -R {POLARION_SECRETS_OWNER} {POLARION_SECRETS_STORE} || exit 1")
         if with_certificates:
@@ -364,6 +407,8 @@ class TestContainersHelper:
             shutil.rmtree(self.systest_extensions_root)
         if self.ca_certificates_root is not None and pathlib.Path(self.ca_certificates_root).exists():
             shutil.rmtree(self.ca_certificates_root)
+        if self.secrets_root is not None and pathlib.Path(self.secrets_root).exists():
+            shutil.rmtree(self.secrets_root)
         if self.network:
             self.network.remove()
 

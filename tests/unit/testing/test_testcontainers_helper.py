@@ -1671,26 +1671,69 @@ class TestPolarionPreparation(unittest.TestCase):
         self.assertIsNone(helper.ca_certificates_root)
 
     def test_a_secret_is_written_before_the_start(self) -> None:
-        """Test that a secret is seeded through the cli of the image, from a variable."""
-        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_variables={"a.secret": "POLARION_SECRET_VALUE_0"})
+        """Test that a secret is seeded through the cli of the image, out of a mounted file."""
+        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_files={"a.secret": "/tmp/polarion-secrets/0"})
 
         self.assertIn("secrets-cli.sh add --key a.secret", command)
-        self.assertIn('"$POLARION_SECRET_VALUE_0" "$POLARION_SECRET_VALUE_0"', command)
+        self.assertIn('"$(cat /tmp/polarion-secrets/0)"', command)
         self.assertIn("chown -R polarion:psvnadm /opt/polarion/etc/secrets-manager", command)
         self.assertTrue(command.endswith("exec /opt/polarion/start-all.sh"), command)
 
+    def test_the_value_of_a_secret_is_removed_as_it_is_read(self) -> None:
+        """Test that nothing in the container holds the value once Polarion runs."""
+        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_files={"a.secret": "/tmp/polarion-secrets/0"})
+
+        self.assertIn("rm -f /tmp/polarion-secrets/0", command)
+        self.assertNotIn("a-value", command)
+
+    def test_a_secret_which_was_read_is_not_seeded_again(self) -> None:
+        """Test that a container started a second time seeds nothing twice."""
+        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_files={"a.secret": "/tmp/polarion-secrets/0"})
+
+        self.assertIn("if [ -f /tmp/polarion-secrets/0 ]; then", command)
+
     def test_a_failing_seed_stops_the_start(self) -> None:
         """Test that Polarion does not start where a secret could not be written."""
-        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_variables={"a.secret": "POLARION_SECRET_VALUE_0"})
+        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_files={"a.secret": "/tmp/polarion-secrets/0"})
 
         self.assertEqual(2, command.count("|| exit 1"), command)
 
     def test_no_secret_leaves_the_store_alone(self) -> None:
         """Test that a run seeding nothing neither calls the cli nor touches the store."""
-        command: str = TestContainersHelper.build_preparation_command({"a.property": "a value"}, with_certificates=False, secret_variables={})
+        command: str = TestContainersHelper.build_preparation_command({"a.property": "a value"}, with_certificates=False, secret_files={})
 
         self.assertNotIn("secrets-cli", command)
         self.assertNotIn("chown", command)
+
+    def test_secrets_are_staged_as_files(self) -> None:
+        """Test that the values are written to a directory to mount, numbered as the command expects."""
+        helper: TestContainersHelper = TestContainersHelper()
+
+        staged: str | None = helper.stage_secrets({"first.secret": "first value", "second.secret": "second value"})
+        self.addCleanup(shutil.rmtree, str(staged), True)
+
+        self.assertEqual(["0", "1"], sorted(path.name for path in pathlib.Path(str(staged)).iterdir()))
+        self.assertEqual("first value", (pathlib.Path(str(staged)) / "0").read_text())
+
+    def test_nothing_is_staged_without_secrets(self) -> None:
+        """Test that a run seeding nothing makes no directory."""
+        helper: TestContainersHelper = TestContainersHelper()
+
+        self.assertIsNone(helper.stage_secrets(None))
+        self.assertIsNone(helper.stage_secrets({}))
+        self.assertIsNone(helper.secrets_root)
+
+    def test_a_secret_without_a_value_is_refused(self) -> None:
+        """Test that a key with no value is named rather than seeded empty."""
+        with self.assertRaises(ContainerSetupError) as context:
+            TestContainersHelper.parse_secrets("a.secret=;other.secret=kept")
+
+        self.assertIn("a.secret", str(context.exception))
+
+    def test_secrets_are_read_like_properties(self) -> None:
+        """Test that the pairs are read the same way the properties are."""
+        self.assertEqual({"a.secret": "a value"}, TestContainersHelper.parse_secrets("a.secret=a value"))
+        self.assertEqual({}, TestContainersHelper.parse_secrets(None))
 
     def test_a_failing_append_stops_the_start(self) -> None:
         """Test that Polarion does not start where a property could not be written."""
