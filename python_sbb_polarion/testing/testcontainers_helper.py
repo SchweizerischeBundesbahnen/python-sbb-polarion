@@ -209,6 +209,10 @@ class TestContainersHelper:
                 container = container.with_volume_mapping(certificates_directory, CA_CERTIFICATES_PATH)
             preparation: str = self.build_preparation_command(parameters.extra_properties, bool(certificates_directory))
             if preparation:
+                # The entrypoint of the Polarion image is the start script and nothing else
+                # (`docker inspect` on polarion:2606-0 reports ["/opt/polarion/start-all.sh"] with no
+                # command), and the templating of polarion.properties runs inside that script. The
+                # preparation ends by executing it, so nothing of the image is skipped.
                 container = container.with_kwargs(entrypoint=["/bin/sh", "-c", preparation])
 
             # Forward the host timezone so the Polarion JVM matches it (defaults to Etc/UTC when it cannot be resolved).
@@ -219,8 +223,7 @@ class TestContainersHelper:
             if self.network:
                 self.network.connect(container.get_wrapped_container().short_id)
             if parameters.polarion_network:
-                # a network someone else created, holding the services this run reaches
-                docker.from_env().networks.get(parameters.polarion_network).connect(container.get_wrapped_container().short_id)
+                self.join_network(container.get_wrapped_container().short_id, parameters.polarion_network)
 
             exposed_port: int = container.get_exposed_port(port)
             base_url: str = f"http://localhost:{exposed_port}"
@@ -237,6 +240,23 @@ class TestContainersHelper:
             raise ContainerSetupError("Cannot setup Polarion container: " + str(ex)) from ex
         else:
             return base_url, token
+
+    @staticmethod
+    def join_network(container_id: str, network_name: str) -> None:
+        """Join a network someone else created, holding the services this run reaches.
+
+        Args:
+            container_id: The container to connect.
+            network_name: The existing network.
+
+        Raises:
+            ContainerSetupError: If there is no such network, which is otherwise a bare docker 404.
+        """
+        try:
+            network: Network = docker.from_env().networks.get(network_name)
+        except docker.errors.NotFound as e:
+            raise ContainerSetupError(f"Network '{network_name}' does not exist") from e
+        network.connect(container_id)
 
     def stage_ca_certificates(self, certificate_files: list[str] | None) -> str | None:
         """Copy the certificates into one directory, so the container mounts a single path.
@@ -264,8 +284,9 @@ class TestContainersHelper:
 
         staged: str = tempfile.mkdtemp(prefix="polarion-ca-")
         self.ca_certificates_root = staged
-        for source in sources:
-            shutil.copyfile(source, pathlib.Path(staged) / source.name)
+        for position, source in enumerate(sources):
+            # numbered, so two authorities named ca.pem in different directories both arrive
+            shutil.copyfile(source, pathlib.Path(staged) / f"{position}-{source.name}")
         return staged
 
     @staticmethod
@@ -287,7 +308,7 @@ class TestContainersHelper:
             )
         # a value is quoted rather than wrapped in quotes: one apostrophe in it would otherwise end
         # the quoting and hand the rest of the value to the shell
-        steps.extend(f"printf '%s\\n' {shlex.quote(f'{name}={value}')} >> {POLARION_PROPERTIES_PATH}" for name, value in (extra_properties or {}).items())
+        steps.extend(f"printf '%s\\n' {shlex.quote(f'{name}={value}')} >> {POLARION_PROPERTIES_PATH} || exit 1" for name, value in (extra_properties or {}).items())
         if not steps:
             return ""
         steps.append(f"exec {POLARION_START_SCRIPT}")

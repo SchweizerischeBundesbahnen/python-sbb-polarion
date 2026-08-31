@@ -10,6 +10,8 @@ import zoneinfo
 from http import HTTPStatus
 from unittest.mock import Mock, patch
 
+import docker
+
 from python_sbb_polarion.extensions.admin_utility import PolarionAdminUtilityApi
 from python_sbb_polarion.testing.testcontainers_helper import (
     ArtifactInfo,
@@ -1503,10 +1505,6 @@ class TestTestContainersHelperPrepareSystemTestExtensions(unittest.TestCase):
         mock_copy.assert_any_call("/tmp/systest/plugins", "com.example", "extra-bundle", "3.0.0")
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class TestPolarionPreparation(unittest.TestCase):
     """Test the properties and certificates prepared before Polarion starts."""
 
@@ -1559,7 +1557,7 @@ class TestPolarionPreparation(unittest.TestCase):
             staged: str | None = helper.stage_ca_certificates([str(first), str(second)])
 
             self.assertIsNotNone(staged)
-            self.assertEqual({"first.pem", "second.pem"}, {path.name for path in pathlib.Path(str(staged)).iterdir()})
+            self.assertEqual({"0-first.pem", "1-second.pem"}, {path.name for path in pathlib.Path(str(staged)).iterdir()})
 
     def test_nothing_is_staged_without_certificates(self) -> None:
         """Test that no directory is made where nothing is to be trusted."""
@@ -1590,6 +1588,26 @@ class TestPolarionPreparation(unittest.TestCase):
 
         self.assertIsNone(helper.ca_certificates_root)
 
+    def test_a_failing_append_stops_the_start(self) -> None:
+        """Test that Polarion does not start where a property could not be written."""
+        command: str = TestContainersHelper.build_preparation_command({"a.property": "a value"}, with_certificates=False)
+
+        self.assertIn(">> /opt/polarion/etc/polarion.properties || exit 1", command)
+
+    def test_certificates_sharing_a_name_both_arrive(self) -> None:
+        """Test that two authorities named alike do not overwrite each other."""
+        helper: TestContainersHelper = TestContainersHelper()
+        with tempfile.TemporaryDirectory() as first_directory, tempfile.TemporaryDirectory() as second_directory:
+            first: pathlib.Path = pathlib.Path(first_directory) / "ca.pem"
+            first.write_text("first")
+            second: pathlib.Path = pathlib.Path(second_directory) / "ca.pem"
+            second.write_text("second")
+
+            staged: str | None = helper.stage_ca_certificates([str(first), str(second)])
+
+            contents: set[str] = {path.read_text() for path in pathlib.Path(str(staged)).iterdir()}
+            self.assertEqual({"first", "second"}, contents)
+
     def test_a_missing_certificate_is_reported(self) -> None:
         """Test that a file which is not there names itself, rather than failing at container start."""
         helper: TestContainersHelper = TestContainersHelper()
@@ -1598,3 +1616,32 @@ class TestPolarionPreparation(unittest.TestCase):
             helper.stage_ca_certificates(["/no/such/certificate.pem"])
 
         self.assertIn("/no/such/certificate.pem", str(context.exception))
+
+
+class TestJoinNetwork(unittest.TestCase):
+    """Test joining a network created outside the run."""
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.docker.from_env")
+    def test_the_container_is_connected(self, mock_from_env: Mock) -> None:
+        """Test that the container joins the named network."""
+        network: Mock = Mock()
+        mock_from_env.return_value.networks.get.return_value = network
+
+        TestContainersHelper.join_network("abc123", "a-network")
+
+        mock_from_env.return_value.networks.get.assert_called_once_with("a-network")
+        network.connect.assert_called_once_with("abc123")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.docker.from_env")
+    def test_a_network_which_is_not_there_names_itself(self, mock_from_env: Mock) -> None:
+        """Test that a wrong network name is reported instead of a bare docker 404."""
+        mock_from_env.return_value.networks.get.side_effect = docker.errors.NotFound("no such network")
+
+        with self.assertRaises(ContainerSetupError) as context:
+            TestContainersHelper.join_network("abc123", "no-such-network")
+
+        self.assertIn("no-such-network", str(context.exception))
+
+
+if __name__ == "__main__":
+    unittest.main()
