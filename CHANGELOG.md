@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.4.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.3.0...v3.4.0) (2026-08-31)
+
+
+### Features
+
+* let a test run give Polarion properties, trust and a network ([#108](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/108)) ([18a141f](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/18a141ff4f1479dc31ea3ff76541118d14db6d37))
+* wrap the extension endpoints verify-openapi-mapping reports as missing ([#98](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/98)) ([3c4790f](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/3c4790ff29bc9bea1b1b70d6706fcd4868175cee))
+
+
+### Bug Fixes
+
+* return extensions root from prepare step ([#103](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/103)) ([a94949e](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/a94949e5398a0ef1dd494710ac01893cb922ca41))
+
+
+### Documentation
+
+* clean up outdated documentation ([#25](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/25)) ([16390b6](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/16390b6fd5b69f2ba01d1a85967288ea00415037))
+* sync documentation and license from template ([#95](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/95)) ([18a4d2f](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/18a4d2f21abc125048001c17759ec2e523a54e01)), closes [#94](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/94)
+
 ## [3.3.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.2.0...v3.3.0) (2026-06-29)
 
 
