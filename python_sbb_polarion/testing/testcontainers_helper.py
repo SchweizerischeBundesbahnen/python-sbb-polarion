@@ -4,6 +4,7 @@ import logging
 import os
 import pathlib
 import re
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -57,6 +58,7 @@ class TestContainersHelper:
     weasyprint_service_container: DockerContainer | None = None
     network: Network | None = None
     systest_extensions_root: str | None = None
+    ca_certificates_root: str | None = None
 
     def create_test_container_if_required(self, extension_name: str) -> None:
         args: argparse.Namespace = get_script_arguments()
@@ -252,11 +254,17 @@ class TestContainersHelper:
         if not files:
             return None
 
-        staged: str = tempfile.mkdtemp(prefix="polarion-ca-")
+        # every file is checked before anything is created, so a wrong path leaves nothing behind
+        sources: list[pathlib.Path] = []
         for path in files:
             source: pathlib.Path = pathlib.Path(path)
             if not source.is_file():
                 raise ContainerSetupError(f"Certificate '{path}' is not a file")
+            sources.append(source)
+
+        staged: str = tempfile.mkdtemp(prefix="polarion-ca-")
+        self.ca_certificates_root = staged
+        for source in sources:
             shutil.copyfile(source, pathlib.Path(staged) / source.name)
         return staged
 
@@ -275,9 +283,11 @@ class TestContainersHelper:
         if with_certificates:
             steps.append(
                 f'for certificate in {CA_CERTIFICATES_PATH}/*; do keytool -importcert -noprompt -alias "ca-$(basename "$certificate")" '
-                f'-file "$certificate" -keystore {POLARION_TRUSTSTORE_PATH} -storepass {POLARION_TRUSTSTORE_PASSWORD}; done'
+                f'-file "$certificate" -keystore {POLARION_TRUSTSTORE_PATH} -storepass {POLARION_TRUSTSTORE_PASSWORD} || exit 1; done'
             )
-        steps.extend(f"printf '%s\\n' '{name}={value}' >> {POLARION_PROPERTIES_PATH}" for name, value in (extra_properties or {}).items())
+        # a value is quoted rather than wrapped in quotes: one apostrophe in it would otherwise end
+        # the quoting and hand the rest of the value to the shell
+        steps.extend(f"printf '%s\\n' {shlex.quote(f'{name}={value}')} >> {POLARION_PROPERTIES_PATH}" for name, value in (extra_properties or {}).items())
         if not steps:
             return ""
         steps.append(f"exec {POLARION_START_SCRIPT}")
@@ -309,6 +319,8 @@ class TestContainersHelper:
             self.polarion_container.stop()
         if self.systest_extensions_root is not None and pathlib.Path(self.systest_extensions_root).exists():
             shutil.rmtree(self.systest_extensions_root)
+        if self.ca_certificates_root is not None and pathlib.Path(self.ca_certificates_root).exists():
+            shutil.rmtree(self.ca_certificates_root)
         if self.network:
             self.network.remove()
 

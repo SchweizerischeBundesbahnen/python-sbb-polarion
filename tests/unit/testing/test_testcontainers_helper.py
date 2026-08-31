@@ -1569,6 +1569,27 @@ class TestPolarionPreparation(unittest.TestCase):
         self.assertIsNone(helper.stage_ca_certificates([]))
         self.assertIsNone(helper.stage_ca_certificates([""]))
 
+    def test_a_value_with_an_apostrophe_survives_the_shell(self) -> None:
+        """Test that a property value is quoted rather than wrapped in quotes."""
+        command: str = TestContainersHelper.build_preparation_command({"a.property": "it's set"}, with_certificates=False)
+
+        self.assertIn("'a.property=it'\"'\"'s set'", command)
+
+    def test_a_failing_import_stops_the_start(self) -> None:
+        """Test that Polarion does not start with an authority which could not be imported."""
+        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=True)
+
+        self.assertIn("|| exit 1", command)
+
+    def test_nothing_is_staged_when_a_certificate_is_missing(self) -> None:
+        """Test that a wrong path leaves no directory behind."""
+        helper: TestContainersHelper = TestContainersHelper()
+
+        with self.assertRaises(ContainerSetupError):
+            helper.stage_ca_certificates(["/no/such/certificate.pem"])
+
+        self.assertIsNone(helper.ca_certificates_root)
+
     def test_a_missing_certificate_is_reported(self) -> None:
         """Test that a file which is not there names itself, rather than failing at container start."""
         helper: TestContainersHelper = TestContainersHelper()
