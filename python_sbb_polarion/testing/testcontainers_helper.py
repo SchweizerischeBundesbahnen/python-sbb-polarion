@@ -173,8 +173,10 @@ class TestContainersHelper:
                 quotes what it read: a fragment of a malformed entry is a piece of a secret.
         """
         fragments: list[str] = [fragment for fragment in (part.strip() for part in (secrets or "").split(";")) if fragment]
-        if any("=" not in fragment for fragment in fragments):
-            raise ContainerSetupError("A Polarion secret is not a 'key=value' pair. A value cannot hold a ';', which separates the pairs.")
+        # no '=' is a value which held the separator; nothing before it is a key which expanded to
+        # nothing, and parse_properties drops that one without a word
+        if any("=" not in fragment or not fragment.partition("=")[0].strip() for fragment in fragments):
+            raise ContainerSetupError("A Polarion secret is not a 'key=value' pair with both halves. A value cannot hold a ';', which separates the pairs.")
 
         parsed: dict[str, str] = TestContainersHelper.parse_properties(secrets)
         empty: list[str] = [key for key, value in parsed.items() if not value]

@@ -1767,6 +1767,18 @@ class TestPolarionPreparation(unittest.TestCase):
         self.assertIn("key=value", str(context.exception))
         self.assertNotIn("second", str(context.exception))
 
+    def test_a_key_which_expanded_to_nothing_is_refused(self) -> None:
+        """Test that a nameless entry stops the run rather than seeding nothing at all.
+
+        It carries an '=', so the separator check passes it, and the shared parser then drops it: the
+        result is an empty mapping, which reads as "seed nothing" and fails once Polarion is up.
+        """
+        with self.assertRaises(ContainerSetupError) as context:
+            TestContainersHelper.parse_secrets("=a value")
+
+        self.assertIn("both halves", str(context.exception))
+        self.assertNotIn("a value", str(context.exception))
+
     def test_secrets_are_read_like_properties(self) -> None:
         """Test that the pairs are read the same way the properties are."""
         self.assertEqual({"a.secret": "a value"}, TestContainersHelper.parse_secrets("a.secret=a value"))
