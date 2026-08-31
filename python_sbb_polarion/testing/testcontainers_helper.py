@@ -48,6 +48,11 @@ POLARION_PROPERTIES_PATH = "/opt/polarion/etc/polarion.properties"
 POLARION_TRUSTSTORE_PATH = "/opt/java/openjdk/lib/security/cacerts"
 POLARION_TRUSTSTORE_PASSWORD = "changeit"  # noqa: S105 - the documented default of a JDK truststore
 POLARION_START_SCRIPT = "/opt/polarion/start-all.sh"
+POLARION_SECRETS_CLI = "/opt/polarion/polarion/secrets-cli/secrets-cli.sh"
+POLARION_SECRETS_STORE = "/opt/polarion/etc/secrets-manager"
+POLARION_SECRETS_OWNER = "polarion:psvnadm"
+# the name of the variable a value travels in, not a value itself
+SECRET_VALUE_VARIABLE = "POLARION_SECRET_VALUE_{index}"  # noqa: S105
 CA_CERTIFICATES_PATH = "/tmp/ca-certificates"  # noqa: S108 - a path inside the container, read only
 
 
@@ -107,6 +112,7 @@ class TestContainersHelper:
         polarion_network: str | None = TestContainersHelper.get_parameter("TC_POLARION_NETWORK", args.tc_polarion_network)
         extra_properties: str | None = TestContainersHelper.get_parameter("TC_POLARION_EXTRA_PROPERTIES", args.tc_polarion_extra_properties)
         ca_certificates: str | None = TestContainersHelper.get_parameter("TC_POLARION_CA_CERTIFICATES", args.tc_polarion_ca_certificates)
+        polarion_secrets: str | None = TestContainersHelper.get_parameter("TC_POLARION_SECRETS", args.tc_polarion_secrets)
         additional_bundles_list: list[ArtifactInfo] | None = TestContainersHelper.parse_additional_bundles(additional_bundles_artifacts)
         return PolarionContainerParameters(
             polarion_image_name=polarion_image_name or "",
@@ -120,6 +126,7 @@ class TestContainersHelper:
             polarion_network=polarion_network or "",
             extra_properties=TestContainersHelper.parse_properties(extra_properties),
             ca_certificate_files=[path.strip() for path in (ca_certificates or "").split(",") if path.strip()],
+            polarion_secrets=TestContainersHelper.parse_properties(polarion_secrets),
         )
 
     @staticmethod
@@ -207,7 +214,15 @@ class TestContainersHelper:
             certificates_directory: str | None = self.stage_ca_certificates(parameters.ca_certificate_files)
             if certificates_directory:
                 container = container.with_volume_mapping(certificates_directory, CA_CERTIFICATES_PATH)
-            preparation: str = self.build_preparation_command(parameters.extra_properties, bool(certificates_directory))
+            # A secret is read out of the store when Polarion starts and kept, so one written into a
+            # running Polarion is never seen. The value travels in an environment variable rather than
+            # in the command, which `docker inspect` prints in full.
+            secret_variables: dict[str, str] = {}
+            for index, (secret_key, secret_value) in enumerate((parameters.polarion_secrets or {}).items()):
+                variable: str = SECRET_VALUE_VARIABLE.format(index=index)
+                container = container.with_env(variable, secret_value)
+                secret_variables[secret_key] = variable
+            preparation: str = self.build_preparation_command(parameters.extra_properties, bool(certificates_directory), secret_variables)
             if preparation:
                 # The entrypoint of the Polarion image is the start script and nothing else
                 # (`docker inspect` on polarion:2606-0 reports ["/opt/polarion/start-all.sh"] with no
@@ -290,17 +305,24 @@ class TestContainersHelper:
         return staged
 
     @staticmethod
-    def build_preparation_command(extra_properties: dict[str, str] | None, with_certificates: bool) -> str:
+    def build_preparation_command(extra_properties: dict[str, str] | None, with_certificates: bool, secret_variables: dict[str, str] | None = None) -> str:
         """Build what runs before Polarion, or an empty string where nothing has to be prepared.
 
         Args:
             extra_properties: Properties appended to polarion.properties, which Polarion reads once.
             with_certificates: Whether certificates were mounted for the JVM to trust.
+            secret_variables: Secret key mapped to the environment variable holding its value.
 
         Returns:
             A shell command ending in the start script of the image.
         """
         steps: list[str] = []
+        for secret_key, variable in (secret_variables or {}).items():
+            # the cli of the image asks for the value twice, and it writes the store Polarion reads
+            steps.append(f'printf "%s\\n%s\\n" "${variable}" "${variable}" | {POLARION_SECRETS_CLI} add --key {shlex.quote(secret_key)} > /dev/null || exit 1')
+        if secret_variables:
+            # the cli runs as the user of the preparation, and Polarion runs as its own
+            steps.append(f"chown -R {POLARION_SECRETS_OWNER} {POLARION_SECRETS_STORE} || exit 1")
         if with_certificates:
             steps.append(
                 f'for certificate in {CA_CERTIFICATES_PATH}/*; do keytool -importcert -noprompt -alias "ca-$(basename "$certificate")" '
@@ -478,6 +500,7 @@ class PolarionContainerParameters:
     polarion_network: str = ""
     extra_properties: dict[str, str] | None = None
     ca_certificate_files: list[str] | None = None
+    polarion_secrets: dict[str, str] | None = None
 
 
 @dataclass

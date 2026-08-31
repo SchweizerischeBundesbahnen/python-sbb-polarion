@@ -426,6 +426,7 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
             "a-network",
             "a.property=a value",
             "/tmp/ca.pem",
+            "a.secret=a value",
         ]
         mock_parse.return_value = [ArtifactInfo("com.example", "artifact", "1.0")]
 
@@ -441,6 +442,7 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         args.tc_polarion_network = "a-network"
         args.tc_polarion_extra_properties = "a.property=a value"
         args.tc_polarion_ca_certificates = "/tmp/ca.pem"
+        args.tc_polarion_secrets = "a.secret=a value"
 
         # Act
         result: PolarionContainerParameters = TestContainersHelper.get_parameters(args)
@@ -457,6 +459,7 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         self.assertEqual(result.polarion_network, "a-network")
         self.assertEqual(result.extra_properties, {"a.property": "a value"})
         self.assertEqual(result.ca_certificate_files, ["/tmp/ca.pem"])
+        self.assertEqual(result.polarion_secrets, {"a.secret": "a value"})
         self.assertIsNotNone(result.additional_bundles)
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameter")
@@ -1666,6 +1669,28 @@ class TestPolarionPreparation(unittest.TestCase):
             helper.stage_ca_certificates(["/no/such/certificate.pem"])
 
         self.assertIsNone(helper.ca_certificates_root)
+
+    def test_a_secret_is_written_before_the_start(self) -> None:
+        """Test that a secret is seeded through the cli of the image, from a variable."""
+        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_variables={"a.secret": "POLARION_SECRET_VALUE_0"})
+
+        self.assertIn("secrets-cli.sh add --key a.secret", command)
+        self.assertIn('"$POLARION_SECRET_VALUE_0" "$POLARION_SECRET_VALUE_0"', command)
+        self.assertIn("chown -R polarion:psvnadm /opt/polarion/etc/secrets-manager", command)
+        self.assertTrue(command.endswith("exec /opt/polarion/start-all.sh"), command)
+
+    def test_a_failing_seed_stops_the_start(self) -> None:
+        """Test that Polarion does not start where a secret could not be written."""
+        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_variables={"a.secret": "POLARION_SECRET_VALUE_0"})
+
+        self.assertEqual(2, command.count("|| exit 1"), command)
+
+    def test_no_secret_leaves_the_store_alone(self) -> None:
+        """Test that a run seeding nothing neither calls the cli nor touches the store."""
+        command: str = TestContainersHelper.build_preparation_command({"a.property": "a value"}, with_certificates=False, secret_variables={})
+
+        self.assertNotIn("secrets-cli", command)
+        self.assertNotIn("chown", command)
 
     def test_a_failing_append_stops_the_start(self) -> None:
         """Test that Polarion does not start where a property could not be written."""
