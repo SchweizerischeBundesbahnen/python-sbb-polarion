@@ -43,6 +43,9 @@ def get_script_arguments() -> argparse.Namespace:
     parser.add_argument("--tc_additional_bundles", type=str, help="Comma separated list of additional bundles in format group_id:artifact_id:version")
     parser.add_argument("--tc_admin_utility_version", type=str, help="Admin utility version")
     parser.add_argument("--tc_test_data_version", type=str, help="Test data version")
+    parser.add_argument("--tc_polarion_network", type=str, help="Name of an existing docker network the Polarion container joins, so it reaches services started outside this run")
+    parser.add_argument("--tc_polarion_extra_properties", type=str, help="Properties appended to polarion.properties before Polarion starts, as 'name=value' separated by ';'")
+    parser.add_argument("--tc_polarion_ca_certificates", type=str, help="Comma separated PEM files trusted by the Polarion JVM, for services it reaches over TLS")
 
     args: argparse.Namespace
     args, _unknown = parser.parse_known_args()

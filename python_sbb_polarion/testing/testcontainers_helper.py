@@ -4,6 +4,7 @@ import logging
 import os
 import pathlib
 import re
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -43,6 +44,11 @@ POLARION_EXTENSIONS_PATH = "/opt/polarion/polarion/extensions/"
 DEFAULT_ADMIN_UTILITY_VERSION = "4.0.1"
 DEFAULT_TEST_DATA_VERSION = "4.1.0"
 WEASYPRINT_NETWORK = "test-weasyprint-network"
+POLARION_PROPERTIES_PATH = "/opt/polarion/etc/polarion.properties"
+POLARION_TRUSTSTORE_PATH = "/opt/java/openjdk/lib/security/cacerts"
+POLARION_TRUSTSTORE_PASSWORD = "changeit"  # noqa: S105 - the documented default of a JDK truststore
+POLARION_START_SCRIPT = "/opt/polarion/start-all.sh"
+CA_CERTIFICATES_PATH = "/tmp/ca-certificates"  # noqa: S108 - a path inside the container, read only
 
 
 class TestContainersHelper:
@@ -52,6 +58,7 @@ class TestContainersHelper:
     weasyprint_service_container: DockerContainer | None = None
     network: Network | None = None
     systest_extensions_root: str | None = None
+    ca_certificates_root: str | None = None
 
     def create_test_container_if_required(self, extension_name: str) -> None:
         args: argparse.Namespace = get_script_arguments()
@@ -97,6 +104,9 @@ class TestContainersHelper:
         test_data_version: str | None = TestContainersHelper.get_parameter("TC_TEST_DATA_VERSION", args.tc_test_data_version)
         polarion_sut_url: str | None = TestContainersHelper.get_parameter("TC_POLARION_SUT_URL", args.tc_polarion_sut_url)
         weasyprint_service_url: str | None = TestContainersHelper.get_parameter("TC_WEASYPRINT_SERVICE_URL", args.tc_weasyprint_service_url)
+        polarion_network: str | None = TestContainersHelper.get_parameter("TC_POLARION_NETWORK", args.tc_polarion_network)
+        extra_properties: str | None = TestContainersHelper.get_parameter("TC_POLARION_EXTRA_PROPERTIES", args.tc_polarion_extra_properties)
+        ca_certificates: str | None = TestContainersHelper.get_parameter("TC_POLARION_CA_CERTIFICATES", args.tc_polarion_ca_certificates)
         additional_bundles_list: list[ArtifactInfo] | None = TestContainersHelper.parse_additional_bundles(additional_bundles_artifacts)
         return PolarionContainerParameters(
             polarion_image_name=polarion_image_name or "",
@@ -107,6 +117,9 @@ class TestContainersHelper:
             test_data_version=test_data_version or "",
             polarion_sut_url=polarion_sut_url or "",
             weasyprint_service_url=weasyprint_service_url or "",
+            polarion_network=polarion_network or "",
+            extra_properties=TestContainersHelper.parse_properties(extra_properties),
+            ca_certificate_files=[path.strip() for path in (ca_certificates or "").split(",") if path.strip()],
         )
 
     @staticmethod
@@ -115,6 +128,23 @@ class TestContainersHelper:
         if not param:
             param = script_argument_value
         return param
+
+    @staticmethod
+    def parse_properties(properties: str | None) -> dict[str, str]:
+        """Read 'name=value' pairs separated by ';' into a mapping.
+
+        Args:
+            properties: The configured string, empty or None where nothing is added.
+
+        Returns:
+            The properties to append to polarion.properties, in the order they were given.
+        """
+        parsed: dict[str, str] = {}
+        for entry in (properties or "").split(";"):
+            pair: tuple[str, str, str] = entry.partition("=")
+            if pair[1] and pair[0].strip():
+                parsed[pair[0].strip()] = pair[2].strip()
+        return parsed
 
     @staticmethod
     def parse_additional_bundles(bundles: str | None) -> list[ArtifactInfo] | None:
@@ -171,6 +201,20 @@ class TestContainersHelper:
             if weasyprint_service_endpoint:
                 container = container.with_env("WEASYPRINT_SERVICE_ENDPOINT", weasyprint_service_endpoint)
 
+            # Properties are read once, at start, and the truststore decides whether a service reached
+            # over TLS is trusted at all. Both are prepared before Polarion runs, by a command which
+            # ends in the start script of the image.
+            certificates_directory: str | None = self.stage_ca_certificates(parameters.ca_certificate_files)
+            if certificates_directory:
+                container = container.with_volume_mapping(certificates_directory, CA_CERTIFICATES_PATH)
+            preparation: str = self.build_preparation_command(parameters.extra_properties, bool(certificates_directory))
+            if preparation:
+                # The entrypoint of the Polarion image is the start script and nothing else
+                # (`docker inspect` on polarion:2606-0 reports ["/opt/polarion/start-all.sh"] with no
+                # command), and the templating of polarion.properties runs inside that script. The
+                # preparation ends by executing it, so nothing of the image is skipped.
+                container = container.with_kwargs(entrypoint=["/bin/sh", "-c", preparation])
+
             # Forward the host timezone so the Polarion JVM matches it (defaults to Etc/UTC when it cannot be resolved).
             tz: str = self.resolve_host_timezone()
             container = container.with_env("TZ", tz)
@@ -178,6 +222,8 @@ class TestContainersHelper:
             container.start()
             if self.network:
                 self.network.connect(container.get_wrapped_container().short_id)
+            if parameters.polarion_network:
+                self.join_network(container.get_wrapped_container().short_id, parameters.polarion_network)
 
             exposed_port: int = container.get_exposed_port(port)
             base_url: str = f"http://localhost:{exposed_port}"
@@ -194,6 +240,79 @@ class TestContainersHelper:
             raise ContainerSetupError("Cannot setup Polarion container: " + str(ex)) from ex
         else:
             return base_url, token
+
+    @staticmethod
+    def join_network(container_id: str, network_name: str) -> None:
+        """Join a network someone else created, holding the services this run reaches.
+
+        Args:
+            container_id: The container to connect.
+            network_name: The existing network.
+
+        Raises:
+            ContainerSetupError: If there is no such network, which is otherwise a bare docker 404.
+        """
+        try:
+            network: Network = docker.from_env().networks.get(network_name)
+        except docker.errors.NotFound as e:
+            raise ContainerSetupError(f"Network '{network_name}' does not exist") from e
+        network.connect(container_id)
+
+    def stage_ca_certificates(self, certificate_files: list[str] | None) -> str | None:
+        """Copy the certificates into one directory, so the container mounts a single path.
+
+        Args:
+            certificate_files: PEM files on the host, empty or None where nothing is to be trusted.
+
+        Returns:
+            The directory to mount, or None where there is nothing to trust.
+
+        Raises:
+            ContainerSetupError: If a named file is not there to be trusted.
+        """
+        files: list[str] = [path for path in (certificate_files or []) if path]
+        if not files:
+            return None
+
+        # every file is checked before anything is created, so a wrong path leaves nothing behind
+        sources: list[pathlib.Path] = []
+        for path in files:
+            source: pathlib.Path = pathlib.Path(path)
+            if not source.is_file():
+                raise ContainerSetupError(f"Certificate '{path}' is not a file")
+            sources.append(source)
+
+        staged: str = tempfile.mkdtemp(prefix="polarion-ca-")
+        self.ca_certificates_root = staged
+        for position, source in enumerate(sources):
+            # numbered, so two authorities named ca.pem in different directories both arrive
+            shutil.copyfile(source, pathlib.Path(staged) / f"{position}-{source.name}")
+        return staged
+
+    @staticmethod
+    def build_preparation_command(extra_properties: dict[str, str] | None, with_certificates: bool) -> str:
+        """Build what runs before Polarion, or an empty string where nothing has to be prepared.
+
+        Args:
+            extra_properties: Properties appended to polarion.properties, which Polarion reads once.
+            with_certificates: Whether certificates were mounted for the JVM to trust.
+
+        Returns:
+            A shell command ending in the start script of the image.
+        """
+        steps: list[str] = []
+        if with_certificates:
+            steps.append(
+                f'for certificate in {CA_CERTIFICATES_PATH}/*; do keytool -importcert -noprompt -alias "ca-$(basename "$certificate")" '
+                f'-file "$certificate" -keystore {POLARION_TRUSTSTORE_PATH} -storepass {POLARION_TRUSTSTORE_PASSWORD} || exit 1; done'
+            )
+        # a value is quoted rather than wrapped in quotes: one apostrophe in it would otherwise end
+        # the quoting and hand the rest of the value to the shell
+        steps.extend(f"printf '%s\\n' {shlex.quote(f'{name}={value}')} >> {POLARION_PROPERTIES_PATH} || exit 1" for name, value in (extra_properties or {}).items())
+        if not steps:
+            return ""
+        steps.append(f"exec {POLARION_START_SCRIPT}")
+        return "; ".join(steps)
 
     def prepare_systest_extensions(self, extension_name: str, parameters: PolarionContainerParameters) -> str:
         systest_extensions_root: str = self.create_host_extensions_root()
@@ -221,6 +340,8 @@ class TestContainersHelper:
             self.polarion_container.stop()
         if self.systest_extensions_root is not None and pathlib.Path(self.systest_extensions_root).exists():
             shutil.rmtree(self.systest_extensions_root)
+        if self.ca_certificates_root is not None and pathlib.Path(self.ca_certificates_root).exists():
+            shutil.rmtree(self.ca_certificates_root)
         if self.network:
             self.network.remove()
 
@@ -354,6 +475,9 @@ class PolarionContainerParameters:
     test_data_version: str | None = None
     polarion_sut_url: str = ""
     weasyprint_service_url: str = ""
+    polarion_network: str = ""
+    extra_properties: dict[str, str] | None = None
+    ca_certificate_files: list[str] | None = None
 
 
 @dataclass

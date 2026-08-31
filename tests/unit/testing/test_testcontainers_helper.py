@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import os
+import pathlib
+import shutil
+import tempfile
 import unittest
 import zoneinfo
 from http import HTTPStatus
 from unittest.mock import Mock, patch
+
+import docker
 
 from python_sbb_polarion.extensions.admin_utility import PolarionAdminUtilityApi
 from python_sbb_polarion.testing.testcontainers_helper import (
@@ -409,7 +414,19 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
     def test_get_parameters_all_set(self, mock_parse: Mock, mock_get_param: Mock) -> None:
         """Test get_parameters with all parameters set."""
         # Arrange
-        mock_get_param.side_effect = ["polarion:latest", "weasyprint:latest", "1.0.0", "com.example:artifact:1.0", "3.0.0", "3.1.1", "http://polarion-sut:80", "http://weasyprint:9080"]
+        mock_get_param.side_effect = [
+            "polarion:latest",
+            "weasyprint:latest",
+            "1.0.0",
+            "com.example:artifact:1.0",
+            "3.0.0",
+            "3.1.1",
+            "http://polarion-sut:80",
+            "http://weasyprint:9080",
+            "a-network",
+            "a.property=a value",
+            "/tmp/ca.pem",
+        ]
         mock_parse.return_value = [ArtifactInfo("com.example", "artifact", "1.0")]
 
         args = Mock()
@@ -421,6 +438,9 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         args.tc_test_data_version = "3.1.1"
         args.tc_polarion_sut_url = "http://polarion-sut:80"
         args.tc_weasyprint_service_url = "http://weasyprint:9080"
+        args.tc_polarion_network = "a-network"
+        args.tc_polarion_extra_properties = "a.property=a value"
+        args.tc_polarion_ca_certificates = "/tmp/ca.pem"
 
         # Act
         result: PolarionContainerParameters = TestContainersHelper.get_parameters(args)
@@ -434,6 +454,9 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         self.assertEqual(result.test_data_version, "3.1.1")
         self.assertEqual(result.polarion_sut_url, "http://polarion-sut:80")
         self.assertEqual(result.weasyprint_service_url, "http://weasyprint:9080")
+        self.assertEqual(result.polarion_network, "a-network")
+        self.assertEqual(result.extra_properties, {"a.property": "a value"})
+        self.assertEqual(result.ca_certificate_files, ["/tmp/ca.pem"])
         self.assertIsNotNone(result.additional_bundles)
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameter")
@@ -556,7 +579,7 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         mock_create_weasyprint.return_value = "http://weasyprint:9080"
         mock_create_polarion.return_value = ("http://localhost:8080", "test-token")
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         helper.create_test_container_if_required("pdf-exporter")
@@ -583,7 +606,7 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
 
         mock_create_polarion.return_value = ("http://localhost:8080", "test-token")
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         helper.create_test_container_if_required("pdf-exporter")
@@ -602,7 +625,7 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         params = PolarionContainerParameters(polarion_image_name="", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None, admin_utility_version="2.0.0", test_data_version="3.1.1")
         mock_get_params.return_value = params
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         helper.create_test_container_if_required("pdf-exporter")
@@ -634,7 +657,7 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         mock_get_params.return_value = params
         mock_setup.return_value = "sut-token"
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         helper.create_test_container_if_required("pdf-exporter")
@@ -670,7 +693,7 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         mock_get_params.return_value = params
         mock_setup.return_value = "sut-token"
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         helper.create_test_container_if_required("pdf-exporter")
@@ -704,7 +727,7 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         mock_get_params.return_value = params
         mock_setup.return_value = "sut-token"
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         helper.create_test_container_if_required("pdf-exporter")
@@ -739,7 +762,7 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         mock_get_params.return_value = params
         mock_create_polarion.return_value = ("http://localhost:8080", "test-token")
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         helper.create_test_container_if_required("pdf-exporter")
@@ -767,7 +790,7 @@ class TestTestContainersHelperCreateWeasyprintServiceContainer(unittest.TestCase
         mock_container.with_name.return_value = mock_container
         mock_docker_container_class.return_value = mock_container
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         result: str = helper.create_weasyprint_service_container(params)
@@ -792,7 +815,7 @@ class TestTestContainersHelperCreateWeasyprintServiceContainer(unittest.TestCase
         mock_docker_container_class.return_value = mock_container
 
         mock_network = Mock()
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
         helper.network = mock_network
 
         # Act
@@ -814,7 +837,7 @@ class TestTestContainersHelperCreateWeasyprintServiceContainer(unittest.TestCase
         mock_container.start.side_effect = Exception("Docker error")
         mock_docker_container_class.return_value = mock_container
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act & Assert
         with self.assertRaises(ContainerSetupError) as context:
@@ -851,7 +874,7 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
 
         mock_prepare.return_value = "/tmp/systest"
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         app_url: str
@@ -866,6 +889,83 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
         mock_container.start.assert_called_once()
         mock_setup.assert_called_once_with("http://localhost:8080")
         self.assertEqual(helper.polarion_container, mock_container)
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.join_network")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.time.sleep")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.setup_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.prepare_systest_extensions")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.DockerContainer")
+    def test_create_polarion_container_prepares_properties_trust_and_network(self, mock_docker_container_class: Mock, mock_prepare: Mock, mock_setup: Mock, mock_sleep: Mock, mock_join: Mock) -> None:
+        """Test that a configured run mounts the certificates, replaces the entrypoint and joins the network."""
+        # Arrange
+        with tempfile.TemporaryDirectory() as directory:
+            certificate: pathlib.Path = pathlib.Path(directory) / "ca.pem"
+            certificate.write_text("an authority")
+            params: PolarionContainerParameters = PolarionContainerParameters(
+                polarion_image_name="polarion:latest",
+                weasyprint_service_image_name="",
+                extension_version="1.0.0",
+                additional_bundles=None,
+                polarion_network="a-network",
+                extra_properties={"a.property": "a value"},
+                ca_certificate_files=[str(certificate)],
+            )
+
+            mock_container: Mock = Mock()
+            mock_wrapped: Mock = Mock()
+            mock_wrapped.short_id = "pol123"
+            mock_container.get_wrapped_container.return_value = mock_wrapped
+            mock_container.get_exposed_port.return_value = "8080"
+            for method in ("with_bind_ports", "with_name", "with_volume_mapping", "with_env", "with_kwargs"):
+                getattr(mock_container, method).return_value = mock_container
+            mock_docker_container_class.return_value = mock_container
+            mock_setup.return_value = "test-token-abc"
+            mock_prepare.return_value = "/tmp/systest"
+
+            helper: TestContainersHelper = TestContainersHelper()
+
+            # Act
+            helper.create_polarion_container("pdf-exporter", params, None)
+            self.addCleanup(shutil.rmtree, str(helper.ca_certificates_root), True)
+
+            # Assert
+            staged: str = str(helper.ca_certificates_root)
+            mock_container.with_volume_mapping.assert_any_call(staged, "/tmp/ca-certificates")
+            entrypoint: list[str] = mock_container.with_kwargs.call_args.kwargs["entrypoint"]
+            self.assertEqual(["/bin/sh", "-c"], entrypoint[:2])
+            self.assertIn("keytool -importcert", entrypoint[2])
+            self.assertIn("'a.property=a value'", entrypoint[2])
+            self.assertTrue(entrypoint[2].endswith("exec /opt/polarion/start-all.sh"), entrypoint[2])
+            mock_join.assert_called_once_with("pol123", "a-network")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.join_network")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.time.sleep")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.setup_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.prepare_systest_extensions")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.DockerContainer")
+    def test_create_polarion_container_leaves_an_unconfigured_run_alone(self, mock_docker_container_class: Mock, mock_prepare: Mock, mock_setup: Mock, mock_sleep: Mock, mock_join: Mock) -> None:
+        """Test that a run configuring none of the three keeps the entrypoint and the networks of the image."""
+        # Arrange
+        params: PolarionContainerParameters = PolarionContainerParameters(polarion_image_name="polarion:latest", weasyprint_service_image_name="", extension_version="1.0.0", additional_bundles=None)
+
+        mock_container: Mock = Mock()
+        mock_container.get_wrapped_container.return_value = Mock(short_id="pol123")
+        mock_container.get_exposed_port.return_value = "8080"
+        for method in ("with_bind_ports", "with_name", "with_volume_mapping", "with_env", "with_kwargs"):
+            getattr(mock_container, method).return_value = mock_container
+        mock_docker_container_class.return_value = mock_container
+        mock_setup.return_value = "test-token-abc"
+        mock_prepare.return_value = "/tmp/systest"
+
+        helper: TestContainersHelper = TestContainersHelper()
+
+        # Act
+        helper.create_polarion_container("pdf-exporter", params, None)
+
+        # Assert
+        mock_container.with_kwargs.assert_not_called()
+        mock_join.assert_not_called()
+        self.assertIsNone(helper.ca_certificates_root)
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.resolve_host_timezone")
     @patch("python_sbb_polarion.testing.testcontainers_helper.time.sleep")
@@ -895,7 +995,7 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
 
         mock_prepare.return_value = "/tmp/systest"
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         helper.create_polarion_container("pdf-exporter", params, "http://weasyprint:9080")
@@ -930,7 +1030,7 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
 
         mock_prepare.return_value = "/tmp/systest"
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         helper.create_polarion_container("pdf-exporter", params, None)
@@ -964,7 +1064,7 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
 
         mock_prepare.return_value = "/tmp/systest"
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
         helper.network = mock_network
 
         # Act
@@ -995,7 +1095,7 @@ class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):
 
         mock_prepare.return_value = "/tmp/systest"
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act & Assert
         with self.assertRaises(ContainerSetupError) as context:
@@ -1223,7 +1323,7 @@ class TestTestContainersHelperCreateHostExtensionsRoot(unittest.TestCase):
         # Arrange
         mock_gettempdir.return_value = "/tmp"
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         result: str = helper.create_host_extensions_root()
@@ -1245,7 +1345,7 @@ class TestTestContainersHelperCreateHostExtensionsPath(unittest.TestCase):
         mock_path_instance.exists.return_value = False
         mock_path_class.return_value = mock_path_instance
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         result: str = helper.create_host_extensions_path("/tmp/systest")
@@ -1264,7 +1364,7 @@ class TestTestContainersHelperCreateHostExtensionsPath(unittest.TestCase):
         mock_path_instance.exists.return_value = True
         mock_path_class.return_value = mock_path_instance
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         result: str = helper.create_host_extensions_path("/tmp/systest")
@@ -1355,7 +1455,7 @@ class TestTestContainersHelperCreateNetwork(unittest.TestCase):
         mock_client.networks.create.return_value = mock_network
         mock_docker.return_value = mock_client
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         helper.create_network("test-network")
@@ -1373,7 +1473,7 @@ class TestTestContainersHelperTearDown(unittest.TestCase):
     def test_tear_down_cleans_all_resources(self, mock_path_class: Mock, mock_rmtree: Mock) -> None:
         """Test tear_down stops containers and removes resources."""
         # Arrange
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         mock_weasyprint_container = Mock()
         mock_weasyprint_wrapped = Mock()
@@ -1405,7 +1505,7 @@ class TestTestContainersHelperTearDown(unittest.TestCase):
     def test_tear_down_handles_none_containers(self) -> None:
         """Test tear_down handles None containers gracefully."""
         # Arrange
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
         helper.weasyprint_service_container = None
         helper.polarion_container = None
         helper.network = None
@@ -1438,7 +1538,7 @@ class TestTestContainersHelperPrepareSystemTestExtensions(unittest.TestCase):
             test_data_version="3.1.1",
         )
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         systest_extensions_root: str = helper.prepare_systest_extensions("pdf-exporter", params)
@@ -1470,7 +1570,7 @@ class TestTestContainersHelperPrepareSystemTestExtensions(unittest.TestCase):
             test_data_version="3.1.1",
         )
 
-        helper = TestContainersHelper()
+        helper: TestContainersHelper = TestContainersHelper()
 
         # Act
         helper.prepare_systest_extensions("pdf-exporter", params)
@@ -1481,6 +1581,146 @@ class TestTestContainersHelperPrepareSystemTestExtensions(unittest.TestCase):
         mock_copy.assert_any_call("/tmp/systest/plugins", "ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.admin-utility", "2.0.0")
         mock_copy.assert_any_call("/tmp/systest/plugins", "ch.sbb.polarion.extensions", "ch.sbb.polarion.extension.test-data", "3.1.1")
         mock_copy.assert_any_call("/tmp/systest/plugins", "com.example", "extra-bundle", "3.0.0")
+
+
+class TestPolarionPreparation(unittest.TestCase):
+    """Test the properties and certificates prepared before Polarion starts."""
+
+    def test_parse_properties_reads_pairs(self) -> None:
+        """Test that pairs separated by ';' become a mapping."""
+        parsed: dict[str, str] = TestContainersHelper.parse_properties("first.name=first value; second.name=second")
+
+        self.assertEqual({"first.name": "first value", "second.name": "second"}, parsed)
+
+    def test_parse_properties_ignores_entries_without_a_value(self) -> None:
+        """Test that an entry without '=' is dropped rather than guessed at."""
+        parsed: dict[str, str] = TestContainersHelper.parse_properties("kept=value;dropped;=also dropped")
+
+        self.assertEqual({"kept": "value"}, parsed)
+
+    def test_parse_properties_of_nothing_is_empty(self) -> None:
+        """Test that an unset value produces no properties."""
+        self.assertEqual({}, TestContainersHelper.parse_properties(None))
+        self.assertEqual({}, TestContainersHelper.parse_properties(""))
+
+    def test_no_preparation_where_nothing_was_configured(self) -> None:
+        """Test that the image keeps its own entrypoint when there is nothing to prepare."""
+        self.assertEqual("", TestContainersHelper.build_preparation_command(None, with_certificates=False))
+        self.assertEqual("", TestContainersHelper.build_preparation_command({}, with_certificates=False))
+
+    def test_preparation_appends_properties_and_starts_polarion(self) -> None:
+        """Test that a property is appended and the start script still runs."""
+        command: str = TestContainersHelper.build_preparation_command({"a.property": "a value"}, with_certificates=False)
+
+        self.assertIn("'a.property=a value' >> /opt/polarion/etc/polarion.properties", command)
+        self.assertTrue(command.endswith("exec /opt/polarion/start-all.sh"), command)
+
+    def test_preparation_imports_certificates(self) -> None:
+        """Test that mounted certificates are imported into the truststore of the JVM."""
+        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=True)
+
+        self.assertIn("keytool -importcert", command)
+        self.assertIn("/opt/java/openjdk/lib/security/cacerts", command)
+        self.assertTrue(command.endswith("exec /opt/polarion/start-all.sh"), command)
+
+    def test_certificates_are_staged_into_one_directory(self) -> None:
+        """Test that the named files are copied to a single directory to mount."""
+        helper: TestContainersHelper = TestContainersHelper()
+        with tempfile.TemporaryDirectory() as source:
+            first: pathlib.Path = pathlib.Path(source) / "first.pem"
+            first.write_text("first")
+            second: pathlib.Path = pathlib.Path(source) / "second.pem"
+            second.write_text("second")
+
+            staged: str | None = helper.stage_ca_certificates([str(first), str(second)])
+            self.addCleanup(shutil.rmtree, str(staged), True)
+
+            self.assertIsNotNone(staged)
+            self.assertEqual({"0-first.pem", "1-second.pem"}, {path.name for path in pathlib.Path(str(staged)).iterdir()})
+
+    def test_nothing_is_staged_without_certificates(self) -> None:
+        """Test that no directory is made where nothing is to be trusted."""
+        helper: TestContainersHelper = TestContainersHelper()
+
+        self.assertIsNone(helper.stage_ca_certificates(None))
+        self.assertIsNone(helper.stage_ca_certificates([]))
+        self.assertIsNone(helper.stage_ca_certificates([""]))
+
+    def test_a_value_with_an_apostrophe_survives_the_shell(self) -> None:
+        """Test that a property value is quoted rather than wrapped in quotes."""
+        command: str = TestContainersHelper.build_preparation_command({"a.property": "it's set"}, with_certificates=False)
+
+        self.assertIn("'a.property=it'\"'\"'s set'", command)
+
+    def test_a_failing_import_stops_the_start(self) -> None:
+        """Test that Polarion does not start with an authority which could not be imported."""
+        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=True)
+
+        self.assertIn("|| exit 1", command)
+
+    def test_nothing_is_staged_when_a_certificate_is_missing(self) -> None:
+        """Test that a wrong path leaves no directory behind."""
+        helper: TestContainersHelper = TestContainersHelper()
+
+        with self.assertRaises(ContainerSetupError):
+            helper.stage_ca_certificates(["/no/such/certificate.pem"])
+
+        self.assertIsNone(helper.ca_certificates_root)
+
+    def test_a_failing_append_stops_the_start(self) -> None:
+        """Test that Polarion does not start where a property could not be written."""
+        command: str = TestContainersHelper.build_preparation_command({"a.property": "a value"}, with_certificates=False)
+
+        self.assertIn(">> /opt/polarion/etc/polarion.properties || exit 1", command)
+
+    def test_certificates_sharing_a_name_both_arrive(self) -> None:
+        """Test that two authorities named alike do not overwrite each other."""
+        helper: TestContainersHelper = TestContainersHelper()
+        with tempfile.TemporaryDirectory() as first_directory, tempfile.TemporaryDirectory() as second_directory:
+            first: pathlib.Path = pathlib.Path(first_directory) / "ca.pem"
+            first.write_text("first")
+            second: pathlib.Path = pathlib.Path(second_directory) / "ca.pem"
+            second.write_text("second")
+
+            staged: str | None = helper.stage_ca_certificates([str(first), str(second)])
+            self.addCleanup(shutil.rmtree, str(staged), True)
+
+            contents: set[str] = {path.read_text() for path in pathlib.Path(str(staged)).iterdir()}
+            self.assertEqual({"first", "second"}, contents)
+
+    def test_a_missing_certificate_is_reported(self) -> None:
+        """Test that a file which is not there names itself, rather than failing at container start."""
+        helper: TestContainersHelper = TestContainersHelper()
+
+        with self.assertRaises(ContainerSetupError) as context:
+            helper.stage_ca_certificates(["/no/such/certificate.pem"])
+
+        self.assertIn("/no/such/certificate.pem", str(context.exception))
+
+
+class TestJoinNetwork(unittest.TestCase):
+    """Test joining a network created outside the run."""
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.docker.from_env")
+    def test_the_container_is_connected(self, mock_from_env: Mock) -> None:
+        """Test that the container joins the named network."""
+        network: Mock = Mock()
+        mock_from_env.return_value.networks.get.return_value = network
+
+        TestContainersHelper.join_network("abc123", "a-network")
+
+        mock_from_env.return_value.networks.get.assert_called_once_with("a-network")
+        network.connect.assert_called_once_with("abc123")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.docker.from_env")
+    def test_a_network_which_is_not_there_names_itself(self, mock_from_env: Mock) -> None:
+        """Test that a wrong network name is reported instead of a bare docker 404."""
+        mock_from_env.return_value.networks.get.side_effect = docker.errors.NotFound("no such network")
+
+        with self.assertRaises(ContainerSetupError) as context:
+            TestContainersHelper.join_network("abc123", "no-such-network")
+
+        self.assertIn("no-such-network", str(context.exception))
 
 
 if __name__ == "__main__":
