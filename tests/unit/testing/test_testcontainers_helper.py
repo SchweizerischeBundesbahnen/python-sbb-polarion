@@ -1675,7 +1675,7 @@ class TestPolarionPreparation(unittest.TestCase):
         command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_files={"a.secret": "/tmp/polarion-secrets/0"})
 
         self.assertIn("secrets-cli.sh add --key a.secret", command)
-        self.assertIn('"$(cat /tmp/polarion-secrets/0)"', command)
+        self.assertIn('"$polarion_secret_value" "$polarion_secret_value"', command)
         self.assertIn("chown -R polarion:psvnadm /opt/polarion/etc/secrets-manager", command)
         self.assertTrue(command.endswith("exec /opt/polarion/start-all.sh"), command)
 
@@ -1693,10 +1693,10 @@ class TestPolarionPreparation(unittest.TestCase):
         self.assertIn("if [ -f /tmp/polarion-secrets/0 ]; then", command)
 
     def test_a_failing_seed_stops_the_start(self) -> None:
-        """Test that Polarion does not start where a secret could not be written."""
+        """Test that every step of the seeding stops the start: the read, the write and the ownership."""
         command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_files={"a.secret": "/tmp/polarion-secrets/0"})
 
-        self.assertEqual(2, command.count("|| exit 1"), command)
+        self.assertEqual(3, command.count("|| exit 1"), command)
 
     def test_no_secret_leaves_the_store_alone(self) -> None:
         """Test that a run seeding nothing neither calls the cli nor touches the store."""
@@ -1735,10 +1735,22 @@ class TestPolarionPreparation(unittest.TestCase):
         self.assertIsNone(helper.secrets_root)
 
     def test_a_directory_which_cannot_be_read_stops_the_start(self) -> None:
-        """Test that unreadable secrets are said out loud rather than looking already read."""
+        """Test that traversal is what is tested, since existence is true for anyone who reads /tmp."""
         command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_files={"a.secret": "/tmp/polarion-secrets/0"})
 
-        self.assertIn("[ -d /tmp/polarion-secrets ] ||", command)
+        self.assertIn("[ -x /tmp/polarion-secrets ] ||", command)
+        self.assertNotIn("[ -d /tmp/polarion-secrets ]", command)
+
+    def test_a_value_which_cannot_be_read_stops_the_start(self) -> None:
+        """Test that a file seen but not read fails instead of seeding an empty secret.
+
+        Inside the pipeline the status belongs to the cli, so the value is read into a variable first
+        and the emptiness of that variable is what is tested.
+        """
+        command: str = TestContainersHelper.build_preparation_command(None, with_certificates=False, secret_files={"a.secret": "/tmp/polarion-secrets/0"})
+
+        self.assertIn("polarion_secret_value=$(cat /tmp/polarion-secrets/0) || exit 1", command)
+        self.assertIn('[ -n "$polarion_secret_value" ] ||', command)
 
     def test_a_secret_without_a_value_is_refused(self) -> None:
         """Test that a key with no value is named rather than seeded empty."""

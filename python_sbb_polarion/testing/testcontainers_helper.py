@@ -366,14 +366,27 @@ class TestContainersHelper:
         if secret_files:
             # a directory the container cannot read would make every file below look already read,
             # and Polarion would start without the secrets rather than say so
-            steps.append(f'[ -d {SECRETS_PATH} ] || {{ echo "the directory holding the secrets cannot be read"; exit 1; }}')
+            # -x, not -d: the directory exists for anyone who can read /tmp, while traversing it is
+            # the permission reading the files below actually needs, and -x is false for both
+            steps.append(f'[ -x {SECRETS_PATH} ] || {{ echo "the directory holding the secrets cannot be read"; exit 1; }}')
         for secret_key, path in (secret_files or {}).items():
             # The value is read out of a mounted file and the file is removed as it is read, so it is
             # in neither the command nor the environment of the container, both of which docker
             # inspect prints in full and Polarion would inherit. A file which is gone was already
             # read: the store keeps what it was given, and a restarted container seeds nothing twice.
             quoted_path: str = shlex.quote(path)
-            steps.append(f'if [ -f {quoted_path} ]; then printf "%s\\n%s\\n" "$(cat {quoted_path})" "$(cat {quoted_path})" | {POLARION_SECRETS_CLI} add --key {shlex.quote(secret_key)} > /dev/null || exit 1; rm -f {quoted_path}; fi')
+            quoted_key: str = shlex.quote(secret_key)
+            # The value is read into a variable first. Inside a pipeline the status belongs to the
+            # cli, so a file which can be seen but not read would expand to nothing and seed an
+            # empty secret, the state this seeding exists to avoid. The variable is not exported,
+            # so it is gone once the start script replaces this shell.
+            steps.append(
+                f"if [ -f {quoted_path} ]; then "
+                f"polarion_secret_value=$(cat {quoted_path}) || exit 1; "
+                f'[ -n "$polarion_secret_value" ] || {{ echo "the value of a secret is empty or could not be read"; exit 1; }}; '
+                f'printf "%s\\n%s\\n" "$polarion_secret_value" "$polarion_secret_value" | {POLARION_SECRETS_CLI} add --key {quoted_key} > /dev/null || exit 1; '
+                f"rm -f {quoted_path}; fi"
+            )
         if secret_files:
             # the cli runs as the user of the preparation, and Polarion runs as its own
             steps.append(f"chown -R {POLARION_SECRETS_OWNER} {POLARION_SECRETS_STORE} || exit 1")
