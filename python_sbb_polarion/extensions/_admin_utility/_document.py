@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from python_sbb_polarion.core.annotations import deprecated_method, restapi_endpoint
+from python_sbb_polarion.core.annotations import restapi_endpoint
 from python_sbb_polarion.extensions._base import BaseMixin
-from python_sbb_polarion.types import Header
 
 
 if TYPE_CHECKING:
@@ -15,38 +14,6 @@ if TYPE_CHECKING:
 
 class DocumentMixin(BaseMixin):
     """Document (module) management operations."""
-
-    @restapi_endpoint(
-        method="POST",
-        path="/api/projects/{projectId}/spaces/{spaceId}/documents/{documentName}",
-        path_params={
-            "projectId": "project_id",
-            "spaceId": "space_id",
-            "documentName": "document_name",
-        },
-        body_param="payload",
-        header_params={
-            Header.CONTENT_TYPE: "content_type",
-        },
-        required_params=["projectId", "spaceId", "documentName"],
-    )
-    @deprecated_method("PolarionApiV1.create_documents")
-    def create_document(self, project_id: str, space_id: str, document_name: str, content_type: str, payload: str | bytes) -> Response:
-        """Create module
-
-        .. deprecated::
-            Use ``PolarionApiV1.create_documents`` instead. The standard Polarion REST API v1
-            covers document creation since Polarion 2606 (note: it expects JSON:API document
-            type/structure, whereas this method takes a raw body).
-
-        Returns:
-            Response: Response object from the API call
-        """
-        url: str = f"{self.rest_api_url}/projects/{project_id}/spaces/{space_id}/documents/{document_name}"
-        headers: dict[str, str] = {
-            Header.CONTENT_TYPE: content_type,
-        }
-        return self.polarion_connection.api_request_post(url, headers=headers, payload=payload)
 
     @restapi_endpoint(
         method="DELETE",

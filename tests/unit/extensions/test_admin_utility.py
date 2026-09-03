@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import unittest
-import warnings
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 from python_sbb_polarion.extensions.admin_utility import PolarionAdminUtilityApi
@@ -66,30 +65,8 @@ class TestPolarionAdminUtilityApi(unittest.TestCase):
         self.mock_connection.api_request_delete.assert_called_once_with(f"{self.api.rest_api_url}/tokens/token-id-123")
 
     # =========================================================================
-    # Project Operations
+    # License
     # =========================================================================
-
-    def test_create_project(self) -> None:
-        """Test create project."""
-        mock_response = Mock()
-        self.mock_connection.api_request_post.return_value = mock_response
-
-        response: Response = self.api.create_project("PROJ", "Test Project", "template1")
-
-        self.assertEqual(response, mock_response)
-        expected_data: JsonDict = {"projectId": "PROJ", "projectName": "Test Project", "templateId": "template1"}
-        self.mock_connection.api_request_post.assert_called_once_with(f"{self.api.rest_api_url}/projects", data=expected_data)
-
-    def test_create_test_run_template(self) -> None:
-        """Test create test run template."""
-        mock_response = Mock()
-        self.mock_connection.api_request_post.return_value = mock_response
-
-        response: Response = self.api.create_test_run_template("PROJ", "template1")
-
-        self.assertEqual(response, mock_response)
-        expected_data: JsonDict = {"templateId": "template1"}
-        self.mock_connection.api_request_post.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ/test-run-templates", data=expected_data)
 
     def test_activate_trial_license(self) -> None:
         """Test activate trial license."""
@@ -105,17 +82,6 @@ class TestPolarionAdminUtilityApi(unittest.TestCase):
     # Module Operations
     # =========================================================================
 
-    def test_create_document(self) -> None:
-        """Test create module."""
-        mock_response = Mock()
-        self.mock_connection.api_request_post.return_value = mock_response
-
-        response: Response = self.api.create_document("PROJ", "space1", "module1", MediaType.XML, "<content>")
-
-        self.assertEqual(response, mock_response)
-        expected_headers: dict[str, str] = {Header.CONTENT_TYPE: MediaType.XML}
-        self.mock_connection.api_request_post.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ/spaces/space1/documents/module1", headers=expected_headers, payload="<content>")
-
     def test_delete_document(self) -> None:
         """Test delete module."""
         mock_response = Mock()
@@ -125,31 +91,6 @@ class TestPolarionAdminUtilityApi(unittest.TestCase):
 
         self.assertEqual(response, mock_response)
         self.mock_connection.api_request_delete.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ/spaces/space1/documents/module1")
-
-    # =========================================================================
-    # Collection Operations
-    # =========================================================================
-
-    def test_delete_collection(self) -> None:
-        """Test delete collection."""
-        mock_response = Mock()
-        self.mock_connection.api_request_delete.return_value = mock_response
-
-        response: Response = self.api.delete_collection("PROJ", "collection1")
-
-        self.assertEqual(response, mock_response)
-        self.mock_connection.api_request_delete.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ/collections/collection1")
-
-    def test_add_to_collection(self) -> None:
-        """Test add to collection."""
-        mock_response = Mock()
-        self.mock_connection.api_request_post.return_value = mock_response
-
-        response: Response = self.api.add_to_collection("PROJ", "collection1", "module1")
-
-        self.assertEqual(response, mock_response)
-        expected_data: JsonDict = {"moduleId": "module1"}
-        self.mock_connection.api_request_post.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ/collections/collection1/modules", data=expected_data)
 
     # =========================================================================
     # Wiki Pages - Project
@@ -198,31 +139,6 @@ class TestPolarionAdminUtilityApi(unittest.TestCase):
 
         self.assertEqual(response, mock_response)
         self.mock_connection.api_request_delete.assert_called_once_with(f"{self.api.rest_api_url}/spaces/space1/wiki/page1")
-
-    # =========================================================================
-    # Live Reports - Project
-    # =========================================================================
-
-    def test_create_live_report_with_project(self) -> None:
-        """Test create live report with project ID."""
-        mock_response = Mock()
-        self.mock_connection.api_request_post.return_value = mock_response
-
-        response: Response = self.api.create_live_report("PROJ", "space1", "report1", MediaType.XML, "<content>")
-
-        self.assertEqual(response, mock_response)
-        expected_headers: dict[str, str] = {Header.CONTENT_TYPE: MediaType.XML}
-        self.mock_connection.api_request_post.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ/spaces/space1/report/report1", headers=expected_headers, payload="<content>")
-
-    def test_delete_live_report_with_project(self) -> None:
-        """Test delete live report with project ID."""
-        mock_response = Mock()
-        self.mock_connection.api_request_delete.return_value = mock_response
-
-        response: Response = self.api.delete_live_report("PROJ", "space1", "report1")
-
-        self.assertEqual(response, mock_response)
-        self.mock_connection.api_request_delete.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ/spaces/space1/report/report1")
 
     # =========================================================================
     # Live Reports - Default Space
@@ -285,171 +201,6 @@ class TestPolarionAdminUtilityApi(unittest.TestCase):
         self.assertEqual(response, mock_response)
         expected_headers: dict[str, str] = {Header.CONTENT_TYPE: MediaType.XML}
         self.mock_connection.api_request_post.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ/document-custom-fields-config/req", headers=expected_headers, payload="<config>")
-
-    # =========================================================================
-    # Collection Creation
-    # =========================================================================
-
-    def test_create_collection(self) -> None:
-        """Test create collection."""
-        mock_response = Mock()
-        self.mock_connection.api_request_post.return_value = mock_response
-
-        response: Response = self.api.create_collection("PROJ", "collection1")
-
-        self.assertEqual(response, mock_response)
-        expected_data: JsonDict = {"collectionName": "collection1"}
-        self.mock_connection.api_request_post.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ/collections", data=expected_data)
-
-    # =========================================================================
-    # Project Get/Delete
-    # =========================================================================
-
-    def test_get_project(self) -> None:
-        """Test get project."""
-        mock_response = Mock()
-        self.mock_connection.api_request_get.return_value = mock_response
-
-        response: Response = self.api.get_project("PROJ")
-
-        self.assertEqual(response, mock_response)
-        self.mock_connection.api_request_get.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ")
-
-    def test_delete_project(self) -> None:
-        """Test delete project."""
-        mock_response = Mock()
-        self.mock_connection.api_request_delete.return_value = mock_response
-
-        response: Response = self.api.delete_project("PROJ")
-
-        self.assertEqual(response, mock_response)
-        self.mock_connection.api_request_delete.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ")
-
-    # =========================================================================
-    # Convenience Methods
-    # =========================================================================
-
-    def test_set_custom_field_type_minimal(self) -> None:
-        """Test set custom field type with minimal parameters."""
-        mock_response = Mock()
-        self.mock_connection.api_request_put.return_value = mock_response
-
-        response: Response = self.api.set_custom_field_type("field1", "Field 1", "string")
-
-        self.assertEqual(response, mock_response)
-        expected_data: JsonDict = {
-            "workItemType": None,
-            "customFields": [{"id": "field1", "name": "Field 1", "type": "string", "description": None, "isRequired": False}],
-        }
-        self.mock_connection.api_request_put.assert_called_once_with(f"{self.api.rest_api_url}/custom-fields", data=expected_data)
-
-    def test_set_custom_field_type_full(self) -> None:
-        """Test set custom field type with all parameters."""
-        mock_response = Mock()
-        self.mock_connection.api_request_put.return_value = mock_response
-
-        response: Response = self.api.set_custom_field_type("field1", "Field 1", "string", field_description="Test field", is_required=True, project_id="PROJ", work_item_type="task")
-
-        self.assertEqual(response, mock_response)
-        expected_data: JsonDict = {
-            "workItemType": "task",
-            "customFields": [{"id": "field1", "name": "Field 1", "type": "string", "description": "Test field", "isRequired": True}],
-        }
-        self.mock_connection.api_request_put.assert_called_once_with(f"{self.api.rest_api_url}/projects/PROJ/custom-fields", data=expected_data)
-
-    # =========================================================================
-    # Field Declarations
-    # =========================================================================
-
-    def test_get_custom_field_declarations_without_project(self) -> None:
-        """Test get field declarations without project ID."""
-        mock_response = Mock()
-        self.mock_connection.api_request_get.return_value = mock_response
-
-        response: Response = self.api.get_custom_field_declarations("workitem", "task")
-
-        self.assertEqual(response, mock_response)
-        self.mock_connection.api_request_get.assert_called_once_with(
-            f"{self.api.rest_api_url}/custom-fields/workitem/task",
-            params=None,
-        )
-
-    def test_get_custom_field_declarations_with_project(self) -> None:
-        """Test get field declarations with project ID."""
-        mock_response = Mock()
-        self.mock_connection.api_request_get.return_value = mock_response
-
-        response: Response = self.api.get_custom_field_declarations("workitem", "task", project_id="PROJ")
-
-        self.assertEqual(response, mock_response)
-        self.mock_connection.api_request_get.assert_called_once_with(
-            f"{self.api.rest_api_url}/custom-fields/workitem/task",
-            params={"projectId": "PROJ"},
-        )
-
-    def test_declare_custom_field_without_project(self) -> None:
-        """Test declare field without project ID."""
-        mock_response = Mock()
-        self.mock_connection.api_request_post.return_value = mock_response
-
-        data: JsonDict = {
-            "id": "custom_field",
-            "name": "Custom Field",
-            "type": "string",
-        }
-        response: Response = self.api.declare_custom_field("workitem", "task", data)
-
-        self.assertEqual(response, mock_response)
-        self.mock_connection.api_request_post.assert_called_once_with(
-            f"{self.api.rest_api_url}/custom-fields/workitem/task",
-            params=None,
-            data=data,
-        )
-
-    def test_declare_custom_field_with_project(self) -> None:
-        """Test declare field with project ID."""
-        mock_response = Mock()
-        self.mock_connection.api_request_post.return_value = mock_response
-
-        data: JsonDict = {
-            "id": "custom_field",
-            "name": "Custom Field",
-            "type": "string",
-        }
-        response: Response = self.api.declare_custom_field("workitem", "task", data, project_id="PROJ")
-
-        self.assertEqual(response, mock_response)
-        self.mock_connection.api_request_post.assert_called_once_with(
-            f"{self.api.rest_api_url}/custom-fields/workitem/task",
-            params={"projectId": "PROJ"},
-            data=data,
-        )
-
-    def test_delete_custom_field_declaration_without_project(self) -> None:
-        """Test delete field declaration without project ID."""
-        mock_response = Mock()
-        self.mock_connection.api_request_delete.return_value = mock_response
-
-        response: Response = self.api.delete_custom_field_declaration("workitem", "task", "custom_field")
-
-        self.assertEqual(response, mock_response)
-        self.mock_connection.api_request_delete.assert_called_once_with(
-            f"{self.api.rest_api_url}/custom-fields/workitem/task/custom_field",
-            params=None,
-        )
-
-    def test_delete_custom_field_declaration_with_project(self) -> None:
-        """Test delete field declaration with project ID."""
-        mock_response = Mock()
-        self.mock_connection.api_request_delete.return_value = mock_response
-
-        response: Response = self.api.delete_custom_field_declaration("workitem", "task", "custom_field", project_id="PROJ")
-
-        self.assertEqual(response, mock_response)
-        self.mock_connection.api_request_delete.assert_called_once_with(
-            f"{self.api.rest_api_url}/custom-fields/workitem/task/custom_field",
-            params={"projectId": "PROJ"},
-        )
 
     # =========================================================================
     # Workitem Custom Fields Configuration
@@ -529,88 +280,3 @@ class TestPolarionAdminUtilityApi(unittest.TestCase):
         self.mock_connection.api_request_delete.assert_called_once_with(
             f"{self.api.rest_api_url}/vault/my-key",
         )
-
-
-# Methods deprecated in favour of PolarionApiV1 (issue #62), with their expected replacement marker.
-DEPRECATED_METHODS: dict[str, str] = {
-    "get_project": "PolarionApiV1.get_project",
-    "create_project": "PolarionApiV1.create_project",
-    "delete_project": "PolarionApiV1.delete_project",
-    "create_test_run_template": "PolarionApiV1.create_testruns",
-    "create_collection": "PolarionApiV1.create_collections",
-    "delete_collection": "PolarionApiV1.delete_collection",
-    "add_to_collection": "PolarionApiV1.create_collection_relationships",
-    "create_document": "PolarionApiV1.create_documents",
-    "create_live_report": "PolarionApiV1.create_page",
-    "delete_live_report": "PolarionApiV1.delete_page",
-    "get_custom_field_declarations": "PolarionApiV1.get_global_custom_fields / PolarionApiV1.get_project_custom_fields",
-    "declare_custom_field": "PolarionApiV1.create_global_custom_fields / PolarionApiV1.create_project_custom_fields",
-    "update_custom_fields_for_default_repo": "PolarionApiV1.update_global_custom_fields",
-    "update_custom_fields_for_project": "PolarionApiV1.update_project_custom_field",
-    "delete_custom_field_declaration": "PolarionApiV1 custom fields API (emulate get + update of the remaining fields)",
-    "set_custom_field_type": "PolarionApiV1.update_project_custom_field / PolarionApiV1.update_global_custom_fields",
-}
-
-# Admin-only methods that must NOT be deprecated (no standard equivalent).
-KEEP_METHODS: list[str] = [
-    "create_token",
-    "delete_token",
-    "delete_all_tokens",
-    "create_vault_record",
-    "get_vault_record",
-    "delete_vault_record",
-    "create_wiki_page",
-    "delete_wiki_page",
-    "activate_trial_license",
-    "delete_document",
-    "create_live_report_in_default_space",
-    "delete_live_report_in_default_space",
-    "get_document_types_configuration",
-]
-
-
-@runtime_checkable
-class _DeprecatedMethod(Protocol):
-    """Structural type for methods carrying the deprecation marker."""
-
-    __deprecated_replacement__: str
-
-
-class TestAdminUtilityDeprecation(unittest.TestCase):
-    """Test deprecation markers on methods covered by PolarionApiV1 (issue #62)."""
-
-    def test_all_expected_methods_are_marked_deprecated(self) -> None:
-        """Test each confirmed duplicate carries the __deprecated_replacement__ marker."""
-        for name, replacement in DEPRECATED_METHODS.items():
-            method: object = getattr(PolarionAdminUtilityApi, name)
-            if isinstance(method, _DeprecatedMethod):
-                self.assertEqual(method.__deprecated_replacement__, replacement)
-            else:
-                self.fail(f"{name} is expected to be deprecated but has no marker")
-
-    def test_kept_methods_are_not_deprecated(self) -> None:
-        """Test admin-only methods (no standard equivalent) are NOT deprecated."""
-        for name in KEEP_METHODS:
-            method: object = getattr(PolarionAdminUtilityApi, name)
-            self.assertNotIsInstance(method, _DeprecatedMethod, f"{name} must not be deprecated (no standard equivalent)")
-
-    def test_calling_deprecated_method_emits_warning(self) -> None:
-        """Test a representative deprecated method emits a DeprecationWarning when called."""
-        api: PolarionAdminUtilityApi = PolarionAdminUtilityApi(Mock())
-
-        with self.assertWarns(DeprecationWarning) as ctx:
-            api.create_project("PROJ", "Project", "template")
-
-        self.assertIn("PolarionApiV1.create_project", str(ctx.warning))
-
-    def test_set_custom_field_type_emits_single_warning(self) -> None:
-        """Test the convenience method emits exactly one warning (it issues the request directly)."""
-        api: PolarionAdminUtilityApi = PolarionAdminUtilityApi(Mock())
-
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            api.set_custom_field_type("field1", "Field 1", "string", project_id="PROJ")
-
-        deprecation_warnings: list[warnings.WarningMessage] = [w for w in caught if issubclass(w.category, DeprecationWarning)]
-        self.assertEqual(len(deprecation_warnings), 1)
-        self.assertIn("set_custom_field_type", str(deprecation_warnings[0].message))

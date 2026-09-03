@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from python_sbb_polarion.core.annotations import deprecated_method, restapi_endpoint
+from python_sbb_polarion.core.annotations import restapi_endpoint
 from python_sbb_polarion.extensions._base import BaseMixin
 from python_sbb_polarion.types import Header
 
@@ -15,61 +15,6 @@ if TYPE_CHECKING:
 
 class LiveReportMixin(BaseMixin):
     """Live report management operations."""
-
-    @restapi_endpoint(
-        method="POST",
-        path="/api/projects/{projectId}/spaces/{spaceId}/report/{name}",
-        path_params={
-            "projectId": "project_id",
-            "spaceId": "space_id",
-            "name": "name",
-        },
-        body_param="content",
-        header_params={
-            Header.CONTENT_TYPE: "content_type",
-        },
-        required_params=["projectId", "spaceId", "name"],
-    )
-    @deprecated_method("PolarionApiV1.create_page")
-    def create_live_report(self, project_id: str, space_id: str, name: str, content_type: str, content: str) -> Response:
-        """Create new live report in project
-
-        .. deprecated::
-            Use ``PolarionApiV1.create_page`` instead. In the standard Polarion REST API v1 a
-            rich/live-report page is a ``pages`` resource (project + space scoped) since Polarion 2606.
-
-        Returns:
-            Response: Response object from the API call
-        """
-        url: str = f"{self.rest_api_url}/projects/{project_id}/spaces/{space_id}/report/{name}"
-        headers: dict[str, str] = {
-            Header.CONTENT_TYPE: content_type,
-        }
-        return self.polarion_connection.api_request_post(url, headers=headers, payload=content)
-
-    @restapi_endpoint(
-        method="DELETE",
-        path="/api/projects/{projectId}/spaces/{spaceId}/report/{name}",
-        path_params={
-            "projectId": "project_id",
-            "spaceId": "space_id",
-            "name": "name",
-        },
-        required_params=["projectId", "spaceId", "name"],
-    )
-    @deprecated_method("PolarionApiV1.delete_page")
-    def delete_live_report(self, project_id: str, space_id: str, name: str) -> Response:
-        """Delete live report in project
-
-        .. deprecated::
-            Use ``PolarionApiV1.delete_page`` instead. In the standard Polarion REST API v1 a
-            rich/live-report page is a ``pages`` resource (project + space scoped) since Polarion 2606.
-
-        Returns:
-            Response: Response object from the API call
-        """
-        url: str = f"{self.rest_api_url}/projects/{project_id}/spaces/{space_id}/report/{name}"
-        return self.polarion_connection.api_request_delete(url)
 
     @restapi_endpoint(
         method="POST",

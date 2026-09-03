@@ -57,14 +57,14 @@ result = pdf_api.convert({"projectId": "PROJECT", "documentName": "doc"})
 
 **Current version:** Polarion 2606
 
-### Deprecated `admin-utility` methods
+### Removed `admin-utility` methods
 
 Since Polarion 2606 the standard REST API v1 (`PolarionApiV1`) covers operations that the
-`admin-utility` extension client (`PolarionAdminUtilityApi`) used to re-implement. These duplicates
-are **deprecated** (they emit a `DeprecationWarning`) and will be removed in the next major release.
-Prefer the standard `PolarionApiV1` method:
+`admin-utility` extension client (`PolarionAdminUtilityApi`) used to re-implement. The extension
+removed those endpoints in v5.0.1, and this client removed the matching methods in 4.0.0
+(deprecated since 3.0.0). Call the standard `PolarionApiV1` method instead:
 
-| `PolarionAdminUtilityApi` (deprecated) | Use `PolarionApiV1` instead |
+| Removed from `PolarionAdminUtilityApi` | Use `PolarionApiV1` instead |
 |----------------------------------------|-----------------------------|
 | `get_project` | `get_project` |
 | `create_project` | `create_project` (standard endpoint needs an explicit `location`) |
@@ -80,7 +80,7 @@ Prefer the standard `PolarionApiV1` method:
 | `declare_custom_field` | `create_global_custom_fields` / `create_project_custom_fields` |
 | `update_custom_fields_for_default_repo` | `update_global_custom_fields` |
 | `update_custom_fields_for_project` | `update_project_custom_field` |
-| `delete_custom_field_declaration` | no direct delete — emulate get + update of the remaining fields |
+| `delete_custom_field_declaration` | no direct delete, emulate get + update of the remaining fields |
 | `set_custom_field_type` | `update_project_custom_field` / `update_global_custom_fields` |
 
 Admin-only methods with no standard equivalent are **kept**: tokens, vault records, classic wiki pages,
