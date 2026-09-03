@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.5.0...v4.0.0) (2026-09-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* PolarionAdminUtilityApi no longer provides get_project, create_project, delete_project, create_test_run_template, create_collection, delete_collection, add_to_collection, create_document, create_live_report, delete_live_report, get_custom_field_declarations, declare_custom_field, delete_custom_field_declaration, update_custom_fields_for_default_repo, update_custom_fields_for_project and set_custom_field_type. Use the matching PolarionApiV1 method.
+
+### Features
+
+* remove admin-utility methods covered by v1 ([#111](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/111)) ([12e6b95](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/12e6b951913581237b4a6e0c39cd6418a8d498d0))
+
 ## [3.5.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.4.0...v3.5.0) (2026-08-31)
 
 
