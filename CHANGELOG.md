@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v4.0.0...v4.0.1) (2026-09-04)
+
+
+### Bug Fixes
+
+* **deps:** update dependency tox to v4.61.2 ([f5baa26](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/f5baa26dc7827603c187a4104717b8bbe5c97382))
+
 ## [4.0.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.5.0...v4.0.0) (2026-09-03)
 
 
