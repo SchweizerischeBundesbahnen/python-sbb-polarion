@@ -5,7 +5,7 @@ import time
 import uuid
 from http import HTTPStatus
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from python_sbb_polarion.core import ExtensionApiFactory
 from python_sbb_polarion.testing.errors import TempProjectError
@@ -34,6 +34,13 @@ POLL_MAX_ATTEMPTS: int = 120
 JOB_STATUS_OK: str = "OK"
 JOB_STATUS_FAILURES: frozenset[str] = frozenset({"FAILED", "CANCELLED"})
 
+# Job kinds, used both for logging and to pick the fallback that confirms the outcome. The alias
+# keeps the deletion switch in _wait_for_job checkable: a typo is a type error, not a silent
+# fallback back to the plain timeout.
+JobAction = Literal["creation", "deletion"]
+ACTION_CREATION: JobAction = "creation"
+ACTION_DELETION: JobAction = "deletion"
+
 
 class TempProject:
     """Temporary Polarion project for system testing.
@@ -60,6 +67,9 @@ class TempProject:
             "Demo Projects/<project_id>" and thus inside the "Demo Projects" project group. When omitted
             the project is created at the repository root (location == project id), preserving the
             previous default behaviour.
+        poll_interval_seconds: Delay between two polls of an asynchronous create/delete job
+        poll_max_attempts: Number of polls before the wait gives up. Raise it for a slow or
+            heavily loaded server, where create/delete jobs queue up behind other work.
     """
 
     def __init__(
@@ -71,8 +81,13 @@ class TempProject:
         mutate_project_id: bool = True,
         transform_links: SparseFields | None = None,
         parent_location: str | None = None,
+        poll_interval_seconds: float = POLL_INTERVAL_SECONDS,
+        poll_max_attempts: int = POLL_MAX_ATTEMPTS,
     ) -> None:
         logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+        self.poll_interval_seconds: float = poll_interval_seconds
+        self.poll_max_attempts: int = poll_max_attempts
 
         if mutate_project_id:
             self.temp_project_id: str = f"{project_id}_st_{str(uuid.uuid4()).split('-')[-1]}"
@@ -137,11 +152,11 @@ class TempProject:
 
         # Project creation is asynchronous: the endpoint returns 202 (Accepted) with a job descriptor.
         if response.status_code != HTTPStatus.ACCEPTED:
-            self._fail("creation", response)
+            self._fail(ACTION_CREATION, response)
 
         # Wait for the job to finish: once it reports OK the project is fully created, so the
         # name PATCH below is guaranteed to land on an existing, writable project.
-        self._wait_for_job(response, "creation")
+        self._wait_for_job(response, ACTION_CREATION)
 
         logger.info(
             "'%s' have been created in %.2f seconds",
@@ -177,12 +192,12 @@ class TempProject:
         logger.debug("Response content: %s", response.content)
         raise TempProjectError(f"Failed to {action} project '{self.temp_project_location}' (HTTP {response.status_code})")
 
-    def _wait_for_job(self, response: Response, action: str) -> None:
+    def _wait_for_job(self, response: Response, action: JobAction) -> None:
         """Poll the job referenced by an async 202 response until it reaches a terminal status.
 
         Args:
             response: The 202 (Accepted) response whose body carries the job descriptor
-            action: Human-readable operation name for logging (e.g. "creation", "deletion")
+            action: Which job is awaited, ACTION_CREATION or ACTION_DELETION
 
         Raises:
             TempProjectError: If the job fails, is cancelled, or never reaches a terminal status
@@ -190,7 +205,8 @@ class TempProject:
         job_id: str = self._job_id_from_response(response, action)
         logger.info("Waiting for %s job '%s' of project '%s'...", action, job_id, self.temp_project_location)
 
-        for attempt in range(POLL_MAX_ATTEMPTS):
+        last_poll: str = "no poll performed"
+        for attempt in range(self.poll_max_attempts):
             job_response: Response = self.polarion_api.get_job(job_id)
             # A non-200 or non-JSON poll (transient 5xx, gateway/SSO HTML page) is treated as
             # "not ready yet" rather than crashing: we keep polling and, if it persists, time out
@@ -204,14 +220,32 @@ class TempProject:
             status_type: str | None
             message: str | None
             status_type, message = self._job_status(job_body)
+            last_poll = f"HTTP {job_response.status_code}, status type {status_type}, message {message}"
             if status_type == JOB_STATUS_OK:
+                return
+            # The job queue is not a reliable witness of a finished deletion: the job can stay
+            # without a terminal status, drop out of the queue history, or report a failure of a
+            # later cleanup step, long after the project itself is gone. A project that no longer
+            # answers is proof enough that the deletion worked, so this check comes first.
+            if action == ACTION_DELETION and self._project_is_gone():
+                logger.info("Project '%s' is gone, %s job '%s' reported: %s", self.temp_project_location, action, job_id, last_poll)
                 return
             if status_type in JOB_STATUS_FAILURES:
                 raise TempProjectError(f"Job to {action} project '{self.temp_project_location}' ended as {status_type}: {message}")
-            if attempt < POLL_MAX_ATTEMPTS - 1:
-                time.sleep(POLL_INTERVAL_SECONDS)
+            if attempt < self.poll_max_attempts - 1:
+                time.sleep(self.poll_interval_seconds)
 
-        raise TempProjectError(f"Timed out waiting for {action} job '{job_id}' of project '{self.temp_project_location}'")
+        raise TempProjectError(f"Timed out waiting for {action} job '{job_id}' of project '{self.temp_project_location}', last poll: {last_poll}")
+
+    def _project_is_gone(self) -> bool:
+        """Report whether the project no longer exists.
+
+        Returns:
+            bool: True when the project lookup answers 404, False for any other status
+        """
+        # A 404 is the expected answer here, so the client's non-2xx warning is suppressed.
+        lookup: Response = self.polarion_api.get_project(self.temp_project_id, print_error=False)
+        return lookup.status_code == HTTPStatus.NOT_FOUND
 
     @staticmethod
     def _safe_json(response: Response) -> JsonDict:
@@ -287,8 +321,8 @@ class TempProject:
 
         # Project deletion is asynchronous: the endpoint returns 202 (Accepted) with a job descriptor.
         if response.status_code != HTTPStatus.ACCEPTED:
-            self._fail("deletion", response)
+            self._fail(ACTION_DELETION, response)
 
-        self._wait_for_job(response, "deletion")
+        self._wait_for_job(response, ACTION_DELETION)
 
         logger.info("'%s' have been deleted in %.2f seconds", self.temp_project_location, time.time() - start_time)
