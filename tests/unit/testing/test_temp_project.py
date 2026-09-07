@@ -381,6 +381,8 @@ class TestTempProject(unittest.TestCase):
         mock_api: Mock = _success_polarion_api()
         # creation job finishes (OK), deletion job never reaches a terminal status
         mock_api.get_job.side_effect = [_job("OK"), *[_job("UNKNOWN") for _ in range(200)]]
+        # 404 for the pre-check, then the project keeps answering: the deletion really is stuck
+        mock_api.get_project.side_effect = [_response(HTTPStatus.NOT_FOUND), *[_response(HTTPStatus.OK) for _ in range(200)]]
         mock_create_api.return_value = mock_api
 
         with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
@@ -614,6 +616,77 @@ class TestTempProject(unittest.TestCase):
         self.assertIsNotNone(temp_project.temp_project_id)
         self.assertEqual(mock_api.get_job.call_count, 3)
         mock_api.update_project.assert_called_once()
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.time.sleep")
+    def test_tear_down_accepts_gone_project_without_terminal_job(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test tear_down returns once the project is gone, even if the job never reports OK."""
+        # Arrange
+        mock_api: Mock = _success_polarion_api()
+        # creation job finishes (OK), deletion job stays without a terminal status
+        mock_api.get_job.side_effect = [_job("OK"), *[_job("UNKNOWN") for _ in range(200)]]
+        # 404 for the pre-check, project still there on the first poll, gone on the second
+        mock_api.get_project.side_effect = [
+            _response(HTTPStatus.NOT_FOUND),
+            _response(HTTPStatus.OK),
+            _response(HTTPStatus.NOT_FOUND),
+        ]
+        mock_create_api.return_value = mock_api
+
+        with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
+            mock_uuid.return_value = Mock()
+            mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
+
+            temp_project = TempProject("TEST", "Test Project", "template_id")
+
+            # Act - should not raise
+            temp_project.tear_down()
+
+            # Assert - the wait ended on the state check, well before the attempt limit
+            self.assertEqual(mock_api.get_job.call_count, 3)
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.time.sleep")
+    def test_creation_does_not_end_on_project_state(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test an existing project does not end the wait for a creation job that is still running."""
+        # Arrange
+        mock_api: Mock = _success_polarion_api()
+        mock_api.get_job.return_value = _job("UNKNOWN")
+        # 404 for the pre-check, then the project answers while the template import runs on
+        mock_api.get_project.side_effect = [_response(HTTPStatus.NOT_FOUND), *[_response(HTTPStatus.OK) for _ in range(200)]]
+        mock_create_api.return_value = mock_api
+
+        with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
+            mock_uuid.return_value = Mock()
+            mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
+
+            # Act & Assert
+            with self.assertRaises(TempProjectError):
+                TempProject("TEST", "Test Project", "template_id", poll_max_attempts=3)
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.time.sleep")
+    def test_poll_settings_are_configurable(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test poll_max_attempts limits the polls and the timeout carries the last seen status."""
+        # Arrange
+        mock_api: Mock = _success_polarion_api()
+        mock_api.get_job.return_value = _job("UNKNOWN", "still running")
+        mock_create_api.return_value = mock_api
+
+        with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
+            mock_uuid.return_value = Mock()
+            mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
+
+            # Act & Assert
+            with self.assertRaises(TempProjectError) as context:
+                TempProject("TEST", "Test Project", "template_id", poll_interval_seconds=0.1, poll_max_attempts=4)
+
+        self.assertIn("still running", str(context.exception))
+        self.assertEqual(mock_api.get_job.call_count, 4)
+        mock_sleep.assert_called_with(0.1)
 
 
 if __name__ == "__main__":
