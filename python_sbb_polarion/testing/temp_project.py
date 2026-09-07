@@ -5,7 +5,7 @@ import time
 import uuid
 from http import HTTPStatus
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from python_sbb_polarion.core import ExtensionApiFactory
 from python_sbb_polarion.testing.errors import TempProjectError
@@ -34,9 +34,12 @@ POLL_MAX_ATTEMPTS: int = 120
 JOB_STATUS_OK: str = "OK"
 JOB_STATUS_FAILURES: frozenset[str] = frozenset({"FAILED", "CANCELLED"})
 
-# Job kinds, used both for logging and to pick the fallback that confirms the outcome.
-ACTION_CREATION: str = "creation"
-ACTION_DELETION: str = "deletion"
+# Job kinds, used both for logging and to pick the fallback that confirms the outcome. The alias
+# keeps the deletion switch in _wait_for_job checkable: a typo is a type error, not a silent
+# fallback back to the plain timeout.
+JobAction = Literal["creation", "deletion"]
+ACTION_CREATION: JobAction = "creation"
+ACTION_DELETION: JobAction = "deletion"
 
 
 class TempProject:
@@ -189,7 +192,7 @@ class TempProject:
         logger.debug("Response content: %s", response.content)
         raise TempProjectError(f"Failed to {action} project '{self.temp_project_location}' (HTTP {response.status_code})")
 
-    def _wait_for_job(self, response: Response, action: str) -> None:
+    def _wait_for_job(self, response: Response, action: JobAction) -> None:
         """Poll the job referenced by an async 202 response until it reaches a terminal status.
 
         Args:
@@ -220,14 +223,15 @@ class TempProject:
             last_poll = f"HTTP {job_response.status_code}, status type {status_type}, message {message}"
             if status_type == JOB_STATUS_OK:
                 return
-            if status_type in JOB_STATUS_FAILURES:
-                raise TempProjectError(f"Job to {action} project '{self.temp_project_location}' ended as {status_type}: {message}")
             # The job queue is not a reliable witness of a finished deletion: the job can stay
-            # without a terminal status (or drop out of the queue history) long after the project
-            # itself is gone. A project that no longer answers is proof enough that it worked.
+            # without a terminal status, drop out of the queue history, or report a failure of a
+            # later cleanup step, long after the project itself is gone. A project that no longer
+            # answers is proof enough that the deletion worked, so this check comes first.
             if action == ACTION_DELETION and self._project_is_gone():
                 logger.info("Project '%s' is gone, %s job '%s' reported: %s", self.temp_project_location, action, job_id, last_poll)
                 return
+            if status_type in JOB_STATUS_FAILURES:
+                raise TempProjectError(f"Job to {action} project '{self.temp_project_location}' ended as {status_type}: {message}")
             if attempt < self.poll_max_attempts - 1:
                 time.sleep(self.poll_interval_seconds)
 

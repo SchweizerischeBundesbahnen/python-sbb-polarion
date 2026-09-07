@@ -649,6 +649,55 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.time.sleep")
+    def test_tear_down_accepts_gone_project_after_failed_job(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test tear_down returns when the deletion job fails but the project is already gone."""
+        # Arrange
+        mock_api: Mock = _success_polarion_api()
+        # creation job finishes (OK), the deletion job reports a failure of a later cleanup step
+        mock_api.get_job.side_effect = [_job("OK"), _job("FAILED", "cleanup step failed")]
+        # 404 for the pre-check, and the project is gone by the time the deletion job is polled
+        mock_api.get_project.side_effect = [_response(HTTPStatus.NOT_FOUND), _response(HTTPStatus.NOT_FOUND)]
+        mock_create_api.return_value = mock_api
+
+        with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
+            mock_uuid.return_value = Mock()
+            mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
+
+            temp_project = TempProject("TEST", "Test Project", "template_id")
+
+            # Act - should not raise
+            temp_project.tear_down()
+
+            # Assert
+            self.assertEqual(mock_api.get_job.call_count, 2)
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.time.sleep")
+    def test_tear_down_reports_failed_job_of_existing_project(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test tear_down still raises when the deletion job fails and the project is still there."""
+        # Arrange
+        mock_api: Mock = _success_polarion_api()
+        mock_api.get_job.side_effect = [_job("OK"), _job("FAILED", "deletion refused")]
+        # 404 for the pre-check, then the project keeps answering: nothing was deleted
+        mock_api.get_project.side_effect = [_response(HTTPStatus.NOT_FOUND), _response(HTTPStatus.OK)]
+        mock_create_api.return_value = mock_api
+
+        with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
+            mock_uuid.return_value = Mock()
+            mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
+
+            temp_project = TempProject("TEST", "Test Project", "template_id")
+
+            # Act & Assert
+            with self.assertRaises(TempProjectError) as context:
+                temp_project.tear_down()
+
+        self.assertIn("deletion refused", str(context.exception))
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.time.sleep")
     def test_creation_does_not_end_on_project_state(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test an existing project does not end the wait for a creation job that is still running."""
         # Arrange
