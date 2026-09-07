@@ -121,7 +121,7 @@ tests/
 - **core** - Core API: `PolarionApiV1`, `PolarionGenericExtensionApi`, `ExtensionApiFactory`
 - **extensions** - Client interfaces for SBB Polarion extensions (pdf-exporter, docx-exporter, admin-utility, etc.)
 - **linter** - Custom AST-based code style linter (PSP001-PSP017)
-- **testing** - Test helpers: `GenericTestCase`, `TestContainersHelper`, `TempProject`
+- **testing** - Test helpers: `GenericTestCase`, `TestContainersHelper`, `TempProject`, `tear_down_all`
 - **types** - Type definitions: `JsonDict`, `MediaType`, `Header`, `AuthScheme`, file upload types
 
 ## Development Commands
