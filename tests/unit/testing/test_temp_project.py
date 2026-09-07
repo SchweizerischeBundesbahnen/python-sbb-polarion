@@ -678,6 +678,30 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.time.sleep")
+    def test_tear_down_takes_ok_job_when_lookup_cannot_answer(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test an OK job ends the wait when the project lookup can neither confirm nor deny."""
+        # Arrange
+        mock_api: Mock = _success_polarion_api()
+        mock_create_api.return_value = mock_api
+
+        with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
+            mock_uuid.return_value = Mock()
+            mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
+
+            temp_project = TempProject("TEST", "Test Project", "template_id")
+            # the session expired, so the lookup answers neither 200 nor 404
+            mock_api.get_project.return_value = _response(HTTPStatus.UNAUTHORIZED)
+            mock_api.get_project.side_effect = None
+
+            # Act - should not raise
+            temp_project.tear_down()
+
+            # Assert - one poll was enough, the wait did not run to the attempt limit
+            self.assertEqual(mock_api.get_project.call_count, 2)
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.time.sleep")
     def test_tear_down_times_out_when_project_survives_ok_job(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test tear_down raises when the project keeps answering, however often the job reports OK."""
         # Arrange

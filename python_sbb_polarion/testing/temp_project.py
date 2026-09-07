@@ -226,14 +226,21 @@ class TempProject:
             status_type, message = self._job_status(job_body)
             last_poll = f"HTTP {job_response.status_code}, status type {status_type}, message {message}"
             if action == ACTION_DELETION:
-                # For a deletion the project itself is the only witness that counts. The job can
-                # stay without a terminal status, drop out of the queue history, or report a failed
+                # For a deletion the project itself is the witness that counts. The job can stay
+                # without a terminal status, drop out of the queue history, or report a failed
                 # cleanup step long after the project is gone, and it can just as well report OK
-                # while the project still answers. So a project that answers keeps the wait going,
-                # whatever the job says, and a project that is gone ends it.
-                if self._project_is_gone():
+                # while the project still answers.
+                lookup_status: int = self._project_lookup_status()
+                last_poll = f"{last_poll}, project lookup HTTP {lookup_status}"
+                if lookup_status == HTTPStatus.NOT_FOUND:
                     if status_type != JOB_STATUS_OK:
                         logger.info("Project '%s' is gone, %s job '%s' reported: %s", self.temp_project_location, action, job_id, last_poll)
+                    return
+                # Only a project that demonstrably answers (200) outranks an OK job. A lookup that
+                # can neither confirm nor deny it, such as an expired session, a transient 5xx or a
+                # gateway page, must not turn a finished deletion into a timeout.
+                if status_type == JOB_STATUS_OK and lookup_status != HTTPStatus.OK:
+                    logger.warning("Taking the word of %s job '%s' for project '%s': %s", action, job_id, self.temp_project_location, last_poll)
                     return
             elif status_type == JOB_STATUS_OK:
                 return
@@ -244,15 +251,16 @@ class TempProject:
 
         raise TempProjectError(f"Timed out waiting for {action} job '{job_id}' of project '{self.temp_project_location}', last poll: {last_poll}")
 
-    def _project_is_gone(self) -> bool:
-        """Report whether the project no longer exists.
+    def _project_lookup_status(self) -> int:
+        """Look the project up and report the raw HTTP status of the answer.
 
         Returns:
-            bool: True when the project lookup answers 404, False for any other status
+            int: 404 when the project is gone, 200 when it is there, any other status when the
+                lookup itself could not answer
         """
-        # A 404 is the expected answer here, so the client's non-2xx warning is suppressed.
+        # A 404 is an expected answer here, so the client's non-2xx warning is suppressed.
         lookup: Response = self.polarion_api.get_project(self.temp_project_id, print_error=False)
-        return lookup.status_code == HTTPStatus.NOT_FOUND
+        return lookup.status_code
 
     @staticmethod
     def _safe_json(response: Response) -> JsonDict:
