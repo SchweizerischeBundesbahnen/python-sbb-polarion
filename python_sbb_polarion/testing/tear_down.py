@@ -18,7 +18,7 @@ class TearDownable(Protocol):
         """Release the resource."""
 
 
-def tear_down_all(*targets: TearDownable) -> bool:
+def tear_down_all(*targets: TearDownable | None) -> bool:
     """Tear down every target, whatever the outcome of the ones before it.
 
     A test runner tears down in a finally block, where the first raising step would skip
@@ -30,14 +30,20 @@ def tear_down_all(*targets: TearDownable) -> bool:
             if not tear_down_all(elibrary, drivepilot, testcontainers_helper):
                 sys.exit(1)
 
+    A None target is skipped rather than reported: the same finally block runs after a
+    setup that failed halfway, where a runner holds its not-yet-created resources as None.
+
     Args:
-        targets: The objects to tear down, in the given order
+        targets: The objects to tear down, in the given order. None stands for a resource
+            that was never created and is skipped
 
     Returns:
-        bool: True when every target was torn down
+        bool: True when every target that exists was torn down
     """
     succeeded: bool = True
     for target in targets:
+        if target is None:
+            continue
         try:
             target.tear_down()
         # A broad catch is the point here: one failing step must not stop the others.

@@ -50,6 +50,13 @@ class TestTearDownAll(unittest.TestCase):
         """Test tear_down_all reports success when there is nothing to tear down."""
         self.assertTrue(tear_down_all())
 
+    def test_skips_targets_that_were_never_created(self) -> None:
+        """Test a None target is skipped, as after a setup that failed halfway."""
+        created: _Recorder = _Recorder()
+
+        self.assertTrue(tear_down_all(None, created, None))
+        self.assertTrue(created.torn_down)
+
     def test_describes_a_temp_project_by_its_location(self) -> None:
         """Test the log names a temporary project by its repository location."""
 
