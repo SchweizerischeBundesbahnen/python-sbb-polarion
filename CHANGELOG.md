@@ -1,5 +1,20 @@
 # Changelog
 
+## [4.1.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v4.0.0...v4.1.0) (2026-09-07)
+
+
+### Features
+
+* add tear_down_all for test runners ([#119](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/119)) ([e4fb447](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/e4fb447963402390eb86d77de32534385985acf7))
+
+
+### Bug Fixes
+
+* **deps:** update dependency ruff to v0.16.6 ([377bd56](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/377bd569580ec1ef18fdf18c58f05d1fd57ae9b8))
+* **deps:** update dependency tox to v4.61.2 ([f5baa26](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/f5baa26dc7827603c187a4104717b8bbe5c97382))
+* end deletion wait when project is gone ([#115](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/115)) ([fced7d7](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/fced7d747ba1d8fa9dcd01474fc226dca0ba7f5f))
+* judge a deletion by the project, not the job ([#117](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/117)) ([debb2a8](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/debb2a8133a1ada4735028177f8e4caf72c7da11))
+
 ## [4.0.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v3.5.0...v4.0.0) (2026-09-03)
 
 
