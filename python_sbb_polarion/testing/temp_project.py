@@ -195,12 +195,16 @@ class TempProject:
     def _wait_for_job(self, response: Response, action: JobAction) -> None:
         """Poll the job referenced by an async 202 response until it reaches a terminal status.
 
+        A creation is over when the job reports OK. A deletion is over when the project is gone,
+        which the job status alone does not prove.
+
         Args:
             response: The 202 (Accepted) response whose body carries the job descriptor
             action: Which job is awaited, ACTION_CREATION or ACTION_DELETION
 
         Raises:
-            TempProjectError: If the job fails, is cancelled, or never reaches a terminal status
+            TempProjectError: If the job fails or is cancelled, if a creation job never reports OK,
+                or if the project of a deletion never disappears
         """
         job_id: str = self._job_id_from_response(response, action)
         logger.info("Waiting for %s job '%s' of project '%s'...", action, job_id, self.temp_project_location)
@@ -221,14 +225,17 @@ class TempProject:
             message: str | None
             status_type, message = self._job_status(job_body)
             last_poll = f"HTTP {job_response.status_code}, status type {status_type}, message {message}"
-            if status_type == JOB_STATUS_OK:
-                return
-            # The job queue is not a reliable witness of a finished deletion: the job can stay
-            # without a terminal status, drop out of the queue history, or report a failure of a
-            # later cleanup step, long after the project itself is gone. A project that no longer
-            # answers is proof enough that the deletion worked, so this check comes first.
-            if action == ACTION_DELETION and self._project_is_gone():
-                logger.info("Project '%s' is gone, %s job '%s' reported: %s", self.temp_project_location, action, job_id, last_poll)
+            if action == ACTION_DELETION:
+                # For a deletion the project itself is the only witness that counts. The job can
+                # stay without a terminal status, drop out of the queue history, or report a failed
+                # cleanup step long after the project is gone, and it can just as well report OK
+                # while the project still answers. So a project that answers keeps the wait going,
+                # whatever the job says, and a project that is gone ends it.
+                if self._project_is_gone():
+                    if status_type != JOB_STATUS_OK:
+                        logger.info("Project '%s' is gone, %s job '%s' reported: %s", self.temp_project_location, action, job_id, last_poll)
+                    return
+            elif status_type == JOB_STATUS_OK:
                 return
             if status_type in JOB_STATUS_FAILURES:
                 raise TempProjectError(f"Job to {action} project '{self.temp_project_location}' ended as {status_type}: {message}")

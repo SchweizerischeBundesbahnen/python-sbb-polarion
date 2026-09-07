@@ -649,6 +649,58 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.time.sleep")
+    def test_tear_down_waits_while_project_answers_after_ok_job(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test tear_down keeps waiting while the project still answers, even after an OK job."""
+        # Arrange
+        mock_api: Mock = _success_polarion_api()
+        mock_create_api.return_value = mock_api
+
+        with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
+            mock_uuid.return_value = Mock()
+            mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
+
+            temp_project = TempProject("TEST", "Test Project", "template_id")
+            lookups_after_creation: int = mock_api.get_project.call_count
+
+            # the deletion job reports OK at once, the project needs two more polls to disappear
+            mock_api.get_project.side_effect = [
+                _response(HTTPStatus.OK),
+                _response(HTTPStatus.OK),
+                _response(HTTPStatus.NOT_FOUND),
+            ]
+
+            # Act - should not raise
+            temp_project.tear_down()
+
+            # Assert - the OK job alone did not end the wait
+            self.assertEqual(mock_api.get_project.call_count - lookups_after_creation, 3)
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.time.sleep")
+    def test_tear_down_times_out_when_project_survives_ok_job(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test tear_down raises when the project keeps answering, however often the job reports OK."""
+        # Arrange
+        mock_api: Mock = _success_polarion_api()
+        mock_create_api.return_value = mock_api
+
+        with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
+            mock_uuid.return_value = Mock()
+            mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
+
+            temp_project = TempProject("TEST", "Test Project", "template_id", poll_max_attempts=3)
+            mock_api.get_project.return_value = _response(HTTPStatus.OK)
+            mock_api.get_project.side_effect = None
+
+            # Act & Assert
+            with self.assertRaises(TempProjectError) as context:
+                temp_project.tear_down()
+
+        self.assertIn("Timed out waiting for deletion job", str(context.exception))
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.time.sleep")
     def test_tear_down_accepts_gone_project_after_failed_job(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test tear_down returns when the deletion job fails but the project is already gone."""
         # Arrange
