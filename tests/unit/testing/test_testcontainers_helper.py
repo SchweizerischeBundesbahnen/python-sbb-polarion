@@ -1240,6 +1240,9 @@ class TestTestContainersHelperStageBulkProcessingCa(unittest.TestCase):
                 self.assertEqual(helper.bulk_processing_ca_root, staged)
                 bundle: pathlib.Path = pathlib.Path(staged) / "ca-bundle.pem"
                 self.assertEqual(bundle.read_bytes(), b"AAA\nBBB\n")
+                # the container reads the mount as a non-host UID, so the public bundle is world-readable
+                self.assertEqual(pathlib.Path(staged).stat().st_mode & 0o777, 0o755)
+                self.assertEqual(bundle.stat().st_mode & 0o777, 0o644)
             finally:
                 if staged is not None:
                     shutil.rmtree(staged, ignore_errors=True)

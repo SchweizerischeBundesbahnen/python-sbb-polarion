@@ -314,24 +314,21 @@ class TestContainersHelper:
         Raises:
             ContainerSetupError: If a named file is not there to be trusted.
         """
-        files: list[str] = [path for path in (certificate_files or []) if path]
-        if not files:
+        sources: list[pathlib.Path] = self.resolve_certificate_files(certificate_files)
+        if not sources:
             return None
-
-        sources: list[pathlib.Path] = []
-        for path in files:
-            source: pathlib.Path = pathlib.Path(path)
-            if not source.is_file():
-                raise ContainerSetupError(f"Certificate '{path}' is not a file")
-            sources.append(source)
 
         staged: str = tempfile.mkdtemp(prefix="bulk-processing-ca-")
         self.bulk_processing_ca_root = staged
+        # mkdtemp makes the directory 0700 owned by the host user, but the bulk container reads the
+        # mount as UID 1000; a public CA bundle is world-readable so any container UID can trust it.
+        pathlib.Path(staged).chmod(0o755)
         bundle: pathlib.Path = pathlib.Path(staged) / "ca-bundle.pem"
         with bundle.open("wb") as handle:
             for source in sources:
                 handle.write(source.read_bytes())
                 handle.write(b"\n")
+        bundle.chmod(0o644)
         return staged
 
     @staticmethod
@@ -419,6 +416,31 @@ class TestContainersHelper:
             raise ContainerSetupError(f"Network '{network_name}' does not exist") from e
         network.connect(container_id)
 
+    @staticmethod
+    def resolve_certificate_files(certificate_files: list[str] | None) -> list[pathlib.Path]:
+        """Check the named PEM files exist and return them as paths, so nothing is staged for a wrong path.
+
+        Every file is checked before any caller creates a directory, so a wrong path leaves nothing behind.
+
+        Args:
+            certificate_files: PEM files on the host, empty or None where nothing is to be trusted.
+
+        Returns:
+            The existing files as paths, empty where there is nothing to trust.
+
+        Raises:
+            ContainerSetupError: If a named file is not there to be trusted.
+        """
+        sources: list[pathlib.Path] = []
+        for path in certificate_files or []:
+            if not path:
+                continue
+            source: pathlib.Path = pathlib.Path(path)
+            if not source.is_file():
+                raise ContainerSetupError(f"Certificate '{path}' is not a file")
+            sources.append(source)
+        return sources
+
     def stage_ca_certificates(self, certificate_files: list[str] | None) -> str | None:
         """Copy the certificates into one directory, so the container mounts a single path.
 
@@ -431,17 +453,9 @@ class TestContainersHelper:
         Raises:
             ContainerSetupError: If a named file is not there to be trusted.
         """
-        files: list[str] = [path for path in (certificate_files or []) if path]
-        if not files:
+        sources: list[pathlib.Path] = self.resolve_certificate_files(certificate_files)
+        if not sources:
             return None
-
-        # every file is checked before anything is created, so a wrong path leaves nothing behind
-        sources: list[pathlib.Path] = []
-        for path in files:
-            source: pathlib.Path = pathlib.Path(path)
-            if not source.is_file():
-                raise ContainerSetupError(f"Certificate '{path}' is not a file")
-            sources.append(source)
 
         staged: str = tempfile.mkdtemp(prefix="polarion-ca-")
         self.ca_certificates_root = staged
