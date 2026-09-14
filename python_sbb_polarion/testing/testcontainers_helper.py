@@ -108,6 +108,11 @@ class TestContainersHelper:
                 if not weasyprint_service_endpoint:
                     self.tear_down()
                     raise ContainerSetupError("The bulk processing service needs a WeasyPrint service; set its image or URL too")
+                if self.network is None and not parameters.polarion_network:
+                    # Polarion reaches the bulk service by container name, which resolves only over a
+                    # shared user-defined network. A pre-started WeasyPrint URL leaves none (no local
+                    # WeasyPrint image created it), so create one here for the two to share.
+                    self.create_network(WEASYPRINT_NETWORK)
                 bulk_processing_service_endpoint = self.create_bulk_processing_service_container(parameters, weasyprint_service_endpoint)
             else:
                 bulk_processing_service_endpoint = None
@@ -275,6 +280,9 @@ class TestContainersHelper:
                 if ca_bundle:
                     container = container.with_volume_mapping(ca_bundle, BULK_PROCESSING_CA_PATH, "ro").with_env("SSL_CERT_FILE", f"{BULK_PROCESSING_CA_PATH}/ca-bundle.pem")
             container.start()
+            # Record the container before wiring networks: a failure below must still find it here so
+            # tear_down stops it, or the named container leaks and later runs clash on its name.
+            self.bulk_processing_service_container = container
             if self.network:
                 self.network.connect(container.get_wrapped_container().short_id)
             # Where WeasyPrint was started outside this run (an already-running service on a named
@@ -285,7 +293,6 @@ class TestContainersHelper:
 
             base_url: str = f"http://{container_name}:{port}"
             logger.info("Bulk processing service in bridge network is accessible through: %s", base_url)
-            self.bulk_processing_service_container = container
         except Exception as ex:
             self.tear_down()
             raise ContainerSetupError("Cannot setup Bulk Processing Service container: " + str(ex)) from ex
