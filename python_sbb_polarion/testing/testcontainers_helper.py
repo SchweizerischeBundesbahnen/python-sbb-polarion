@@ -53,7 +53,6 @@ POLARION_SECRETS_STORE = "/opt/polarion/etc/secrets-manager"
 POLARION_SECRETS_OWNER = "polarion:psvnadm"
 SECRETS_PATH = "/tmp/polarion-secrets"  # noqa: S108 - a path inside the container, removed as it is read
 CA_CERTIFICATES_PATH = "/tmp/ca-certificates"  # noqa: S108 - a path inside the container, read only
-BULK_PROCESSING_CA_PATH = "/tmp/bulk-processing-ca"  # noqa: S108 - a path inside the bulk processing container, read only
 
 
 class TestContainersHelper:
@@ -229,6 +228,22 @@ class TestContainersHelper:
         client: docker.DockerClient = docker.from_env()
         self.network = client.networks.create(network_name, driver="bridge")
 
+    def attach_to_networks(self, container: DockerContainer, polarion_network: str) -> None:
+        """Attach a started container to the networks this run reaches, so the names resolve both ways.
+
+        The container joins the run's own bridge network when there is one, and any existing named
+        network the run was pointed at (e.g. one an already-running service sits on).
+
+        Args:
+            container: The started container to connect.
+            polarion_network: An existing named network to also join, empty where there is none.
+        """
+        short_id: str = container.get_wrapped_container().short_id
+        if self.network:
+            self.network.connect(short_id)
+        if polarion_network:
+            self.join_network(short_id, polarion_network)
+
     def create_weasyprint_service_container(self, parameters: PolarionContainerParameters) -> str:
         container_name: str = "test-weasyprint-service-container"
         port: int = 9080
@@ -278,18 +293,15 @@ class TestContainersHelper:
                     container = container.with_env("WEASYPRINT_API_KEY", parameters.weasyprint_api_key)
                 ca_bundle: str | None = self.stage_bulk_processing_ca(parameters.ca_certificate_files)
                 if ca_bundle:
-                    container = container.with_volume_mapping(ca_bundle, BULK_PROCESSING_CA_PATH, "ro").with_env("SSL_CERT_FILE", f"{BULK_PROCESSING_CA_PATH}/ca-bundle.pem")
+                    container = container.with_volume_mapping(ca_bundle, CA_CERTIFICATES_PATH, "ro").with_env("SSL_CERT_FILE", f"{CA_CERTIFICATES_PATH}/ca-bundle.pem")
             container.start()
             # Record the container before wiring networks: a failure below must still find it here so
             # tear_down stops it, or the named container leaks and later runs clash on its name.
             self.bulk_processing_service_container = container
-            if self.network:
-                self.network.connect(container.get_wrapped_container().short_id)
             # Where WeasyPrint was started outside this run (an already-running service on a named
             # network), the bulk service joins that same network, so it reaches WeasyPrint and Polarion
             # reaches it, both under the names the network answers.
-            if parameters.polarion_network:
-                self.join_network(container.get_wrapped_container().short_id, parameters.polarion_network)
+            self.attach_to_networks(container, parameters.polarion_network)
 
             base_url: str = f"http://{container_name}:{port}"
             logger.info("Bulk processing service in bridge network is accessible through: %s", base_url)
@@ -378,10 +390,7 @@ class TestContainersHelper:
             container = container.with_env("TZ", tz)
 
             container.start()
-            if self.network:
-                self.network.connect(container.get_wrapped_container().short_id)
-            if parameters.polarion_network:
-                self.join_network(container.get_wrapped_container().short_id, parameters.polarion_network)
+            self.attach_to_networks(container, parameters.polarion_network)
 
             exposed_port: int = container.get_exposed_port(port)
             base_url: str = f"http://localhost:{exposed_port}"

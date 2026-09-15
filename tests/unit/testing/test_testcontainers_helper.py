@@ -1107,8 +1107,8 @@ class TestTestContainersHelperCreateBulkProcessingServiceContainer(unittest.Test
 
         # Assert - the key is sent and the staged CA directory is mounted read-only
         mock_container.with_env.assert_any_call("WEASYPRINT_API_KEY", "a-key")
-        mock_container.with_env.assert_any_call("SSL_CERT_FILE", "/tmp/bulk-processing-ca/ca-bundle.pem")
-        mock_container.with_volume_mapping.assert_called_once_with("/tmp/bulk-ca", "/tmp/bulk-processing-ca", "ro")
+        mock_container.with_env.assert_any_call("SSL_CERT_FILE", "/tmp/ca-certificates/ca-bundle.pem")
+        mock_container.with_volume_mapping.assert_called_once_with("/tmp/bulk-ca", "/tmp/ca-certificates", "ro")
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.join_network")
     @patch("python_sbb_polarion.testing.testcontainers_helper.DockerContainer")
