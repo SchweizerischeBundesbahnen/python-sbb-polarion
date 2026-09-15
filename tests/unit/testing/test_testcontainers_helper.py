@@ -15,6 +15,7 @@ import docker
 
 from python_sbb_polarion.extensions.admin_utility import PolarionAdminUtilityApi
 from python_sbb_polarion.testing.testcontainers_helper import (
+    WEASYPRINT_NETWORK,
     ArtifactInfo,
     ContainerSetupError,
     MavenError,
@@ -423,6 +424,9 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
             "3.1.1",
             "http://polarion-sut:80",
             "http://weasyprint:9080",
+            "weasyprint-key",
+            "bulk-processing:latest",
+            "http://bulk-processing:9070",
             "a-network",
             "a.property=a value",
             "/tmp/ca.pem",
@@ -439,6 +443,9 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         args.tc_test_data_version = "3.1.1"
         args.tc_polarion_sut_url = "http://polarion-sut:80"
         args.tc_weasyprint_service_url = "http://weasyprint:9080"
+        args.tc_weasyprint_api_key = "weasyprint-key"
+        args.tc_bulk_processing_service_image_name = "bulk-processing:latest"
+        args.tc_bulk_processing_service_url = "http://bulk-processing:9070"
         args.tc_polarion_network = "a-network"
         args.tc_polarion_extra_properties = "a.property=a value"
         args.tc_polarion_ca_certificates = "/tmp/ca.pem"
@@ -456,6 +463,9 @@ class TestTestContainersHelperGetParameters(unittest.TestCase):
         self.assertEqual(result.test_data_version, "3.1.1")
         self.assertEqual(result.polarion_sut_url, "http://polarion-sut:80")
         self.assertEqual(result.weasyprint_service_url, "http://weasyprint:9080")
+        self.assertEqual(result.weasyprint_api_key, "weasyprint-key")
+        self.assertEqual(result.bulk_processing_service_image_name, "bulk-processing:latest")
+        self.assertEqual(result.bulk_processing_service_url, "http://bulk-processing:9070")
         self.assertEqual(result.polarion_network, "a-network")
         self.assertEqual(result.extra_properties, {"a.property": "a value"})
         self.assertEqual(result.ca_certificate_files, ["/tmp/ca.pem"])
@@ -590,7 +600,7 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         # Assert
         mock_create_network.assert_called_once_with("test-weasyprint-network")
         mock_create_weasyprint.assert_called_once_with(params)
-        mock_create_polarion.assert_called_once_with("pdf-exporter", params, "http://weasyprint:9080")
+        mock_create_polarion.assert_called_once_with("pdf-exporter", params, "http://weasyprint:9080", None)
         self.assertEqual(os.environ.get("APP_URL"), "http://localhost:8080")
         self.assertEqual(os.environ.get("APP_TOKEN"), "test-token")
 
@@ -615,7 +625,7 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         helper.create_test_container_if_required("pdf-exporter")
 
         # Assert
-        mock_create_polarion.assert_called_once_with("pdf-exporter", params, None)
+        mock_create_polarion.assert_called_once_with("pdf-exporter", params, None, None)
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameters")
     @patch("python_sbb_polarion.testing.testcontainers_helper.get_script_arguments")
@@ -773,7 +783,179 @@ class TestTestContainersHelperCreateTestContainerIfRequired(unittest.TestCase):
         # Assert - no WeasyPrint container/network is started; the URL is passed to the Polarion container
         mock_create_network.assert_not_called()
         mock_create_weasyprint.assert_not_called()
-        mock_create_polarion.assert_called_once_with("pdf-exporter", params, "http://localhost:9080")
+        mock_create_polarion.assert_called_once_with("pdf-exporter", params, "http://localhost:9080", None)
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_bulk_processing_service_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.get_script_arguments")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameters")
+    @patch.dict("os.environ", {}, clear=True)
+    def test_create_test_container_bulk_url_passed_through(self, mock_get_params: Mock, mock_get_args: Mock, mock_create_bulk: Mock, mock_create_polarion: Mock) -> None:
+        """Test a pre-started bulk processing URL is injected without starting a bulk container."""
+        # Arrange
+        mock_get_args.return_value = Mock()
+        params = PolarionContainerParameters(
+            polarion_image_name="polarion:latest",
+            weasyprint_service_image_name="",
+            extension_version="1.0.0",
+            additional_bundles=None,
+            admin_utility_version="2.0.0",
+            test_data_version="3.1.1",
+            bulk_processing_service_url="http://bulk:9070",
+        )
+        mock_get_params.return_value = params
+        mock_create_polarion.return_value = ("http://localhost:8080", "test-token")
+
+        helper: TestContainersHelper = TestContainersHelper()
+
+        # Act
+        helper.create_test_container_if_required("pdf-exporter")
+
+        # Assert - the URL is passed to Polarion; no bulk container is started
+        mock_create_bulk.assert_not_called()
+        mock_create_polarion.assert_called_once_with("pdf-exporter", params, None, "http://bulk:9070")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_bulk_processing_service_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_weasyprint_service_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_network")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.get_script_arguments")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameters")
+    @patch.dict("os.environ", {}, clear=True)
+    def test_create_test_container_bulk_image_started_with_weasyprint(self, mock_get_params: Mock, mock_get_args: Mock, mock_create_network: Mock, mock_create_weasyprint: Mock, mock_create_bulk: Mock, mock_create_polarion: Mock) -> None:
+        """Test a bulk image is started against the WeasyPrint endpoint and its result is passed on."""
+        # Arrange
+        mock_get_args.return_value = Mock()
+        params = PolarionContainerParameters(
+            polarion_image_name="polarion:latest",
+            weasyprint_service_image_name="weasyprint:latest",
+            extension_version="1.0.0",
+            additional_bundles=None,
+            admin_utility_version="2.0.0",
+            test_data_version="3.1.1",
+            bulk_processing_service_image_name="bulk:latest",
+        )
+        mock_get_params.return_value = params
+        mock_create_weasyprint.return_value = "http://weasyprint:9080"
+        mock_create_bulk.return_value = "http://bulk:9070"
+        mock_create_polarion.return_value = ("http://localhost:8080", "test-token")
+
+        helper: TestContainersHelper = TestContainersHelper()
+
+        # Act
+        helper.create_test_container_if_required("pdf-exporter")
+
+        # Assert
+        mock_create_bulk.assert_called_once_with(params, "http://weasyprint:9080")
+        mock_create_polarion.assert_called_once_with("pdf-exporter", params, "http://weasyprint:9080", "http://bulk:9070")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_bulk_processing_service_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_weasyprint_service_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_network")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.get_script_arguments")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameters")
+    @patch.dict("os.environ", {}, clear=True)
+    def test_create_test_container_bulk_image_with_weasyprint_url_creates_shared_network(
+        self,
+        mock_get_params: Mock,
+        mock_get_args: Mock,
+        mock_create_network: Mock,
+        mock_create_weasyprint: Mock,
+        mock_create_bulk: Mock,
+        mock_create_polarion: Mock,
+    ) -> None:
+        """Test a bulk image beside a pre-started WeasyPrint URL creates a shared network for name resolution."""
+        # Arrange
+        mock_get_args.return_value = Mock()
+        params = PolarionContainerParameters(
+            polarion_image_name="polarion:latest",
+            weasyprint_service_image_name="",
+            extension_version="1.0.0",
+            additional_bundles=None,
+            admin_utility_version="2.0.0",
+            test_data_version="3.1.1",
+            weasyprint_service_url="http://weasyprint:9080",
+            bulk_processing_service_image_name="bulk:latest",
+        )
+        mock_get_params.return_value = params
+        mock_create_bulk.return_value = "http://bulk:9070"
+        mock_create_polarion.return_value = ("http://localhost:8080", "test-token")
+
+        helper: TestContainersHelper = TestContainersHelper()
+
+        # Act
+        helper.create_test_container_if_required("pdf-exporter")
+
+        # Assert - no WeasyPrint container is started, but a shared network is created so Polarion resolves the bulk name
+        mock_create_weasyprint.assert_not_called()
+        mock_create_network.assert_called_once_with(WEASYPRINT_NETWORK)
+        mock_create_bulk.assert_called_once_with(params, "http://weasyprint:9080")
+        mock_create_polarion.assert_called_once_with("pdf-exporter", params, "http://weasyprint:9080", "http://bulk:9070")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_bulk_processing_service_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_network")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.get_script_arguments")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameters")
+    @patch.dict("os.environ", {}, clear=True)
+    def test_create_test_container_bulk_image_with_polarion_network_skips_shared_network(self, mock_get_params: Mock, mock_get_args: Mock, mock_create_network: Mock, mock_create_bulk: Mock, mock_create_polarion: Mock) -> None:
+        """Test a bulk image beside a pre-started WeasyPrint URL joins an existing named network instead of creating one."""
+        # Arrange
+        mock_get_args.return_value = Mock()
+        params = PolarionContainerParameters(
+            polarion_image_name="polarion:latest",
+            weasyprint_service_image_name="",
+            extension_version="1.0.0",
+            additional_bundles=None,
+            admin_utility_version="2.0.0",
+            test_data_version="3.1.1",
+            weasyprint_service_url="http://weasyprint:9080",
+            bulk_processing_service_image_name="bulk:latest",
+            polarion_network="a-network",
+        )
+        mock_get_params.return_value = params
+        mock_create_bulk.return_value = "http://bulk:9070"
+        mock_create_polarion.return_value = ("http://localhost:8080", "test-token")
+
+        helper: TestContainersHelper = TestContainersHelper()
+
+        # Act
+        helper.create_test_container_if_required("pdf-exporter")
+
+        # Assert - the named network is relied upon, so no bridge network is created here
+        mock_create_network.assert_not_called()
+        mock_create_bulk.assert_called_once_with(params, "http://weasyprint:9080")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.tear_down")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.create_polarion_container")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.get_script_arguments")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_parameters")
+    @patch.dict("os.environ", {}, clear=True)
+    def test_create_test_container_bulk_image_without_weasyprint_fails(self, mock_get_params: Mock, mock_get_args: Mock, mock_create_polarion: Mock, mock_tear_down: Mock) -> None:
+        """Test starting a bulk image with no WeasyPrint service tears down and raises."""
+        # Arrange
+        mock_get_args.return_value = Mock()
+        params = PolarionContainerParameters(
+            polarion_image_name="polarion:latest",
+            weasyprint_service_image_name="",
+            extension_version="1.0.0",
+            additional_bundles=None,
+            admin_utility_version="2.0.0",
+            test_data_version="3.1.1",
+            bulk_processing_service_image_name="bulk:latest",
+        )
+        mock_get_params.return_value = params
+
+        helper: TestContainersHelper = TestContainersHelper()
+
+        # Act & Assert
+        with self.assertRaises(ContainerSetupError) as context:
+            helper.create_test_container_if_required("pdf-exporter")
+
+        self.assertIn("needs a WeasyPrint service", str(context.exception))
+        mock_tear_down.assert_called_once()
+        mock_create_polarion.assert_not_called()
 
 
 class TestTestContainersHelperCreateWeasyprintServiceContainer(unittest.TestCase):
@@ -848,6 +1030,222 @@ class TestTestContainersHelperCreateWeasyprintServiceContainer(unittest.TestCase
 
         self.assertIn("Cannot setup Weasyprint Service container", str(context.exception))
         mock_tear_down.assert_called_once()
+
+
+class TestTestContainersHelperCreateBulkProcessingServiceContainer(unittest.TestCase):
+    """Test TestContainersHelper.create_bulk_processing_service_container method."""
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.DockerContainer")
+    def test_create_bulk_processing_service_container_http_success(self, mock_docker_container_class: Mock) -> None:
+        """Test the container starts and is wired to WeasyPrint over plain http, without key or CA."""
+        # Arrange
+        params = PolarionContainerParameters(
+            polarion_image_name="",
+            weasyprint_service_image_name="",
+            extension_version="",
+            additional_bundles=None,
+            admin_utility_version="",
+            test_data_version="",
+            bulk_processing_service_image_name="bulk:latest",
+            weasyprint_api_key="a-key",
+        )
+
+        mock_container = Mock()
+        mock_wrapped = Mock()
+        mock_wrapped.short_id = "bulk123"
+        mock_container.get_wrapped_container.return_value = mock_wrapped
+        mock_container.with_bind_ports.return_value = mock_container
+        mock_container.with_name.return_value = mock_container
+        mock_container.with_env.return_value = mock_container
+        mock_docker_container_class.return_value = mock_container
+
+        helper: TestContainersHelper = TestContainersHelper()
+
+        # Act
+        result: str = helper.create_bulk_processing_service_container(params, "http://weasyprint:9080")
+
+        # Assert - over plain http neither the key nor a CA bundle is wired
+        self.assertEqual(result, "http://test-bulk-processing-service-container:9070")
+        mock_container.with_env.assert_called_once_with("WEASYPRINT_SERVICE_URL", "http://weasyprint:9080")
+        mock_container.with_volume_mapping.assert_not_called()
+        mock_container.start.assert_called_once()
+        self.assertEqual(helper.bulk_processing_service_container, mock_container)
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.stage_bulk_processing_ca")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.DockerContainer")
+    def test_create_bulk_processing_service_container_https_wires_key_and_ca(self, mock_docker_container_class: Mock, mock_stage: Mock) -> None:
+        """Test that over https the API key is sent and the CA bundle is mounted."""
+        # Arrange
+        params = PolarionContainerParameters(
+            polarion_image_name="",
+            weasyprint_service_image_name="",
+            extension_version="",
+            additional_bundles=None,
+            admin_utility_version="",
+            test_data_version="",
+            bulk_processing_service_image_name="bulk:latest",
+            weasyprint_api_key="a-key",
+            ca_certificate_files=["/tmp/ca.pem"],
+        )
+
+        mock_container = Mock()
+        mock_wrapped = Mock()
+        mock_wrapped.short_id = "bulk123"
+        mock_container.get_wrapped_container.return_value = mock_wrapped
+        mock_container.with_bind_ports.return_value = mock_container
+        mock_container.with_name.return_value = mock_container
+        mock_container.with_env.return_value = mock_container
+        mock_container.with_volume_mapping.return_value = mock_container
+        mock_docker_container_class.return_value = mock_container
+
+        mock_stage.return_value = "/tmp/bulk-ca"
+
+        helper: TestContainersHelper = TestContainersHelper()
+
+        # Act
+        helper.create_bulk_processing_service_container(params, "https://weasyprint:9080")
+
+        # Assert - the key is sent and the staged CA directory is mounted read-only
+        mock_container.with_env.assert_any_call("WEASYPRINT_API_KEY", "a-key")
+        mock_container.with_env.assert_any_call("SSL_CERT_FILE", "/tmp/bulk-processing-ca/ca-bundle.pem")
+        mock_container.with_volume_mapping.assert_called_once_with("/tmp/bulk-ca", "/tmp/bulk-processing-ca", "ro")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.join_network")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.DockerContainer")
+    def test_create_bulk_processing_service_container_joins_network(self, mock_docker_container_class: Mock, mock_join: Mock) -> None:
+        """Test the container connects to the bridge network and joins a named network."""
+        # Arrange
+        params = PolarionContainerParameters(
+            polarion_image_name="",
+            weasyprint_service_image_name="",
+            extension_version="",
+            additional_bundles=None,
+            admin_utility_version="",
+            test_data_version="",
+            bulk_processing_service_image_name="bulk:latest",
+            polarion_network="a-network",
+        )
+
+        mock_container = Mock()
+        mock_wrapped = Mock()
+        mock_wrapped.short_id = "bulk123"
+        mock_container.get_wrapped_container.return_value = mock_wrapped
+        mock_container.with_bind_ports.return_value = mock_container
+        mock_container.with_name.return_value = mock_container
+        mock_container.with_env.return_value = mock_container
+        mock_docker_container_class.return_value = mock_container
+
+        mock_network = Mock()
+        helper: TestContainersHelper = TestContainersHelper()
+        helper.network = mock_network
+
+        # Act
+        helper.create_bulk_processing_service_container(params, "http://weasyprint:9080")
+
+        # Assert
+        mock_network.connect.assert_called_once_with("bulk123")
+        mock_join.assert_called_once_with("bulk123", "a-network")
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.tear_down")
+    @patch("python_sbb_polarion.testing.testcontainers_helper.DockerContainer")
+    def test_create_bulk_processing_service_container_error(self, mock_docker_container_class: Mock, mock_tear_down: Mock) -> None:
+        """Test create_bulk_processing_service_container raises ContainerSetupError on failure."""
+        # Arrange
+        params = PolarionContainerParameters(
+            polarion_image_name="", weasyprint_service_image_name="", extension_version="", additional_bundles=None, admin_utility_version="", test_data_version="", bulk_processing_service_image_name="bulk:latest"
+        )
+
+        mock_container = Mock()
+        mock_container.with_bind_ports.return_value = mock_container
+        mock_container.with_name.return_value = mock_container
+        mock_container.with_env.return_value = mock_container
+        mock_container.start.side_effect = Exception("Docker error")
+        mock_docker_container_class.return_value = mock_container
+
+        helper: TestContainersHelper = TestContainersHelper()
+
+        # Act & Assert
+        with self.assertRaises(ContainerSetupError) as context:
+            helper.create_bulk_processing_service_container(params, "http://weasyprint:9080")
+
+        self.assertIn("Cannot setup Bulk Processing Service container", str(context.exception))
+        mock_tear_down.assert_called_once()
+
+    @patch("python_sbb_polarion.testing.testcontainers_helper.DockerContainer")
+    def test_create_bulk_processing_service_container_network_failure_stops_container(self, mock_docker_container_class: Mock) -> None:
+        """Test a network attachment failure after start still tears the started container down."""
+        # Arrange
+        params = PolarionContainerParameters(
+            polarion_image_name="", weasyprint_service_image_name="", extension_version="", additional_bundles=None, admin_utility_version="", test_data_version="", bulk_processing_service_image_name="bulk:latest"
+        )
+
+        mock_container = Mock()
+        mock_wrapped = Mock()
+        mock_wrapped.short_id = "bulk123"
+        mock_container.get_wrapped_container.return_value = mock_wrapped
+        mock_container.with_bind_ports.return_value = mock_container
+        mock_container.with_name.return_value = mock_container
+        mock_container.with_env.return_value = mock_container
+        mock_docker_container_class.return_value = mock_container
+
+        mock_network = Mock()
+        mock_network.connect.side_effect = Exception("network attach failed")
+
+        helper: TestContainersHelper = TestContainersHelper()
+        helper.network = mock_network
+
+        # Act & Assert
+        with self.assertRaises(ContainerSetupError):
+            helper.create_bulk_processing_service_container(params, "http://weasyprint:9080")
+
+        # The container was registered before the failing network step, so tear_down stops it rather than leaking it
+        mock_container.stop.assert_called_once()
+
+
+class TestTestContainersHelperStageBulkProcessingCa(unittest.TestCase):
+    """Test TestContainersHelper.stage_bulk_processing_ca method."""
+
+    def test_stage_bulk_processing_ca_none_returns_none(self) -> None:
+        """Test that no certificate files yields nothing to mount."""
+        helper: TestContainersHelper = TestContainersHelper()
+        self.assertIsNone(helper.stage_bulk_processing_ca(None))
+        self.assertIsNone(helper.stage_bulk_processing_ca([]))
+        self.assertIsNone(helper.stage_bulk_processing_ca([""]))
+
+    def test_stage_bulk_processing_ca_missing_file(self) -> None:
+        """Test a named file that is not there raises ContainerSetupError."""
+        helper: TestContainersHelper = TestContainersHelper()
+        with self.assertRaises(ContainerSetupError) as context:
+            helper.stage_bulk_processing_ca(["/does/not/exist.pem"])
+        self.assertIn("is not a file", str(context.exception))
+
+    def test_stage_bulk_processing_ca_bundles_files(self) -> None:
+        """Test the certificate files are concatenated into a single mounted bundle."""
+        # Arrange
+        with tempfile.TemporaryDirectory() as directory:
+            first: pathlib.Path = pathlib.Path(directory) / "a.pem"
+            second: pathlib.Path = pathlib.Path(directory) / "b.pem"
+            first.write_bytes(b"AAA")
+            second.write_bytes(b"BBB")
+
+            helper: TestContainersHelper = TestContainersHelper()
+
+            # Act
+            staged: str | None = helper.stage_bulk_processing_ca([str(first), str(second)])
+
+            # Assert
+            try:
+                self.assertIsNotNone(staged)
+                assert staged is not None
+                self.assertEqual(helper.bulk_processing_ca_root, staged)
+                bundle: pathlib.Path = pathlib.Path(staged) / "ca-bundle.pem"
+                self.assertEqual(bundle.read_bytes(), b"AAA\nBBB\n")
+                # the container reads the mount as a non-host UID, so the public bundle is world-readable
+                self.assertEqual(pathlib.Path(staged).stat().st_mode & 0o777, 0o755)
+                self.assertEqual(bundle.stat().st_mode & 0o777, 0o644)
+            finally:
+                if staged is not None:
+                    shutil.rmtree(staged, ignore_errors=True)
 
 
 class TestTestContainersHelperCreatePolarionContainer(unittest.TestCase):

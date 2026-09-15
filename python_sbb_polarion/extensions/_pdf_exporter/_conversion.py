@@ -18,7 +18,7 @@ from python_sbb_polarion.types import Header, MediaType
 if TYPE_CHECKING:
     from requests import Response
 
-    from python_sbb_polarion.types import JsonDict
+    from python_sbb_polarion.types import JsonDict, JsonList
 
 
 class ConversionMixin(BaseMixin):
@@ -155,6 +155,44 @@ class ConversionMixin(BaseMixin):
         """
         url: str = f"{self.rest_api_url}/convert/jobs/{job_id}"
         return self.polarion_connection.api_request_get(url, allow_redirects=False)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/convert/jobs/{id}/cancel",
+        path_params={
+            "id": "job_id",
+        },
+        required_params=["id"],
+        response_type="text",
+    )
+    def cancel_pdf_converter_job(self, job_id: str) -> Response:
+        """POST Cancels a running PDF conversion job
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/convert/jobs/{job_id}/cancel"
+        return self.polarion_connection.api_request_post(url)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/convert/merge/jobs",
+        body_param="export_params",
+        required_params=["__request_body__"],
+        response_type="json",
+    )
+    def start_pdf_merge_job(self, export_params: JsonList) -> Response:
+        """POST Starts asynchronous merge export job combining multiple documents into a single PDF
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/convert/merge/jobs"
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.JSON,
+            Header.CONTENT_TYPE: MediaType.JSON,
+        }
+        return self.polarion_connection.api_request_post(url, data=export_params, headers=headers)
 
     # =========================================================================
     # PDF Conversion - Document

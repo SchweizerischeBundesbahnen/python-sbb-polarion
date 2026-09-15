@@ -28,6 +28,8 @@ class ConfigurationMixin(SharedExporterConfigurationMixin):
     PDF-specific methods:
     - check_live_report_config() - Check live report configuration
     - check_weasyprint() - Check weasyprint configuration
+    - check_bulk_processing() - Check bulk processing service configuration
+    - get_bulk_processing_service_status() - Check bulk processing service availability
     """
 
     # =========================================================================
@@ -62,4 +64,34 @@ class ConfigurationMixin(SharedExporterConfigurationMixin):
             Response: Response object from the API call
         """
         url: str = f"{self.rest_api_url}/configuration/weasyprint"
+        return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/configuration/bulk-processing",
+        required_params=[],
+        response_type="json",
+    )
+    def check_bulk_processing(self) -> Response:
+        """Check bulk processing service configuration.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/configuration/bulk-processing"
+        return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/bulk-processing/status",
+        required_params=[],
+        response_type="json",
+    )
+    def get_bulk_processing_service_status(self) -> Response:
+        """Check if the bulk processing service is available.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/bulk-processing/status"
         return self.polarion_connection.api_request_get(url)

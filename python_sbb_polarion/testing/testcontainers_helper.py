@@ -53,6 +53,7 @@ POLARION_SECRETS_STORE = "/opt/polarion/etc/secrets-manager"
 POLARION_SECRETS_OWNER = "polarion:psvnadm"
 SECRETS_PATH = "/tmp/polarion-secrets"  # noqa: S108 - a path inside the container, removed as it is read
 CA_CERTIFICATES_PATH = "/tmp/ca-certificates"  # noqa: S108 - a path inside the container, read only
+BULK_PROCESSING_CA_PATH = "/tmp/bulk-processing-ca"  # noqa: S108 - a path inside the bulk processing container, read only
 
 
 class TestContainersHelper:
@@ -60,9 +61,11 @@ class TestContainersHelper:
 
     polarion_container: DockerContainer | None = None
     weasyprint_service_container: DockerContainer | None = None
+    bulk_processing_service_container: DockerContainer | None = None
     network: Network | None = None
     systest_extensions_root: str | None = None
     ca_certificates_root: str | None = None
+    bulk_processing_ca_root: str | None = None
     secrets_root: str | None = None
 
     def create_test_container_if_required(self, extension_name: str) -> None:
@@ -73,9 +76,11 @@ class TestContainersHelper:
         # container. The SUT is expected to be provisioned (extensions installed) by the orchestrator;
         # here we only activate the trial license and issue a security token against it.
         if parameters.polarion_sut_url:
-            # The SUT manages its own WeasyPrint, so we neither start nor wire one here.
+            # The SUT manages its own WeasyPrint and bulk processing service, so we neither start nor wire them here.
             if parameters.weasyprint_service_url or parameters.weasyprint_service_image_name:
                 logger.info("Polarion SUT URL is set; ignoring WeasyPrint configuration (the SUT manages its own service)")
+            if parameters.bulk_processing_service_url or parameters.bulk_processing_service_image_name:
+                logger.info("Polarion SUT URL is set; ignoring bulk processing configuration (the SUT manages its own service)")
             logger.info("Using pre-started Polarion SUT at: %s", parameters.polarion_sut_url)
             token: str = self.setup_polarion_container(parameters.polarion_sut_url)
             os.environ["APP_URL"] = parameters.polarion_sut_url
@@ -93,9 +98,28 @@ class TestContainersHelper:
             else:
                 weasyprint_service_endpoint = None
 
+            # The bulk processing service converts each document through WeasyPrint, so it only makes
+            # sense alongside one. Prefer an already-running service over starting one, like WeasyPrint.
+            bulk_processing_service_endpoint: str | None
+            if parameters.bulk_processing_service_url:
+                logger.info("Using pre-started bulk processing service at: %s", parameters.bulk_processing_service_url)
+                bulk_processing_service_endpoint = parameters.bulk_processing_service_url
+            elif parameters.bulk_processing_service_image_name:
+                if not weasyprint_service_endpoint:
+                    self.tear_down()
+                    raise ContainerSetupError("The bulk processing service needs a WeasyPrint service; set its image or URL too")
+                if self.network is None and not parameters.polarion_network:
+                    # Polarion reaches the bulk service by container name, which resolves only over a
+                    # shared user-defined network. A pre-started WeasyPrint URL leaves none (no local
+                    # WeasyPrint image created it), so create one here for the two to share.
+                    self.create_network(WEASYPRINT_NETWORK)
+                bulk_processing_service_endpoint = self.create_bulk_processing_service_container(parameters, weasyprint_service_endpoint)
+            else:
+                bulk_processing_service_endpoint = None
+
             app_url: str
             app_token: str
-            app_url, app_token = self.create_polarion_container(extension_name, parameters, weasyprint_service_endpoint)
+            app_url, app_token = self.create_polarion_container(extension_name, parameters, weasyprint_service_endpoint, bulk_processing_service_endpoint)
             os.environ["APP_URL"] = app_url
             os.environ["APP_TOKEN"] = app_token
 
@@ -109,6 +133,9 @@ class TestContainersHelper:
         test_data_version: str | None = TestContainersHelper.get_parameter("TC_TEST_DATA_VERSION", args.tc_test_data_version)
         polarion_sut_url: str | None = TestContainersHelper.get_parameter("TC_POLARION_SUT_URL", args.tc_polarion_sut_url)
         weasyprint_service_url: str | None = TestContainersHelper.get_parameter("TC_WEASYPRINT_SERVICE_URL", args.tc_weasyprint_service_url)
+        weasyprint_api_key: str | None = TestContainersHelper.get_parameter("TC_WEASYPRINT_API_KEY", args.tc_weasyprint_api_key)
+        bulk_processing_service_image_name: str | None = TestContainersHelper.get_parameter("TC_BULK_PROCESSING_SERVICE_IMAGE_NAME", args.tc_bulk_processing_service_image_name)
+        bulk_processing_service_url: str | None = TestContainersHelper.get_parameter("TC_BULK_PROCESSING_SERVICE_URL", args.tc_bulk_processing_service_url)
         polarion_network: str | None = TestContainersHelper.get_parameter("TC_POLARION_NETWORK", args.tc_polarion_network)
         extra_properties: str | None = TestContainersHelper.get_parameter("TC_POLARION_EXTRA_PROPERTIES", args.tc_polarion_extra_properties)
         ca_certificates: str | None = TestContainersHelper.get_parameter("TC_POLARION_CA_CERTIFICATES", args.tc_polarion_ca_certificates)
@@ -123,6 +150,9 @@ class TestContainersHelper:
             test_data_version=test_data_version or "",
             polarion_sut_url=polarion_sut_url or "",
             weasyprint_service_url=weasyprint_service_url or "",
+            weasyprint_api_key=weasyprint_api_key or "",
+            bulk_processing_service_image_name=bulk_processing_service_image_name or "",
+            bulk_processing_service_url=bulk_processing_service_url or "",
             polarion_network=polarion_network or "",
             extra_properties=TestContainersHelper.parse_properties(extra_properties),
             ca_certificate_files=[path.strip() for path in (ca_certificates or "").split(",") if path.strip()],
@@ -218,6 +248,89 @@ class TestContainersHelper:
         else:
             return base_url
 
+    def create_bulk_processing_service_container(self, parameters: PolarionContainerParameters, weasyprint_service_endpoint: str) -> str:
+        """Start the bulk processing service, wired to reach WeasyPrint over the shared network.
+
+        The service converts each document through WeasyPrint, so it is given that endpoint. Where the
+        endpoint is https, it is also given the authority which signed WeasyPrint's certificate (the
+        same certificates the Polarion JVM is told to trust) and the API key to send, since the service
+        refuses to send a key over plain http.
+
+        Args:
+            parameters: The run configuration, for the image, the WeasyPrint key and the CA files.
+            weasyprint_service_endpoint: The address the service reaches WeasyPrint under.
+
+        Returns:
+            The address the bulk processing service answers under on the shared network.
+
+        Raises:
+            ContainerSetupError: If the container cannot be started.
+        """
+        container_name: str = "test-bulk-processing-service-container"
+        port: int = 9070
+        try:
+            logger.info("Starting %s ...", container_name)
+            container: DockerContainer = DockerContainer(image=parameters.bulk_processing_service_image_name).with_bind_ports(port).with_name(container_name).with_env("WEASYPRINT_SERVICE_URL", weasyprint_service_endpoint)
+            if weasyprint_service_endpoint.lower().startswith("https://"):
+                # a key travels only over https, and a private certificate is trusted only where its
+                # authority is named; over plain http the service needs neither
+                if parameters.weasyprint_api_key:
+                    container = container.with_env("WEASYPRINT_API_KEY", parameters.weasyprint_api_key)
+                ca_bundle: str | None = self.stage_bulk_processing_ca(parameters.ca_certificate_files)
+                if ca_bundle:
+                    container = container.with_volume_mapping(ca_bundle, BULK_PROCESSING_CA_PATH, "ro").with_env("SSL_CERT_FILE", f"{BULK_PROCESSING_CA_PATH}/ca-bundle.pem")
+            container.start()
+            # Record the container before wiring networks: a failure below must still find it here so
+            # tear_down stops it, or the named container leaks and later runs clash on its name.
+            self.bulk_processing_service_container = container
+            if self.network:
+                self.network.connect(container.get_wrapped_container().short_id)
+            # Where WeasyPrint was started outside this run (an already-running service on a named
+            # network), the bulk service joins that same network, so it reaches WeasyPrint and Polarion
+            # reaches it, both under the names the network answers.
+            if parameters.polarion_network:
+                self.join_network(container.get_wrapped_container().short_id, parameters.polarion_network)
+
+            base_url: str = f"http://{container_name}:{port}"
+            logger.info("Bulk processing service in bridge network is accessible through: %s", base_url)
+        except Exception as ex:
+            self.tear_down()
+            raise ContainerSetupError("Cannot setup Bulk Processing Service container: " + str(ex)) from ex
+        else:
+            return base_url
+
+    def stage_bulk_processing_ca(self, certificate_files: list[str] | None) -> str | None:
+        """Bundle the CA files into one directory the bulk processing container trusts, or None.
+
+        The service reads a single ``SSL_CERT_FILE``, so the authorities are concatenated into one
+        bundle. The directory is returned, so the container mounts a path rather than a host file.
+
+        Args:
+            certificate_files: PEM files on the host, empty or None where nothing is to be trusted.
+
+        Returns:
+            The directory holding ``ca-bundle.pem`` to mount, or None where there is nothing to trust.
+
+        Raises:
+            ContainerSetupError: If a named file is not there to be trusted.
+        """
+        sources: list[pathlib.Path] = self.resolve_certificate_files(certificate_files)
+        if not sources:
+            return None
+
+        staged: str = tempfile.mkdtemp(prefix="bulk-processing-ca-")
+        self.bulk_processing_ca_root = staged
+        # mkdtemp makes the directory 0700 owned by the host user, but the bulk container reads the
+        # mount as UID 1000; a public CA bundle is world-readable so any container UID can trust it.
+        pathlib.Path(staged).chmod(0o755)
+        bundle: pathlib.Path = pathlib.Path(staged) / "ca-bundle.pem"
+        with bundle.open("wb") as handle:
+            for source in sources:
+                handle.write(source.read_bytes())
+                handle.write(b"\n")
+        bundle.chmod(0o644)
+        return staged
+
     @staticmethod
     def resolve_host_timezone() -> str:
         tz: str | None = os.environ.get("TZ")
@@ -228,7 +341,7 @@ class TestContainersHelper:
         except zoneinfo.ZoneInfoNotFoundError:
             return DEFAULT_TIMEZONE
 
-    def create_polarion_container(self, extension_name: str, parameters: PolarionContainerParameters, weasyprint_service_endpoint: str | None) -> tuple[str, str]:
+    def create_polarion_container(self, extension_name: str, parameters: PolarionContainerParameters, weasyprint_service_endpoint: str | None, bulk_processing_service_endpoint: str | None = None) -> tuple[str, str]:
         container_name: str = "test-polarion-container"
         port: int = 80
         try:
@@ -238,6 +351,8 @@ class TestContainersHelper:
             container: DockerContainer = DockerContainer(image=parameters.polarion_image_name).with_bind_ports(port).with_name(container_name).with_volume_mapping(systest_extensions_root, POLARION_EXTENSIONS_PATH)
             if weasyprint_service_endpoint:
                 container = container.with_env("WEASYPRINT_SERVICE_ENDPOINT", weasyprint_service_endpoint)
+            if bulk_processing_service_endpoint:
+                container = container.with_env("BULK_PROCESSING_SERVICE_ENDPOINT", bulk_processing_service_endpoint)
 
             # Properties are read once, at start, and the truststore decides whether a service reached
             # over TLS is trusted at all. Both are prepared before Polarion runs, by a command which
@@ -301,6 +416,31 @@ class TestContainersHelper:
             raise ContainerSetupError(f"Network '{network_name}' does not exist") from e
         network.connect(container_id)
 
+    @staticmethod
+    def resolve_certificate_files(certificate_files: list[str] | None) -> list[pathlib.Path]:
+        """Check the named PEM files exist and return them as paths, so nothing is staged for a wrong path.
+
+        Every file is checked before any caller creates a directory, so a wrong path leaves nothing behind.
+
+        Args:
+            certificate_files: PEM files on the host, empty or None where nothing is to be trusted.
+
+        Returns:
+            The existing files as paths, empty where there is nothing to trust.
+
+        Raises:
+            ContainerSetupError: If a named file is not there to be trusted.
+        """
+        sources: list[pathlib.Path] = []
+        for path in certificate_files or []:
+            if not path:
+                continue
+            source: pathlib.Path = pathlib.Path(path)
+            if not source.is_file():
+                raise ContainerSetupError(f"Certificate '{path}' is not a file")
+            sources.append(source)
+        return sources
+
     def stage_ca_certificates(self, certificate_files: list[str] | None) -> str | None:
         """Copy the certificates into one directory, so the container mounts a single path.
 
@@ -313,17 +453,9 @@ class TestContainersHelper:
         Raises:
             ContainerSetupError: If a named file is not there to be trusted.
         """
-        files: list[str] = [path for path in (certificate_files or []) if path]
-        if not files:
+        sources: list[pathlib.Path] = self.resolve_certificate_files(certificate_files)
+        if not sources:
             return None
-
-        # every file is checked before anything is created, so a wrong path leaves nothing behind
-        sources: list[pathlib.Path] = []
-        for path in files:
-            source: pathlib.Path = pathlib.Path(path)
-            if not source.is_file():
-                raise ContainerSetupError(f"Certificate '{path}' is not a file")
-            sources.append(source)
 
         staged: str = tempfile.mkdtemp(prefix="polarion-ca-")
         self.ca_certificates_root = staged
@@ -434,6 +566,9 @@ class TestContainersHelper:
         if self.weasyprint_service_container is not None and self.weasyprint_service_container.get_wrapped_container() is not None:
             logger.info("Stopping Weasyprint Servce test container ...")
             self.weasyprint_service_container.stop()
+        if self.bulk_processing_service_container is not None and self.bulk_processing_service_container.get_wrapped_container() is not None:
+            logger.info("Stopping Bulk Processing Service test container ...")
+            self.bulk_processing_service_container.stop()
         if self.polarion_container is not None and self.polarion_container.get_wrapped_container() is not None:
             logger.info("Stopping Polarion test container and cleaning temp directory ...")
             self.polarion_container.stop()
@@ -441,6 +576,8 @@ class TestContainersHelper:
             shutil.rmtree(self.systest_extensions_root)
         if self.ca_certificates_root is not None and pathlib.Path(self.ca_certificates_root).exists():
             shutil.rmtree(self.ca_certificates_root)
+        if self.bulk_processing_ca_root is not None and pathlib.Path(self.bulk_processing_ca_root).exists():
+            shutil.rmtree(self.bulk_processing_ca_root)
         if self.secrets_root is not None and pathlib.Path(self.secrets_root).exists():
             shutil.rmtree(self.secrets_root)
         if self.network:
@@ -576,6 +713,9 @@ class PolarionContainerParameters:
     test_data_version: str | None = None
     polarion_sut_url: str = ""
     weasyprint_service_url: str = ""
+    weasyprint_api_key: str = ""
+    bulk_processing_service_image_name: str = ""
+    bulk_processing_service_url: str = ""
     polarion_network: str = ""
     extra_properties: dict[str, str] | None = None
     ca_certificate_files: list[str] | None = None

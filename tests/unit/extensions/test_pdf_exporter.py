@@ -256,6 +256,26 @@ class TestPolarionPdfExporterApi(unittest.TestCase):
         self.mock_connection.api_request_get.assert_called_once_with("/polarion/pdf-exporter/rest/api/configuration/weasyprint")
         self.assertEqual(result, mock_response)
 
+    def test_check_bulk_processing(self) -> None:
+        """Test check_bulk_processing method"""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        result: Response = self.api.check_bulk_processing()
+
+        self.mock_connection.api_request_get.assert_called_once_with("/polarion/pdf-exporter/rest/api/configuration/bulk-processing")
+        self.assertEqual(result, mock_response)
+
+    def test_get_bulk_processing_service_status(self) -> None:
+        """Test get_bulk_processing_service_status method"""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        result: Response = self.api.get_bulk_processing_service_status()
+
+        self.mock_connection.api_request_get.assert_called_once_with("/polarion/pdf-exporter/rest/api/bulk-processing/status")
+        self.assertEqual(result, mock_response)
+
     def test_check_default_settings(self) -> None:
         """Test check_default_settings method"""
         mock_response = Mock()
@@ -379,6 +399,34 @@ class TestPolarionPdfExporterApi(unittest.TestCase):
             data=export_params,
             headers={Header.ACCEPT: MediaType.JSON, Header.CONTENT_TYPE: MediaType.JSON},
         )
+        self.assertEqual(result, mock_response)
+
+    def test_start_pdf_merge_job(self) -> None:
+        """Test start_pdf_merge_job method"""
+        export_params: JsonList = [{"projectId": "test_project", "documentName": "doc_1"}, {"projectId": "test_project", "documentName": "doc_2"}]
+        mock_response = Mock()
+        mock_response.status_code = HTTPStatus.ACCEPTED
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        result: Response = self.api.start_pdf_merge_job(export_params)
+
+        self.mock_connection.api_request_post.assert_called_once_with(
+            "/polarion/pdf-exporter/rest/api/convert/merge/jobs",
+            data=export_params,
+            headers={Header.ACCEPT: MediaType.JSON, Header.CONTENT_TYPE: MediaType.JSON},
+        )
+        self.assertEqual(result, mock_response)
+
+    def test_cancel_pdf_converter_job(self) -> None:
+        """Test cancel_pdf_converter_job method"""
+        job_id: str = "job-123"
+        mock_response = Mock()
+        mock_response.status_code = HTTPStatus.NO_CONTENT
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        result: Response = self.api.cancel_pdf_converter_job(job_id)
+
+        self.mock_connection.api_request_post.assert_called_once_with("/polarion/pdf-exporter/rest/api/convert/jobs/job-123/cancel")
         self.assertEqual(result, mock_response)
 
     def test_get_pdf_converter_job_result(self) -> None:
