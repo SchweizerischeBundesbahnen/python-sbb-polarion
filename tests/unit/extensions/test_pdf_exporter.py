@@ -618,6 +618,37 @@ class TestPolarionPdfExporterApi(unittest.TestCase):
         self.mock_connection.api_request_post.assert_called_once_with("/polarion/pdf-exporter/rest/api/settings/cover-page/templates/template1", params={"scope": "project/test"})
         self.assertEqual(result, mock_response)
 
+    def test_get_cover_page_template_content(self) -> None:
+        """Test get_cover_page_template_content method"""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        result: Response = self.api.get_cover_page_template_content("template1")
+
+        self.mock_connection.api_request_get.assert_called_once_with("/polarion/pdf-exporter/rest/api/settings/cover-page/templates/template1/content")
+        self.assertEqual(result, mock_response)
+
+    def test_persist_cover_page_template_content(self) -> None:
+        """Test persist_cover_page_template_content method without scope and name"""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        result: Response = self.api.persist_cover_page_template_content("template1")
+
+        self.mock_connection.api_request_post.assert_called_once_with("/polarion/pdf-exporter/rest/api/settings/cover-page/templates/template1/content", params=None)
+        self.assertEqual(result, mock_response)
+
+    def test_persist_cover_page_template_content_with_scope_and_name(self) -> None:
+        """Test persist_cover_page_template_content method with scope and name"""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        result: Response = self.api.persist_cover_page_template_content("template1", scope="project/test", name="cover1")
+
+        expected_params: dict[str, str] = {"scope": "project/test", "name": "cover1"}
+        self.mock_connection.api_request_post.assert_called_once_with("/polarion/pdf-exporter/rest/api/settings/cover-page/templates/template1/content", params=expected_params)
+        self.assertEqual(result, mock_response)
+
     def test_delete_cover_page_images(self) -> None:
         """Test delete_cover_page_images method without scope"""
         mock_response = Mock()
