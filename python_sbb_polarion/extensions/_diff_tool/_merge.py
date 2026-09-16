@@ -76,3 +76,51 @@ class MergeMixin(BaseMixin):
         """
         url: str = f"{self.rest_api_url}/merge/workitems"
         return self.polarion_connection.api_request_post(url, data=data)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/merge/chapter",
+        body_param="data",
+        required_params=["__request_body__"],
+    )
+    def merge_chapter(self, data: JsonDict) -> Response:
+        """Copies or moves a chapter of one live document into another one
+
+        The merge runs as a Polarion job. This method returns as soon as the job
+        is scheduled. Poll get_chapter_merge_job() for the merge result.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/merge/chapter"
+        return self.polarion_connection.api_request_post(url, data=data)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/merge/chapter/jobs",
+    )
+    def get_chapter_merge_jobs(self) -> Response:
+        """Gets list of chapter merge jobs, the most recent one first
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/merge/chapter/jobs"
+        return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/merge/chapter/jobs/{jobId}",
+        path_params={
+            "jobId": "job_id",
+        },
+        required_params=["jobId"],
+    )
+    def get_chapter_merge_job(self, job_id: str) -> Response:
+        """Gets a certain chapter merge job, with its merge result as soon as it has one
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/merge/chapter/jobs/{job_id}"
+        return self.polarion_connection.api_request_get(url)
