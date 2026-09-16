@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.2.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v4.1.0...v4.2.0) (2026-09-16)
+
+
+### Features
+
+* add bulk processing service support ([#125](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/125)) ([90e78b4](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/90e78b4ecc58a6979e0a6c73a307818de95ba859)), closes [#124](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/124)
+* add chapter merge endpoints of diff-tool and cover page endpoints of pdf-exporter ([#128](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/128)) ([a78594b](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/a78594b72ba242f2b4f1bad230f5e089abf3528c))
+
+
+### Bug Fixes
+
+* **deps:** update dependency ruff to v0.16.7 ([#122](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/122)) ([d1cdd27](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/d1cdd277c2715a7542dca560a053fdb5993ee307))
+* **deps:** update dependency tox to v4.61.3 ([#120](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/120)) ([46ec101](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/46ec10148fc2bf3eea224310e33c9e9a252a630a))
+
 ## [4.1.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v4.0.0...v4.1.0) (2026-09-07)
 
 
