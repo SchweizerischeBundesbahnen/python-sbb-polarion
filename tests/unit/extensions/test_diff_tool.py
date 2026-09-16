@@ -245,6 +245,42 @@ class TestPolarionDiffToolApi(unittest.TestCase):
         expected_url: str = f"{self.api.rest_api_url}/merge/workitems"
         self.mock_connection.api_request_post.assert_called_once_with(expected_url, data=data)
 
+    def test_merge_chapter(self) -> None:
+        """Test merge chapter."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+        data: JsonDict = {
+            "key": "value",
+        }
+
+        response: Response = self.api.merge_chapter(data)
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/merge/chapter"
+        self.mock_connection.api_request_post.assert_called_once_with(expected_url, data=data)
+
+    def test_get_chapter_merge_jobs(self) -> None:
+        """Test get chapter merge jobs."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_chapter_merge_jobs()
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/merge/chapter/jobs"
+        self.mock_connection.api_request_get.assert_called_once_with(expected_url)
+
+    def test_get_chapter_merge_job(self) -> None:
+        """Test get chapter merge job."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_chapter_merge_job("job-1")
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/merge/chapter/jobs/job-1"
+        self.mock_connection.api_request_get.assert_called_once_with(expected_url)
+
     # =========================================================================
     # Utility API - Spaces and Documents
     # =========================================================================

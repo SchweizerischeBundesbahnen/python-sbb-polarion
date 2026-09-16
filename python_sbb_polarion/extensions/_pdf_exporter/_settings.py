@@ -72,6 +72,55 @@ class SettingsMixin(SharedExporterSettingsMixin):
         return self.polarion_connection.api_request_post(url, params=params or None)
 
     @restapi_endpoint(
+        method="GET",
+        path="/api/settings/cover-page/templates/{template}/content",
+        path_params={
+            "template": "template",
+        },
+        required_params=["template"],
+        response_type="json",
+    )
+    def get_cover_page_template_content(self, template: str) -> Response:
+        """Get content of predefined cover page template, to read or compare it.
+
+        Nothing is persisted.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/settings/cover-page/templates/{template}/content"
+        return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/settings/cover-page/templates/{template}/content",
+        path_params={
+            "template": "template",
+        },
+        query_params={
+            "scope": "scope",
+            "name": "name",
+        },
+        required_params=["template"],
+        response_type="json",
+    )
+    def persist_cover_page_template_content(self, template: str, scope: str | None = None, name: str | None = None) -> Response:
+        """Get content of predefined cover page template, to copy into the named cover page.
+
+        The images of the template are persisted for that cover page.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/settings/cover-page/templates/{template}/content"
+        params: dict[str, str] = {}
+        if scope:
+            params["scope"] = scope
+        if name:
+            params["name"] = name
+        return self.polarion_connection.api_request_post(url, params=params or None)
+
+    @restapi_endpoint(
         method="DELETE",
         path="/api/settings/cover-page/names/{name}/images",
         path_params={
