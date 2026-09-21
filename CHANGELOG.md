@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.3.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v4.2.0...v4.3.0) (2026-09-21)
+
+
+### Features
+
+* update api of chapter merge endpoints of diff-tool ([0d726ff](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/0d726ff3fbc57764a5aff444ac0f802875df03f7))
+
+
+### Bug Fixes
+
+* **deps:** update dependency ruff to v0.16.8 ([05d043a](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/05d043a6ebf7a275fe786999cd6c1ffa63392cd3))
+* **deps:** update dependency tox to v4.61.5 ([fc7ee64](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/fc7ee643bc33e3502c495c48e73ff7157ed1279c))
+* update api of chapter merge endpoints of diff-tool ([#130](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/130)) ([0d726ff](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/0d726ff3fbc57764a5aff444ac0f802875df03f7))
+
 ## [4.2.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v4.1.0...v4.2.0) (2026-09-16)
 
 
