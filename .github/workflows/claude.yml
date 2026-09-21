@@ -13,6 +13,7 @@ permissions: {}
 jobs:
   claude:
     uses: SchweizerischeBundesbahnen/github-workflows-polarion/.github/workflows/reusable-claude.yml@main
+    cache-mode: none
     permissions:
       contents: read
       pull-requests: read
