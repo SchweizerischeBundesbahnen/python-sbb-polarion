@@ -279,6 +279,18 @@ class TestPolarionDiffToolApi(unittest.TestCase):
 
         self.assertEqual(response, mock_response)
         expected_url: str = f"{self.api.rest_api_url}/merge/chapter/jobs/job-1"
+        # a merge which is over redirects to its result, and the caller is to see that redirect
+        self.mock_connection.api_request_get.assert_called_once_with(expected_url, allow_redirects=False)
+
+    def test_get_chapter_merge_job_result(self) -> None:
+        """Test get chapter merge job result."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_chapter_merge_job_result("job-1")
+
+        self.assertEqual(response, mock_response)
+        expected_url: str = f"{self.api.rest_api_url}/merge/chapter/jobs/job-1/result"
         self.mock_connection.api_request_get.assert_called_once_with(expected_url)
 
     # =========================================================================
