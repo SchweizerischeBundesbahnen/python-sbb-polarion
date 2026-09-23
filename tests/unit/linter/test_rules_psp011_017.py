@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
+from python_sbb_polarion.linter._visitor import _check_is_test_file
 from python_sbb_polarion.linter.code_style_linter import Violation, lint_file
 
 
@@ -546,6 +547,27 @@ def func():
 
         psp015_violations: list[Violation] = [v for v in violations if v.code == "PSP015"]
         self.assertEqual(len(psp015_violations), 0)
+
+    # Relative paths, as the hook passes them. Both separators, so Linux CI catches a Windows-only break.
+    def test_relative_tests_path_is_test_file(self) -> None:
+        """Test that a relative path into tests/ is identified under either separator."""
+        self.assertTrue(_check_is_test_file(PurePosixPath("tests/helper.py")))
+        self.assertTrue(_check_is_test_file(PureWindowsPath("tests\\helper.py")))
+
+    def test_relative_testing_path_is_test_file(self) -> None:
+        """Test that a relative path into testing/ is identified under either separator."""
+        self.assertTrue(_check_is_test_file(PurePosixPath("testing/helper.py")))
+        self.assertTrue(_check_is_test_file(PureWindowsPath("testing\\helper.py")))
+
+    def test_nested_relative_path_is_test_file(self) -> None:
+        """Test that a test file below the top level is identified under either separator."""
+        self.assertTrue(_check_is_test_file(PurePosixPath("tests/unit/linter/helper.py")))
+        self.assertTrue(_check_is_test_file(PureWindowsPath("tests\\unit\\linter\\helper.py")))
+
+    def test_production_path_is_not_test_file(self) -> None:
+        """Test that library code is not mistaken for a test file under either separator."""
+        self.assertFalse(_check_is_test_file(PurePosixPath("python_sbb_polarion/linter/_visitor.py")))
+        self.assertFalse(_check_is_test_file(PureWindowsPath("python_sbb_polarion\\linter\\_visitor.py")))
 
 
 class TestPSP012CollectionOrNoneCheck(unittest.TestCase):
