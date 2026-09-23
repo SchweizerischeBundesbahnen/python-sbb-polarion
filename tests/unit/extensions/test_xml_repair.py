@@ -80,6 +80,22 @@ class TestPolarionXmlRepairApi(unittest.TestCase):
             params=expected_params,
         )
 
+    def test_get_link_roles(self) -> None:
+        """Test get list of work item link roles for the given project."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_link_roles(project_id="project1")
+
+        self.assertEqual(response, mock_response)
+        expected_params: dict[str, str] = {
+            "projectId": "project1",
+        }
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/link-roles",
+            params=expected_params,
+        )
+
     def test_get_repairers(self) -> None:
         """Test get list of repairers for specified entity type."""
         mock_response = Mock()
