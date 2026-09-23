@@ -79,6 +79,26 @@ class RepairMixin(BaseMixin):
 
     @restapi_endpoint(
         method="GET",
+        path="/api/link-roles",
+        query_params={
+            "projectId": "project_id",
+        },
+        required_params=["projectId"],
+    )
+    def get_link_roles(self, project_id: str) -> Response:
+        """Gets list of work item link roles for the given project
+
+        Returns:
+            Response: Response object from the API call
+        """
+        params: dict[str, str] = {
+            "projectId": project_id,
+        }
+        url: str = f"{self.rest_api_url}/link-roles"
+        return self.polarion_connection.api_request_get(url, params=params)
+
+    @restapi_endpoint(
+        method="GET",
         path="/api/repairers",
         query_params={
             "entityType": "entity_type",
