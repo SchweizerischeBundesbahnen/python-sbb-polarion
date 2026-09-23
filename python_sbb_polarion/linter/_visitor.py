@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import ast
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import ClassVar
 
 from ._helpers import contains_query_params, get_method_name, reconstruct_fstring
@@ -806,16 +806,13 @@ class CodeStyleLinter(ast.NodeVisitor):
 # Helper functions
 
 
-def _check_is_test_file(file_path: Path) -> bool:
+def _check_is_test_file(file_path: PurePath) -> bool:
     """Check if file is in tests directory or testing module.
 
     Returns:
         True if file is a test file, False otherwise.
     """
-    path_str: str = str(file_path)
-    if "/tests/" in path_str or path_str.startswith("tests/") or "\\tests\\" in path_str:
-        return True
-    if "/testing/" in path_str or "\\testing\\" in path_str:
+    if "tests" in file_path.parts or "testing" in file_path.parts:
         return True
     return file_path.name.startswith("test_")
 
