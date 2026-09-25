@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.3.1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v4.3.0...v4.3.1) (2026-09-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency tox to v4.63.0 ([#131](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/131)) ([79ac699](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/79ac69932732ef1b8284320805368d61c34bf08f))
+* detect test files under a relative tests path on Windows ([#133](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/133)) ([5ac791e](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/5ac791e423be18df8b87be3f081caaa7a22283d7)), closes [#132](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/132)
+
 ## [4.3.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v4.2.0...v4.3.0) (2026-09-21)
 
 
