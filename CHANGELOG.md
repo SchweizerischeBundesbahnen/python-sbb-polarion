@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.3.1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v4.3.0...v4.3.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* **deps:** update dependency ruff to v0.16.9 ([1c4db65](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/1c4db65936cb5337ba35272860ef6fde2353b9f2))
+* **deps:** update dependency tox to v4.63.0 ([#131](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/131)) ([79ac699](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/79ac69932732ef1b8284320805368d61c34bf08f))
+* **deps:** update dependency tox to v4.64.1 ([0037a95](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/0037a95573c25459857ec2c2a8a04f34afcdb607))
+* **deps:** update dependency tox to v4.64.2 ([97287d9](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/97287d992f203e4157386cadefa18f8374f0db36))
+* **deps:** update dependency tox to v4.64.3 ([db9008f](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/db9008f54dcb4eba9ed8c57f1bdd7a3fd6e4a56a))
+* **deps:** update dependency tox to v4.64.4 ([57e7072](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/57e70724ec168cb69cf85ec1f8f5cbe2d831a714))
+* **deps:** update dependency tox to v4.64.5 ([#136](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/136)) ([259f2d3](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/259f2d305f6c1f9be7348fba4fe3c087136d7737))
+* detect test files under a relative tests path on Windows ([#133](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/133)) ([5ac791e](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/5ac791e423be18df8b87be3f081caaa7a22283d7)), closes [#132](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/132)
+
 ## [4.3.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v4.2.0...v4.3.0) (2026-09-21)
 
 
