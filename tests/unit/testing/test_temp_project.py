@@ -818,6 +818,27 @@ class TestTempProject(unittest.TestCase):
     @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
     @patch("python_sbb_polarion.testing.temp_project.time.sleep")
+    def test_creation_waits_five_minutes_by_default(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
+        """Test a creation job which takes longer than 2 minutes still ends without an error."""
+        # Arrange
+        mock_api: Mock = _success_polarion_api()
+        # the creation job reports no terminal status for 299 polls, then OK
+        mock_api.get_job.side_effect = [*[_job("UNKNOWN") for _ in range(299)], _job("OK")]
+        mock_create_api.return_value = mock_api
+
+        with patch("python_sbb_polarion.testing.temp_project.uuid.uuid4") as mock_uuid:
+            mock_uuid.return_value = Mock()
+            mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
+
+            # Act - should not raise
+            TempProject("TEST", "Test Project", "template_id")
+
+        # Assert
+        self.assertEqual(mock_api.get_job.call_count, 300)
+
+    @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
+    @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
+    @patch("python_sbb_polarion.testing.temp_project.time.sleep")
     def test_deletion_waits_longer_than_creation_by_default(self, mock_sleep: Mock, mock_create_api: Mock, mock_factory: Mock) -> None:
         """Test a deletion which takes longer than the creation limit still ends without an error."""
         # Arrange

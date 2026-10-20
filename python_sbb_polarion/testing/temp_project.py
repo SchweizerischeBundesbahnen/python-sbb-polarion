@@ -28,7 +28,9 @@ logger = logging.getLogger(__name__)
 # Standard project create/delete endpoints are asynchronous (HTTP 202): the response carries a
 # job descriptor, so we poll that job (GET /jobs/{id}) until it reaches a terminal status.
 POLL_INTERVAL_SECONDS: float = 1.0
-POLL_MAX_ATTEMPTS: int = 120
+# A creation on a loaded server can take longer than 2 minutes and still succeed. The wait ends as
+# soon as the job reports OK, so the higher limit costs time only for a creation that never finishes.
+POLL_MAX_ATTEMPTS: int = 300
 # A deletion on a loaded server can take longer than 2 minutes. The wait ends as soon as the project
 # is gone, so the higher limit costs time only for a deletion that never finishes.
 DELETION_POLL_MAX_ATTEMPTS: int = 600
