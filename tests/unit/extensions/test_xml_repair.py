@@ -147,6 +147,103 @@ class TestPolarionXmlRepairApi(unittest.TestCase):
             data=repair_params,
         )
 
+    def test_start_scan_job(self) -> None:
+        """Test start an asynchronous scan job."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        scan_params: JsonDict = {
+            "projectId": "project1",
+            "entityType": "workitem",
+        }
+        response: Response = self.api.start_scan_job(scan_params=scan_params)
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_post.assert_called_once_with(
+            f"{self.api.rest_api_url}/scan/jobs",
+            data=scan_params,
+        )
+
+    def test_get_scan_job_status(self) -> None:
+        """Test get scan job status without following the redirect."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_scan_job_status(job_id="job-123")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/scan/jobs/job-123",
+            allow_redirects=False,
+        )
+
+    def test_get_scan_job_result(self) -> None:
+        """Test get scan job result."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_scan_job_result(job_id="job-123")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/scan/jobs/job-123/result",
+        )
+
+    def test_stop_scan_job(self) -> None:
+        """Test stop a running scan job."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        response: Response = self.api.stop_scan_job(job_id="job-123")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_post.assert_called_once_with(
+            f"{self.api.rest_api_url}/scan/jobs/job-123/stop",
+        )
+
+    def test_start_repair_job(self) -> None:
+        """Test start an asynchronous repair job."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        repair_params: JsonDict = {
+            "projectId": "project1",
+            "entityType": "workitem",
+            "repairerId": "repairer1",
+        }
+        response: Response = self.api.start_repair_job(repair_params=repair_params)
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_post.assert_called_once_with(
+            f"{self.api.rest_api_url}/repair/jobs",
+            data=repair_params,
+        )
+
+    def test_get_repair_job_status(self) -> None:
+        """Test get repair job status without following the redirect."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_repair_job_status(job_id="job-123")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/repair/jobs/job-123",
+            allow_redirects=False,
+        )
+
+    def test_get_repair_job_result(self) -> None:
+        """Test get repair job result."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_repair_job_result(job_id="job-123")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/repair/jobs/job-123/result",
+        )
+
     def test_list_entities(self) -> None:
         """Test list_entities without the optional subtype."""
         mock_response = Mock()
