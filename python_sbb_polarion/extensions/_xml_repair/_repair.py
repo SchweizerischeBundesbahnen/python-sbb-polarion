@@ -148,6 +148,124 @@ class RepairMixin(BaseMixin):
         return self.polarion_connection.api_request_post(url, data=repair_params)
 
     @restapi_endpoint(
+        method="POST",
+        path="/api/scan/jobs",
+        body_param="scan_params",
+        required_params=["__request_body__"],
+    )
+    def start_scan_job(self, scan_params: JsonDict) -> Response:
+        """Starts an asynchronous scan of entities for XML issues
+
+        Returns:
+            Response: Response object from the API call, the job URI in its Location header
+        """
+        url: str = f"{self.rest_api_url}/scan/jobs"
+        return self.polarion_connection.api_request_post(url, data=scan_params)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/scan/jobs/{id}",
+        path_params={
+            "id": "job_id",
+        },
+        required_params=["id"],
+    )
+    def get_scan_job_status(self, job_id: str) -> Response:
+        """Gets the status of a scan job, without following the redirect to its result
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/scan/jobs/{job_id}"
+        return self.polarion_connection.api_request_get(url, allow_redirects=False)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/scan/jobs/{id}/result",
+        path_params={
+            "id": "job_id",
+        },
+        required_params=["id"],
+        response_type="json",
+    )
+    def get_scan_job_result(self, job_id: str) -> Response:
+        """Gets the result of a scan job
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/scan/jobs/{job_id}/result"
+        return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/scan/jobs/{id}/stop",
+        path_params={
+            "id": "job_id",
+        },
+        required_params=["id"],
+        naming_ok=True,
+    )
+    def stop_scan_job(self, job_id: str) -> Response:
+        """Stops a running scan job, which still finishes with the items scanned so far
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/scan/jobs/{job_id}/stop"
+        return self.polarion_connection.api_request_post(url)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/repair/jobs",
+        body_param="repair_params",
+        required_params=["__request_body__"],
+    )
+    def start_repair_job(self, repair_params: JsonDict) -> Response:
+        """Starts an asynchronous repair of XML issues, all of them in one transaction
+
+        Returns:
+            Response: Response object from the API call, the job URI in its Location header
+        """
+        url: str = f"{self.rest_api_url}/repair/jobs"
+        return self.polarion_connection.api_request_post(url, data=repair_params)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/repair/jobs/{id}",
+        path_params={
+            "id": "job_id",
+        },
+        required_params=["id"],
+    )
+    def get_repair_job_status(self, job_id: str) -> Response:
+        """Gets the status of a repair job, without following the redirect to its result
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/repair/jobs/{job_id}"
+        return self.polarion_connection.api_request_get(url, allow_redirects=False)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/repair/jobs/{id}/result",
+        path_params={
+            "id": "job_id",
+        },
+        required_params=["id"],
+        response_type="json",
+    )
+    def get_repair_job_result(self, job_id: str) -> Response:
+        """Gets the result of a repair job
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/repair/jobs/{job_id}/result"
+        return self.polarion_connection.api_request_get(url)
+
+    @restapi_endpoint(
         method="GET",
         path="/api/entities",
         query_params={
