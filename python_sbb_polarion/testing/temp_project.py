@@ -29,6 +29,9 @@ logger = logging.getLogger(__name__)
 # job descriptor, so we poll that job (GET /jobs/{id}) until it reaches a terminal status.
 POLL_INTERVAL_SECONDS: float = 1.0
 POLL_MAX_ATTEMPTS: int = 120
+# A deletion on a loaded server can take longer than 2 minutes. The wait ends as soon as the project
+# is gone, so the higher limit costs time only for a deletion that never finishes.
+DELETION_POLL_MAX_ATTEMPTS: int = 600
 
 # Terminal job status types (jobsSingleGetResponse.data.attributes.status.type in the OpenAPI spec).
 JOB_STATUS_OK: str = "OK"
@@ -68,8 +71,9 @@ class TempProject:
             the project is created at the repository root (location == project id), preserving the
             previous default behaviour.
         poll_interval_seconds: Delay between two polls of an asynchronous create/delete job
-        poll_max_attempts: Number of polls before the wait gives up. Raise it for a slow or
-            heavily loaded server, where create/delete jobs queue up behind other work.
+        poll_max_attempts: Number of polls of a creation job before the wait gives up. Raise it for a
+            slow or heavily loaded server, where create jobs queue up behind other work.
+        deletion_poll_max_attempts: Number of polls of a deletion job before the wait gives up.
     """
 
     def __init__(
@@ -83,11 +87,13 @@ class TempProject:
         parent_location: str | None = None,
         poll_interval_seconds: float = POLL_INTERVAL_SECONDS,
         poll_max_attempts: int = POLL_MAX_ATTEMPTS,
+        deletion_poll_max_attempts: int = DELETION_POLL_MAX_ATTEMPTS,
     ) -> None:
         logging.basicConfig(level=logging.INFO, format="%(message)s")
 
         self.poll_interval_seconds: float = poll_interval_seconds
         self.poll_max_attempts: int = poll_max_attempts
+        self.deletion_poll_max_attempts: int = deletion_poll_max_attempts
 
         if mutate_project_id:
             self.temp_project_id: str = f"{project_id}_st_{str(uuid.uuid4()).split('-')[-1]}"
@@ -209,8 +215,11 @@ class TempProject:
         job_id: str = self._job_id_from_response(response, action)
         logger.info("Waiting for %s job '%s' of project '%s'...", action, job_id, self.temp_project_location)
 
+        max_attempts: int = self.poll_max_attempts
+        if action == ACTION_DELETION:
+            max_attempts = self.deletion_poll_max_attempts
         last_poll: str = "no poll performed"
-        for attempt in range(self.poll_max_attempts):
+        for attempt in range(max_attempts):
             job_response: Response = self.polarion_api.get_job(job_id)
             # A non-200 or non-JSON poll (transient 5xx, gateway/SSO HTML page) is treated as
             # "not ready yet" rather than crashing: we keep polling and, if it persists, time out
@@ -246,7 +255,7 @@ class TempProject:
                 return
             if status_type in JOB_STATUS_FAILURES:
                 raise TempProjectError(f"Job to {action} project '{self.temp_project_location}' ended as {status_type}: {message}")
-            if attempt < self.poll_max_attempts - 1:
+            if attempt < max_attempts - 1:
                 time.sleep(self.poll_interval_seconds)
 
         raise TempProjectError(f"Timed out waiting for {action} job '{job_id}' of project '{self.temp_project_location}', last poll: {last_poll}")
