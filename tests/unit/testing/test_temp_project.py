@@ -712,7 +712,8 @@ class TestTempProject(unittest.TestCase):
             mock_uuid.return_value = Mock()
             mock_uuid.return_value.__str__ = Mock(return_value="test-uuid")
 
-            temp_project = TempProject("TEST", "Test Project", "template_id", poll_max_attempts=3)
+            temp_project = TempProject("TEST", "Test Project", "template_id", deletion_poll_max_attempts=3)
+            mock_api.get_job.reset_mock()
             mock_api.get_project.return_value = _response(HTTPStatus.OK)
             mock_api.get_project.side_effect = None
 
@@ -721,6 +722,7 @@ class TestTempProject(unittest.TestCase):
                 temp_project.tear_down()
 
         self.assertIn("Timed out waiting for deletion job", str(context.exception))
+        self.assertEqual(mock_api.get_job.call_count, 3)
 
     @patch("python_sbb_polarion.testing.temp_project.ExtensionApiFactory.get_extension_api_by_name")
     @patch("python_sbb_polarion.testing.temp_project.GenericTestCase.create_polarion_api")
