@@ -128,7 +128,7 @@ tests/
 
 ```bash
 # Run tests
-uv run tox                    # Run all tests and checks (ruff, mypy, py311, py313, py314)
+uv run tox                    # Run all tests and checks (ruff, mypy, py311, py313, py314, py315)
 uv run tox -e py314           # Run unit tests only (Python 3.14)
 
 # Linting and formatting (using Ruff)
@@ -237,7 +237,7 @@ python -m python_sbb_polarion.polarion_project_manager upload_template --templat
 
 ## Requirements
 
-- Python >=3.11, <3.15
+- Python >=3.11, <3.16
 - uv package manager
 
 ## License
