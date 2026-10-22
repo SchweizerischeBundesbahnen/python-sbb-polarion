@@ -30,15 +30,15 @@ def deprecated_method(replacement: str) -> Callable[[F], F]:
     """
 
     def decorator(func: F) -> F:
-        message: str = f"{func.__qualname__} is deprecated and will be removed in a future major release; use {replacement} instead."
+        message: str = f"{func.__qualname__} is deprecated and will be removed in a future major release; use {replacement} instead."  # ty: ignore[unresolved-attribute]
 
         @functools.wraps(func)
         def wrapper(*args: object, **kwargs: object) -> object:
             warnings.warn(message, DeprecationWarning, stacklevel=2)
             return func(*args, **kwargs)
 
-        wrapper.__deprecated_replacement__ = replacement  # type: ignore[attr-defined]
-        return wrapper  # type: ignore[return-value]
+        wrapper.__deprecated_replacement__ = replacement  # ty: ignore[unresolved-attribute]
+        return wrapper  # ty: ignore[invalid-return-type]
 
     return decorator
 
@@ -200,7 +200,7 @@ def restapi_endpoint(  # noqa: PLR0913
             deprecated=deprecated,
             naming_ok=naming_ok,
         )
-        func.__restapi_endpoint__ = metadata  # type: ignore[attr-defined]
+        func.__restapi_endpoint__ = metadata  # ty: ignore[unresolved-attribute]
         return func
 
     return decorator

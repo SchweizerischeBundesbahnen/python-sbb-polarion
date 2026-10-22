@@ -226,7 +226,7 @@ class GenericTestCase(unittest.TestCase):
             return env_value
 
         try:
-            return type(script_argument_value)(env_value)  # type: ignore[call-arg]
+            return type(script_argument_value)(env_value)  # ty: ignore[too-many-positional-arguments]
         # Any conversion failure means the environment value does not fit; keep the default.
         except Exception:  # noqa: BLE001
             return script_argument_value

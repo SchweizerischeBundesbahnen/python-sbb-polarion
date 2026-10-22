@@ -16,6 +16,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import docker
+import docker.errors
 import tzlocal
 from testcontainers.core.container import DockerContainer
 

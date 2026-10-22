@@ -287,7 +287,7 @@ class TestDeprecatedMethod(unittest.TestCase):
         def sample(value: int) -> int:
             return value
 
-        self.assertEqual(sample.__deprecated_replacement__, "PolarionApiV1.do_thing")  # type: ignore[attr-defined]
+        self.assertEqual(sample.__deprecated_replacement__, "PolarionApiV1.do_thing")  # ty: ignore[unresolved-attribute]
         self.assertEqual(sample.__name__, "sample")
         # restapi_endpoint metadata applied on top of the deprecation wrapper is still reachable
         self.assertTrue(hasattr(sample, "__restapi_endpoint__"))
