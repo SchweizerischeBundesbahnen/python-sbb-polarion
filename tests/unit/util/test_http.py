@@ -33,7 +33,7 @@ class TestHttpConnection(unittest.TestCase):
         conn = HttpConnection(url=self.base_url, token="test-token-123")
 
         self.assertEqual(conn.host, self.base_url)
-        self.assertEqual(conn._HttpConnection__authorization_headers, {Header.AUTHORIZATION: f"{AuthScheme.BEARER} test-token-123"})  # type: ignore[attr-defined]
+        self.assertEqual(conn._HttpConnection__authorization_headers, {Header.AUTHORIZATION: f"{AuthScheme.BEARER} test-token-123"})  # ty: ignore[unresolved-attribute]
         self.assertFalse(mock_session.trust_env)
         mock_session_class.assert_called_once()
 
@@ -45,7 +45,7 @@ class TestHttpConnection(unittest.TestCase):
 
         conn = HttpConnection(url=self.base_url, api_key="test-api-key")
 
-        self.assertEqual(conn._HttpConnection__authorization_headers, {Header.X_API_KEY: "test-api-key"})  # type: ignore[attr-defined]
+        self.assertEqual(conn._HttpConnection__authorization_headers, {Header.X_API_KEY: "test-api-key"})  # ty: ignore[unresolved-attribute]
 
     @patch("python_sbb_polarion.util.http.Session")
     def test_init_with_basic_auth(self, mock_session_class: Mock) -> None:
@@ -56,7 +56,7 @@ class TestHttpConnection(unittest.TestCase):
         conn = HttpConnection(url=self.base_url, username="user", password="pass")
 
         expected_auth: str = base64.b64encode(b"user:pass").decode("utf-8")
-        self.assertEqual(conn._HttpConnection__authorization_headers, {Header.AUTHORIZATION: f"{AuthScheme.BASIC} {expected_auth}"})  # type: ignore[attr-defined]
+        self.assertEqual(conn._HttpConnection__authorization_headers, {Header.AUTHORIZATION: f"{AuthScheme.BASIC} {expected_auth}"})  # ty: ignore[unresolved-attribute]
 
     @patch("python_sbb_polarion.util.http.Session")
     def test_init_with_custom_content_type(self, mock_session_class: Mock) -> None:
@@ -67,7 +67,7 @@ class TestHttpConnection(unittest.TestCase):
         conn = HttpConnection(url=self.base_url, token="token", content_type=MediaType.XML, accept=MediaType.HTML)
 
         expected_headers: dict[str, str] = {Header.CONTENT_TYPE: MediaType.XML, Header.ACCEPT: MediaType.HTML, Header.AUTHORIZATION: f"{AuthScheme.BEARER} token"}
-        self.assertEqual(conn._HttpConnection__default_connection_headers, expected_headers)  # type: ignore[attr-defined]
+        self.assertEqual(conn._HttpConnection__default_connection_headers, expected_headers)  # ty: ignore[unresolved-attribute]
 
     @patch("python_sbb_polarion.util.http.Session")
     def test_init_with_trust_env(self, mock_session_class: Mock) -> None:

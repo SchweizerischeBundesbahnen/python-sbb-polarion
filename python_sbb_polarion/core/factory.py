@@ -166,5 +166,5 @@ class ExtensionApiFactory:
         if api_class:
             # Extension subclasses have different __init__ signature than base class
             # They only take polarion_connection (extension_name is hardcoded)
-            return api_class(polarion_connection)  # type: ignore[call-arg, arg-type]
+            return api_class(polarion_connection)  # ty: ignore[invalid-argument-type, missing-argument]
         raise ValueError("Invalid extension name")

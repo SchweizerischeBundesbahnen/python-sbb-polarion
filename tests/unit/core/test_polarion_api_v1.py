@@ -59,7 +59,7 @@ class TestWorkitemsCrud(unittest.TestCase):
         """Test get_workitems with pagination parameters."""
         self.api.get_workitems("project1", page_size=50, page_number=2)
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "2")
 
@@ -73,7 +73,7 @@ class TestWorkitemsCrud(unittest.TestCase):
         """Test get_workitem with fields parameter."""
         self.api.get_workitem("project1", "WI-123", fields={"workitems": "id,title"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,title")
 
     def test_create_workitems(self) -> None:
@@ -96,10 +96,10 @@ class TestWorkitemsCrud(unittest.TestCase):
         call_args: tuple[tuple[str, ...], dict[str, str]] = self.mock_connection.api_request_patch.call_args
         self.assertIn("/projects/project1/workitems/WI-123", call_args[0][0])
         # Verify attributes are wrapped in JSON:API format
-        sent_data: JsonDict = call_args[1]["data"]  # type: ignore[assignment]
-        self.assertEqual(sent_data["data"]["type"], "workitems")  # type: ignore[index,call-overload]
-        self.assertEqual(sent_data["data"]["id"], "project1/WI-123")  # type: ignore[index,call-overload]
-        self.assertEqual(sent_data["data"]["attributes"], attributes)  # type: ignore[index,call-overload]
+        sent_data: JsonDict = call_args[1]["data"]  # ty: ignore[invalid-assignment]
+        self.assertEqual(sent_data["data"]["type"], "workitems")  # ty: ignore[invalid-argument-type, not-subscriptable]
+        self.assertEqual(sent_data["data"]["id"], "project1/WI-123")  # ty: ignore[invalid-argument-type, not-subscriptable]
+        self.assertEqual(sent_data["data"]["attributes"], attributes)  # ty: ignore[invalid-argument-type, not-subscriptable]
 
     def test_update_workitems(self) -> None:
         """Test update_workitems method."""
@@ -684,7 +684,7 @@ class TestWorkitemsEnums(unittest.TestCase):
         """Test get_workitem_available_enum_options with optional parameters."""
         self.api.get_workitem_available_enum_options("project1", "WI-123", "status", page_size=50, page_number=2, revision="1234")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "2")
         self.assertEqual(params["revision"], "1234")
@@ -693,7 +693,7 @@ class TestWorkitemsEnums(unittest.TestCase):
         """Test get_workitem_current_enum_options with optional parameters."""
         self.api.get_workitem_current_enum_options("project1", "WI-123", "status", page_size=25, page_number=1, revision="5678")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "25")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["revision"], "5678")
@@ -702,7 +702,7 @@ class TestWorkitemsEnums(unittest.TestCase):
         """Test get_workitems_available_enum_options with optional parameters."""
         self.api.get_workitems_available_enum_options("project1", "status", page_size=100, page_number=3, type_filter="task")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "100")
         self.assertEqual(params[PAGE_NUMBER], "3")
         self.assertEqual(params["type"], "task")
@@ -711,7 +711,7 @@ class TestWorkitemsEnums(unittest.TestCase):
         """Test get_workitem_relationships with optional parameters."""
         self.api.get_workitem_relationships("project1", "WI-123", "assignee", page_size=10, page_number=0, fields={"workitems": "id,name"}, include="user", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,name")
@@ -728,7 +728,7 @@ class TestWorkitemsEnums(unittest.TestCase):
         """Test get_workitem_feature_selections with optional parameters."""
         self.api.get_workitem_feature_selections("project1", "WI-123", page_size=20, page_number=1, fields={"featureselections": "id"}, include="target", revision="rev2")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[featureselections]"], "id")
@@ -745,7 +745,7 @@ class TestWorkitemsEnums(unittest.TestCase):
         """Test get_workitem_feature_selection with optional parameters."""
         self.api.get_workitem_feature_selection("project1", "WI-123", "type1", "project2", "WI-456", fields={"featureselections": "id,type"}, include="source", revision="rev3")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[featureselections]"], "id,type")
         self.assertEqual(params["include"], "source")
         self.assertEqual(params["revision"], "rev3")
@@ -846,7 +846,7 @@ class TestTestrunsCrud(unittest.TestCase):
         """Test get_testruns with optional parameters."""
         self.api.get_testruns("project1", page_size=50, page_number=2, fields={"testruns": "id,title"}, include="author", query="status:open", sort="created", revision="rev1", templates="true")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "2")
         self.assertEqual(params["fields[testruns]"], "id,title")
@@ -860,7 +860,7 @@ class TestTestrunsCrud(unittest.TestCase):
         """Test get_testrun with optional parameters."""
         self.api.get_testrun("project1", "TR-1", fields={"testruns": "id,status"}, include="records", revision="rev2")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[testruns]"], "id,status")
         self.assertEqual(params["include"], "records")
         self.assertEqual(params["revision"], "rev2")
@@ -872,7 +872,7 @@ class TestTestrunsCrud(unittest.TestCase):
         }
         self.api.update_testrun("project1", "TR-1", data, workflow_action="complete")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_patch.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["workflowAction"], "complete")
 
     def test_update_testruns_with_workflow_action(self) -> None:
@@ -882,7 +882,7 @@ class TestTestrunsCrud(unittest.TestCase):
         }
         self.api.update_testruns("project1", data, workflow_action="approve")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_patch.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["workflowAction"], "approve")
 
     def test_delete_testrun(self) -> None:
@@ -895,7 +895,7 @@ class TestTestrunsCrud(unittest.TestCase):
         """Test get_testrun_workflow_actions with optional parameters."""
         self.api.get_testrun_workflow_actions("project1", "TR-1", page_size=10, page_number=0, revision="rev3")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["revision"], "rev3")
@@ -910,7 +910,7 @@ class TestTestrunsCrud(unittest.TestCase):
         """Test export_tests_to_excel with optional parameters."""
         self.api.export_tests_to_excel("project1", "TR-1", query="status:passed", sort_by="name", template="default", revision="rev4")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["query"], "status:passed")
         self.assertEqual(params["sortBy"], "name")
         self.assertEqual(params["template"], "default")
@@ -978,7 +978,7 @@ class TestTestrunsAttachments(unittest.TestCase):
         """Test get_testrun_attachments with optional parameters."""
         self.api.get_testrun_attachments("project1", "TR-1", page_size=25, page_number=1, fields={"testrun_attachments": "id,filename"}, include="author", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "25")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[testrun_attachments]"], "id,filename")
@@ -989,7 +989,7 @@ class TestTestrunsAttachments(unittest.TestCase):
         """Test get_testrun_attachment with optional parameters."""
         self.api.get_testrun_attachment("project1", "TR-1", "att-1", fields={"testrun_attachments": "id,size"}, include="testrun", revision="rev2")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[testrun_attachments]"], "id,size")
         self.assertEqual(params["include"], "testrun")
         self.assertEqual(params["revision"], "rev2")
@@ -998,7 +998,7 @@ class TestTestrunsAttachments(unittest.TestCase):
         """Test get_testrun_attachment_content with revision parameter."""
         self.api.get_testrun_attachment_content("project1", "TR-1", "att-1", revision="rev3")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["revision"], "rev3")
 
     def test_delete_testrun_attachments(self) -> None:
@@ -1060,7 +1060,7 @@ class TestTestrunsComments(unittest.TestCase):
         """Test get_testrun_comments with optional parameters."""
         self.api.get_testrun_comments("project1", "TR-1", page_size=20, page_number=0, fields={"testrun_comments": "id,text"}, include="author", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[testrun_comments]"], "id,text")
@@ -1071,7 +1071,7 @@ class TestTestrunsComments(unittest.TestCase):
         """Test get_testrun_comment with optional parameters."""
         self.api.get_testrun_comment("project1", "TR-1", "comment-1", fields={"testrun_comments": "id,created"}, include="testrun", revision="rev2")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[testrun_comments]"], "id,created")
         self.assertEqual(params["include"], "testrun")
         self.assertEqual(params["revision"], "rev2")
@@ -1195,7 +1195,7 @@ class TestTestrunsRecords(unittest.TestCase):
         """Test get_test_records with optional parameters."""
         self.api.get_test_records("project1", "TR-1", page_size=50, page_number=1, fields={"testrecords": "id,result"}, include="testcase", revision="rev1", test_case_project_id="proj2", test_case_id="TC-1", test_result_id="0")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[testrecords]"], "id,result")
@@ -1209,7 +1209,7 @@ class TestTestrunsRecords(unittest.TestCase):
         """Test get_test_record with optional parameters."""
         self.api.get_test_record("project1", "TR-1", "project1", "TC-1", 0, fields={"testrecords": "id,status"}, include="attachments", revision="rev2")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[testrecords]"], "id,status")
         self.assertEqual(params["include"], "attachments")
         self.assertEqual(params["revision"], "rev2")
@@ -1233,7 +1233,7 @@ class TestTestrunsRecords(unittest.TestCase):
         """Test get_test_record_attachments with optional parameters."""
         self.api.get_test_record_attachments("project1", "TR-1", "project1", "TC-1", 0, page_size=20, page_number=0, fields={"testrecord_attachments": "id,name"}, include="author", revision="rev3")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[testrecord_attachments]"], "id,name")
@@ -1244,7 +1244,7 @@ class TestTestrunsRecords(unittest.TestCase):
         """Test get_test_record_attachment with optional parameters."""
         self.api.get_test_record_attachment("project1", "TR-1", "project1", "TC-1", 0, "att-1", fields={"testrecord_attachments": "id,size"}, include="record", revision="rev4")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[testrecord_attachments]"], "id,size")
         self.assertEqual(params["include"], "record")
         self.assertEqual(params["revision"], "rev4")
@@ -1253,7 +1253,7 @@ class TestTestrunsRecords(unittest.TestCase):
         """Test get_test_record_attachment_content with revision parameter."""
         self.api.get_test_record_attachment_content("project1", "TR-1", "project1", "TC-1", 0, "att-1", revision="rev5")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["revision"], "rev5")
 
     def test_delete_test_record_attachments(self) -> None:
@@ -1269,7 +1269,7 @@ class TestTestrunsRecords(unittest.TestCase):
         """Test get_test_record_test_parameters with optional parameters."""
         self.api.get_test_record_test_parameters("project1", "TR-1", "project1", "TC-1", 0, page_size=10, page_number=0, fields={"testparameters": "id,value"}, include="definition", revision="rev6")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[testparameters]"], "id,value")
@@ -1280,7 +1280,7 @@ class TestTestrunsRecords(unittest.TestCase):
         """Test get_test_record_test_parameter with optional parameters."""
         self.api.get_test_record_test_parameter("project1", "TR-1", "project1", "TC-1", 0, "param-1", fields={"testparameters": "id,name"}, include="record", revision="rev7")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[testparameters]"], "id,name")
         self.assertEqual(params["include"], "record")
         self.assertEqual(params["revision"], "rev7")
@@ -2434,7 +2434,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_revisions with optional parameters."""
         self.api.get_revisions(page_size=50, page_number=1, fields={"revisions": "id"}, include="author", query="date:[NOW-1DAY TO *]", sort="-created")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[revisions]"], "id")
@@ -2446,7 +2446,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_revision with optional parameters."""
         self.api.get_revision("default", "12345", fields={"revisions": "id,message"}, include="author")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[revisions]"], "id,message")
         self.assertEqual(params["include"], "author")
 
@@ -2455,7 +2455,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_testrun_test_parameters with optional parameters."""
         self.api.get_testrun_test_parameters("project1", "TR-1", page_size=20, page_number=0, fields={"testparameters": "id"}, include="definition", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[testparameters]"], "id")
@@ -2466,7 +2466,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_testrun_test_parameter with optional parameters."""
         self.api.get_testrun_test_parameter("project1", "TR-1", "param-1", fields={"testparameters": "id,value"}, include="definition", revision="rev2")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[testparameters]"], "id,value")
         self.assertEqual(params["include"], "definition")
         self.assertEqual(params["revision"], "rev2")
@@ -2475,7 +2475,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_testrun_test_parameter_definitions with optional parameters."""
         self.api.get_testrun_test_parameter_definitions("project1", "TR-1", page_size=30, page_number=2, fields={"testparameter_definitions": "id,name"}, include="values", revision="rev3")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "30")
         self.assertEqual(params[PAGE_NUMBER], "2")
         self.assertEqual(params["fields[testparameter_definitions]"], "id,name")
@@ -2486,7 +2486,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_testrun_test_parameter_definition with optional parameters."""
         self.api.get_testrun_test_parameter_definition("project1", "TR-1", "param-1", fields={"testparameter_definitions": "id,type"}, include="values", revision="rev4")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[testparameter_definitions]"], "id,type")
         self.assertEqual(params["include"], "values")
         self.assertEqual(params["revision"], "rev4")
@@ -2496,7 +2496,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_test_step_results with optional parameters."""
         self.api.get_test_step_results("project1", "TR-1", "project1", "TC-1", 0, page_size=10, page_number=0, fields={"teststep_results": "id,result"}, include="attachments", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[teststep_results]"], "id,result")
@@ -2507,7 +2507,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_test_step_result with optional parameters."""
         self.api.get_test_step_result("project1", "TR-1", "project1", "TC-1", 0, 1, fields={"teststep_results": "id,status"}, include="attachments", revision="rev2")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[teststep_results]"], "id,status")
         self.assertEqual(params["include"], "attachments")
         self.assertEqual(params["revision"], "rev2")
@@ -2516,7 +2516,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_test_step_result_attachments with optional parameters."""
         self.api.get_test_step_result_attachments("project1", "TR-1", "project1", "TC-1", 0, 1, page_size=5, page_number=0, fields={"teststepresult_attachments": "id,name"}, include="author", revision="rev3")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "5")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[teststepresult_attachments]"], "id,name")
@@ -2527,7 +2527,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_test_step_result_attachment with optional parameters."""
         self.api.get_test_step_result_attachment("project1", "TR-1", "project1", "TC-1", 0, 1, "att-1", fields={"teststepresult_attachments": "id,size"}, include="result", revision="rev4")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[teststepresult_attachments]"], "id,size")
         self.assertEqual(params["include"], "result")
         self.assertEqual(params["revision"], "rev4")
@@ -2536,7 +2536,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_test_step_result_attachment_content with revision parameter."""
         self.api.get_test_step_result_attachment_content("project1", "TR-1", "project1", "TC-1", 0, 1, "att-1", revision="rev5")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["revision"], "rev5")
 
     # Users optional params
@@ -2544,7 +2544,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_users with optional parameters."""
         self.api.get_users(page_size=100, page_number=0, fields={"users": "id,name"}, include="groups", query="name:admin*", sort="name")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "100")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[users]"], "id,name")
@@ -2556,7 +2556,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_user with optional parameters."""
         self.api.get_user("user1", fields={"users": "id,email"}, include="groups")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[users]"], "id,email")
         self.assertEqual(params["include"], "groups")
 
@@ -2565,7 +2565,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_job with optional parameters."""
         self.api.get_job("job-123", fields={"jobs": "id,status"}, include="results")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[jobs]"], "id,status")
         self.assertEqual(params["include"], "results")
 
@@ -2574,7 +2574,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_global_enumeration with optional parameters."""
         self.api.get_global_enumeration("context", "priority", "workitems", fields={"enumerations": "id,name"}, include="options")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[enumerations]"], "id,name")
         self.assertEqual(params["include"], "options")
 
@@ -2582,7 +2582,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_global_icons with optional parameters."""
         self.api.get_global_icons(page_size=50, page_number=0, fields={"enumerations": "id,name"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[enumerations]"], "id,name")
@@ -2591,14 +2591,14 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_global_icon with optional parameters."""
         self.api.get_global_icon("icon-1", fields={"enumerations": "id,name"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[enumerations]"], "id,name")
 
     def test_get_default_icons_with_params(self) -> None:
         """Test get_default_icons with optional parameters."""
         self.api.get_default_icons(page_size=25, page_number=0, fields={"enumerations": "id,name"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "25")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[enumerations]"], "id,name")
@@ -2607,7 +2607,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_default_icon with optional parameters."""
         self.api.get_default_icon("icon-1", fields={"enumerations": "id,data"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[enumerations]"], "id,data")
 
     # Projects CRUD optional params
@@ -2615,7 +2615,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_projects with optional parameters."""
         self.api.get_projects(page_size=20, page_number=1, fields={"enumerations": "id,name"}, include="lead", query="status:active", sort="name")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[enumerations]"], "id,name")
@@ -2627,7 +2627,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_project with optional parameters."""
         self.api.get_project("project1", fields={"enumerations": "id,description"}, include="lead", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[enumerations]"], "id,description")
         self.assertEqual(params["include"], "lead")
         self.assertEqual(params["revision"], "rev1")
@@ -2637,7 +2637,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_project_enumeration with optional parameters."""
         self.api.get_project_enumeration("project1", "context", "priority", "workitems", fields={"enumerations": "id,name"}, revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[enumerations]"], "id,name")
         self.assertEqual(params["revision"], "rev1")
 
@@ -2645,7 +2645,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_project_icons with optional parameters."""
         self.api.get_project_icons("project1", page_size=30, page_number=0, fields={"enumerations": "id,name"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "30")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[enumerations]"], "id,name")
@@ -2654,7 +2654,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_project_icon with optional parameters."""
         self.api.get_project_icon("project1", "icon-1", fields={"enumerations": "id,data"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[enumerations]"], "id,data")
 
     # Project collections optional params (use generic get_collections/get_collection)
@@ -2662,7 +2662,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_collections with optional parameters."""
         self.api.get_collections("project1", page_size=15, page_number=1, fields={"enumerations": "id,name"}, include="documents", query="name:*spec*", sort="name", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "15")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[enumerations]"], "id,name")
@@ -2675,7 +2675,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_collection with optional parameters."""
         self.api.get_collection("project1", "col-1", fields={"enumerations": "id,description"}, include="documents", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[enumerations]"], "id,description")
         self.assertEqual(params["include"], "documents")
         self.assertEqual(params["revision"], "rev1")
@@ -2685,7 +2685,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_document with optional parameters."""
         self.api.get_document("project1", "space1", "doc1", fields={"enumerations": "id,content"}, include="attachments", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[enumerations]"], "id,content")
         self.assertEqual(params["include"], "attachments")
         self.assertEqual(params["revision"], "rev1")
@@ -2695,7 +2695,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_document_attachments with optional parameters."""
         self.api.get_document_attachments("project1", "space1", "doc1", page_size=10, page_number=0, fields={"enumerations": "id,name"}, include="author", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[enumerations]"], "id,name")
@@ -2706,7 +2706,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_document_attachment with optional parameters."""
         self.api.get_document_attachment("project1", "space1", "doc1", "att-1", fields={"enumerations": "id,size"}, include="author", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[enumerations]"], "id,size")
         self.assertEqual(params["include"], "author")
         self.assertEqual(params["revision"], "rev1")
@@ -2715,7 +2715,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_document_attachment_content with revision parameter."""
         self.api.get_document_attachment_content("project1", "space1", "doc1", "att-1", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["revision"], "rev1")
 
     # Document comments optional params
@@ -2723,7 +2723,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_document_comments with optional parameters."""
         self.api.get_document_comments("project1", "space1", "doc1", page_size=15, page_number=0, fields={"revisions": "id,text"}, include="author", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "15")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[revisions]"], "id,text")
@@ -2734,7 +2734,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_document_comment with optional parameters."""
         self.api.get_document_comment("project1", "space1", "doc1", "com-1", fields={"revisions": "id,created"}, include="author", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[revisions]"], "id,created")
         self.assertEqual(params["include"], "author")
         self.assertEqual(params["revision"], "rev1")
@@ -2744,7 +2744,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_document_available_enum_options with optional parameters."""
         self.api.get_document_available_enum_options("project1", "space1", "doc1", "status", page_size=20, page_number=0)
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "0")
 
@@ -2752,7 +2752,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_document_current_enum_options with optional parameters."""
         self.api.get_document_current_enum_options("project1", "space1", "doc1", "status", page_size=10, page_number=1, revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["revision"], "rev1")
@@ -2761,7 +2761,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_documents_available_enum_options with optional parameters."""
         self.api.get_documents_available_enum_options("project1", "status", page_size=30, page_number=0, document_type="spec")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "30")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["type"], "spec")
@@ -2771,7 +2771,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_document_parts with optional parameters."""
         self.api.get_document_parts("project1", "space1", "doc1", page_size=50, page_number=0, fields={"revisions": "id,level"}, include="workitem", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[revisions]"], "id,level")
@@ -2782,7 +2782,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_document_part with optional parameters."""
         self.api.get_document_part("project1", "space1", "doc1", "part-1", fields={"revisions": "id,type"}, include="workitem", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[revisions]"], "id,type")
         self.assertEqual(params["include"], "workitem")
         self.assertEqual(params["revision"], "rev1")
@@ -2795,7 +2795,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         }
         self.api.branch_document("project1", "space1", "doc1", data, revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_post.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["revision"], "rev1")
 
     # Plans optional params
@@ -2803,7 +2803,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_plans with optional parameters."""
         self.api.get_plans("project1", page_size=25, page_number=0, fields={"revisions": "id,name"}, include="parent", query="status:active", sort="name", revision="rev1", templates="tmpl-1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "25")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[revisions]"], "id,name")
@@ -2817,7 +2817,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_plan with optional parameters."""
         self.api.get_plan("project1", "plan-1", fields={"revisions": "id,description"}, include="items", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[revisions]"], "id,description")
         self.assertEqual(params["include"], "items")
         self.assertEqual(params["revision"], "rev1")
@@ -2826,7 +2826,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_plan_relationships with optional parameters."""
         self.api.get_plan_relationships("project1", "plan-1", "workitems", page_size=50, page_number=0, fields={"workitems": "id"}, include="target", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id")
@@ -2838,7 +2838,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_page with optional parameters."""
         self.api.get_page("project1", "space1", "page1", fields={"workitems": "id,title"}, include="attachments", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,title")
         self.assertEqual(params["include"], "attachments")
         self.assertEqual(params["revision"], "rev1")
@@ -2847,7 +2847,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_page_attachment with optional parameters."""
         self.api.get_page_attachment("project1", "space1", "page1", "att-1", fields={"workitems": "id,size"}, include="author", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,size")
         self.assertEqual(params["include"], "author")
         self.assertEqual(params["revision"], "rev1")
@@ -2856,7 +2856,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_page_attachment_content with revision parameter."""
         self.api.get_page_attachment_content("project1", "space1", "page1", "att-1", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["revision"], "rev1")
 
     # Workitems CRUD optional params
@@ -2864,7 +2864,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_workitems with all optional parameters."""
         self.api.get_workitems("project1", page_size=100, page_number=2, fields={"workitems": "id,title"}, include="attachments", query="type:task", sort="-created", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "100")
         self.assertEqual(params[PAGE_NUMBER], "2")
         self.assertEqual(params["fields[workitems]"], "id,title")
@@ -2877,7 +2877,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_workitem with all optional parameters."""
         self.api.get_workitem("project1", "WI-123", fields={"workitems": "id,description"}, include="comments", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,description")
         self.assertEqual(params["include"], "comments")
         self.assertEqual(params["revision"], "rev1")
@@ -2887,7 +2887,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_workitem_comments with optional parameters."""
         self.api.get_workitem_comments("project1", "WI-123", page_size=20, page_number=0, fields={"workitems": "id,text"}, include="author", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,text")
@@ -2898,7 +2898,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_workitem_comment with optional parameters."""
         self.api.get_workitem_comment("project1", "WI-123", "com-1", fields={"workitems": "id,created"}, include="author", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,created")
         self.assertEqual(params["include"], "author")
         self.assertEqual(params["revision"], "rev1")
@@ -2908,7 +2908,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_workitem_approvals with optional parameters."""
         self.api.get_workitem_approvals("project1", "WI-123", page_size=10, page_number=0, fields={"workitems": "id,status"}, include="user", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,status")
@@ -2919,7 +2919,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_workitem_approval with optional parameters."""
         self.api.get_workitem_approval("project1", "WI-123", "user1", fields={"workitems": "id,date"}, include="workitem", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,date")
         self.assertEqual(params["include"], "workitem")
         self.assertEqual(params["revision"], "rev1")
@@ -2929,7 +2929,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_workitem_attachments with optional parameters."""
         self.api.get_workitem_attachments("project1", "WI-123", page_size=15, page_number=0, fields={"workitems": "id,name"}, include="author", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "15")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,name")
@@ -2940,7 +2940,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_workitem_attachment with optional parameters."""
         self.api.get_workitem_attachment("project1", "WI-123", "att-1", fields={"workitems": "id,size"}, include="workitem", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,size")
         self.assertEqual(params["include"], "workitem")
         self.assertEqual(params["revision"], "rev1")
@@ -2949,7 +2949,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_workitem_attachment_content with revision parameter."""
         self.api.get_workitem_attachment_content("project1", "WI-123", "att-1", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["revision"], "rev1")
 
     # Workitem links optional params (methods are get_linked_workitems, not get_workitem_linked_workitems)
@@ -2957,7 +2957,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_linked_workitems with optional parameters."""
         self.api.get_linked_workitems("project1", "WI-123", page_size=30, page_number=0, fields={"workitems": "id,role"}, include="target", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "30")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,role")
@@ -2968,7 +2968,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_linked_workitem with optional parameters."""
         self.api.get_linked_workitem("project1", "WI-123", "link-role", "project2", "WI-456", fields={"workitems": "id,suspect"}, include="workitem", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,suspect")
         self.assertEqual(params["include"], "workitem")
         self.assertEqual(params["revision"], "rev1")
@@ -2979,7 +2979,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_externally_linked_workitems with optional parameters."""
         self.api.get_externally_linked_workitems("project1", "WI-123", page_size=20, page_number=0, fields={"workitems": "id,url"}, include="target", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,url")
@@ -2990,7 +2990,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_externally_linked_workitem with optional parameters."""
         self.api.get_externally_linked_workitem("project1", "WI-123", "ext-link", "ext-host", "ext-project", "EXT-1", fields={"workitems": "id"}, include="workitem", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id")
         self.assertEqual(params["include"], "workitem")
         self.assertEqual(params["revision"], "rev1")
@@ -3001,7 +3001,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_test_steps with optional parameters."""
         self.api.get_test_steps("project1", "WI-123", page_size=50, page_number=0, fields={"workitems": "id,description"}, include="attachments", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,description")
@@ -3012,7 +3012,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_test_step with optional parameters."""
         self.api.get_test_step("project1", "WI-123", 0, fields={"workitems": "id,expected"}, include="attachments", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,expected")
         self.assertEqual(params["include"], "attachments")
         self.assertEqual(params["revision"], "rev1")
@@ -3022,7 +3022,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_work_records with optional parameters."""
         self.api.get_work_records("project1", "WI-123", page_size=30, page_number=0, fields={"workitems": "id,time"}, include="user", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "30")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,time")
@@ -3033,7 +3033,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_work_record with optional parameters."""
         self.api.get_work_record("project1", "WI-123", "record-1", fields={"workitems": "id,date"}, include="workitem", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,date")
         self.assertEqual(params["include"], "workitem")
         self.assertEqual(params["revision"], "rev1")
@@ -3043,7 +3043,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test export_tests_to_excel with optional parameters."""
         self.api.export_tests_to_excel("project1", "TR-1", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["revision"], "rev1")
 
     # Global misc methods optional params
@@ -3051,7 +3051,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_role with optional parameters."""
         self.api.get_role("admin", fields={"workitems": "id,name"}, include="permissions")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,name")
         self.assertEqual(params["include"], "permissions")
 
@@ -3059,7 +3059,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_user_group with optional parameters."""
         self.api.get_user_group("group1", fields={"users": "id,name"}, include="users", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[users]"], "id,name")
         self.assertEqual(params["include"], "users")
         self.assertEqual(params["revision"], "rev1")
@@ -3068,7 +3068,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_all_workitems with optional parameters."""
         self.api.get_all_workitems(page_size=50, page_number=1, fields={"workitems": "id,title"}, include="author", query="type:req", sort="id", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[workitems]"], "id,title")
@@ -3084,14 +3084,14 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         }
         self.api.update_all_workitems(data, workflow_action="approve")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_patch.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["workflowAction"], "approve")
 
     def test_get_project_test_parameter_definitions_with_params(self) -> None:
         """Test get_project_test_parameter_definitions with optional parameters."""
         self.api.get_project_test_parameter_definitions("project1", page_size=25, page_number=0, fields={"workitems": "id,name"}, include="values", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "25")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,name")
@@ -3102,7 +3102,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_project_test_parameter_definition with optional parameters."""
         self.api.get_project_test_parameter_definition("project1", "param1", fields={"workitems": "id,name"}, include="values", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,name")
         self.assertEqual(params["include"], "values")
         self.assertEqual(params["revision"], "rev1")
@@ -3112,7 +3112,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_workitem_test_parameter_definitions with optional parameters."""
         self.api.get_workitem_test_parameter_definitions("project1", "WI-123", page_size=20, page_number=0, fields={"workitems": "id,name"}, include="values", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,name")
@@ -3123,7 +3123,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_workitem_test_parameter_definition with optional parameters."""
         self.api.get_workitem_test_parameter_definition("project1", "WI-123", "param1", fields={"workitems": "id,name"}, include="values", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,name")
         self.assertEqual(params["include"], "values")
         self.assertEqual(params["revision"], "rev1")
@@ -3136,7 +3136,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         }
         self.api.update_workitem("project1", "WI-123", data, workflow_action="approve")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_patch.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["workflowAction"], "approve")
 
     def test_update_workitem_with_change_type(self) -> None:
@@ -3146,7 +3146,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         }
         self.api.update_workitem("project1", "WI-123", data, change_type_to="requirement")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_patch.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["changeTypeTo"], "requirement")
 
     def test_update_workitems_with_workflow_action(self) -> None:
@@ -3156,7 +3156,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         }
         self.api.update_workitems("project1", data, workflow_action="reject")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_patch.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["workflowAction"], "reject")
 
     def test_update_workitems_with_change_type(self) -> None:
@@ -3166,14 +3166,14 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         }
         self.api.update_workitems("project1", data, change_type_to="task")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_patch.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["changeTypeTo"], "task")
 
     def test_get_workflow_actions_with_params(self) -> None:
         """Test get_workflow_actions with optional parameters."""
         self.api.get_workflow_actions("project1", "WI-123", page_size=10, page_number=0, revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["revision"], "rev1")
@@ -3183,7 +3183,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_project_templates with optional parameters."""
         self.api.get_project_templates(page_size=15, page_number=0, fields={"workitems": "id,name"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "15")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,name")
@@ -3193,7 +3193,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_collection_relationships with optional parameters."""
         self.api.get_collection_relationships("project1", "col1", "documents", page_size=20, page_number=1, fields={"workitems": "id"}, include="target", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[workitems]"], "id")
@@ -3205,7 +3205,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_oslc_resources with optional parameters."""
         self.api.get_oslc_resources("project1", "WI-123", page_size=20, page_number=0, fields={"workitems": "id,url"}, include="workitem", query="type:req", sort="id", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "0")
         self.assertEqual(params["fields[workitems]"], "id,url")
@@ -3222,7 +3222,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         }
         self.api.copy_document("project1", "space1", "doc1", data, revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_post.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["revision"], "rev1")
 
     # Update document with params
@@ -3233,7 +3233,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         }
         self.api.update_document("project1", "space1", "doc1", data, workflow_action="publish")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_patch.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["workflowAction"], "publish")
 
     # Users with revision param
@@ -3241,14 +3241,14 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_users with revision parameter."""
         self.api.get_users(revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["revision"], "rev1")
 
     def test_get_user_with_revision(self) -> None:
         """Test get_user with revision parameter."""
         self.api.get_user("user1", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["revision"], "rev1")
 
     # Plan deletion
@@ -3281,7 +3281,7 @@ class TestOptionalParameterCoverage(unittest.TestCase):
         """Test get_project_templates with all optional parameters."""
         self.api.get_project_templates(page_size=10, page_number=1, fields={"teststepresult_attachments": "id,name"}, include="lead")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[teststepresult_attachments]"], "id,name")
@@ -3324,7 +3324,7 @@ class TestLicense(unittest.TestCase):
         """Test get_license with fields parameter."""
         self.api.get_license(fields={"enumerations": "id,type"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[enumerations]"], "id,type")
 
     def test_update_license(self) -> None:
@@ -3346,7 +3346,7 @@ class TestLicense(unittest.TestCase):
         """Test get_license_slots with optional parameters."""
         self.api.get_license_slots("type-1", page_size=50, page_number=1, fields={"enumerations": "id,name"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[enumerations]"], "id,name")
@@ -3417,7 +3417,7 @@ class TestCustomFields(unittest.TestCase):
         """Test get_global_custom_fields with optional parameters."""
         self.api.get_global_custom_fields("workitems", "task", fields={"users": "id,name"}, include="values")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[users]"], "id,name")
         self.assertEqual(params["include"], "values")
 
@@ -3455,7 +3455,7 @@ class TestCustomFields(unittest.TestCase):
         """Test get_project_custom_fields with optional parameters."""
         self.api.get_project_custom_fields("project1", "workitems", "task", fields={"users": "id,name"}, include="values")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[users]"], "id,name")
         self.assertEqual(params["include"], "values")
 
@@ -3504,7 +3504,7 @@ class TestJobsNew(unittest.TestCase):
         """Test get_jobs with optional parameters."""
         self.api.get_jobs(page_size=50, page_number=1, fields={"jobs": "id,status"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[jobs]"], "id,status")
@@ -3545,7 +3545,7 @@ class TestDocumentsNew(unittest.TestCase):
         """Test get_all_documents with optional parameters."""
         self.api.get_all_documents(page_size=50, page_number=1, fields={"jobs": "id,title"}, query="type:spec")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[jobs]"], "id,title")
@@ -3742,7 +3742,7 @@ class TestProjectsNew(unittest.TestCase):
         """Test get_project_enumerations with optional parameters."""
         self.api.get_project_enumerations("project1", page_size=50, page_number=1, fields={"enumerations": "id,name"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[enumerations]"], "id,name")
@@ -3752,14 +3752,14 @@ class TestProjectsNew(unittest.TestCase):
         self.api.get_project_fields_metadata("project1", "workitems")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
         self.assertIn("/projects/project1/actions/getFieldsMetadata", call_args[0][0])
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["resourceType"], "workitems")
 
     def test_get_project_fields_metadata_with_params(self) -> None:
         """Test get_project_fields_metadata with target_type parameter."""
         self.api.get_project_fields_metadata("project1", resource_type="workitems", target_type="task")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["resourceType"], "workitems")
         self.assertEqual(params["targetType"], "task")
 
@@ -3784,7 +3784,7 @@ class TestGlobalMiscNew(unittest.TestCase):
         """Test get_global_enumerations with optional parameters."""
         self.api.get_global_enumerations(page_size=50, page_number=1, fields={"enumerations": "id,name"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[enumerations]"], "id,name")
@@ -3794,14 +3794,14 @@ class TestGlobalMiscNew(unittest.TestCase):
         self.api.get_global_fields_metadata("workitems")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
         self.assertIn("/actions/getFieldsMetadata", call_args[0][0])
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["resourceType"], "workitems")
 
     def test_get_global_fields_metadata_with_params(self) -> None:
         """Test get_global_fields_metadata with target_type parameter."""
         self.api.get_global_fields_metadata(resource_type="workitems", target_type="task")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["resourceType"], "workitems")
         self.assertEqual(params["targetType"], "task")
 
@@ -3815,7 +3815,7 @@ class TestGlobalMiscNew(unittest.TestCase):
         """Test get_metadata with fields parameter."""
         self.api.get_metadata(fields={"enumerations": "id,version"})
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[enumerations]"], "id,version")
 
 
@@ -3839,7 +3839,7 @@ class TestUsersNew(unittest.TestCase):
         """Test get_current_user with optional parameters."""
         self.api.get_current_user(fields={"users": "id,name"}, include="groups")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[users]"], "id,name")
         self.assertEqual(params["include"], "groups")
 
@@ -3864,7 +3864,7 @@ class TestWorkitemsLinksNew(unittest.TestCase):
         """Test get_backlinked_workitems with optional parameters."""
         self.api.get_backlinked_workitems("project1", "WI-123", page_size=50, page_number=1, fields={"workitems": "id,title"}, include="author", revision="rev1")
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "50")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[workitems]"], "id,title")
@@ -3908,7 +3908,7 @@ class TestPagesOptionalParams(unittest.TestCase):
             revision="1234",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "2")
         self.assertEqual(params["fields[workitems]"], "id,title")
@@ -3928,7 +3928,7 @@ class TestPagesOptionalParams(unittest.TestCase):
             sort="name",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "3")
         self.assertEqual(params["fields[workitems]"], "id,name")
@@ -3949,7 +3949,7 @@ class TestPagesOptionalParams(unittest.TestCase):
             revision="5678",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "15")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[workitems]"], "id")
@@ -3971,7 +3971,7 @@ class TestPagesOptionalParams(unittest.TestCase):
             revision="9999",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "25")
         self.assertEqual(params[PAGE_NUMBER], "4")
         self.assertEqual(params["fields[workitems]"], "id,title,author")
@@ -3993,7 +3993,7 @@ class TestPagesOptionalParams(unittest.TestCase):
             sort="updated",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "30")
         self.assertEqual(params[PAGE_NUMBER], "5")
         self.assertEqual(params["fields[workitems]"], "id,name,content")
@@ -4012,7 +4012,7 @@ class TestPagesOptionalParams(unittest.TestCase):
             revision="2222",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,title")
         self.assertEqual(params["include"], "attachments")
         self.assertEqual(params["revision"], "2222")
@@ -4030,7 +4030,7 @@ class TestPagesOptionalParams(unittest.TestCase):
             revision="3333",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[workitems]"], "id,fileName")
@@ -4049,7 +4049,7 @@ class TestPagesOptionalParams(unittest.TestCase):
             revision="4444",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,fileName,length")
         self.assertEqual(params["include"], "author")
         self.assertEqual(params["revision"], "4444")
@@ -4067,7 +4067,7 @@ class TestPagesOptionalParams(unittest.TestCase):
             revision="5555",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "5")
         self.assertEqual(params[PAGE_NUMBER], "2")
         self.assertEqual(params["fields[workitems]"], "id,text")
@@ -4086,7 +4086,7 @@ class TestPagesOptionalParams(unittest.TestCase):
             revision="6666",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,text,created")
         self.assertEqual(params["include"], "author,replies")
         self.assertEqual(params["revision"], "6666")
@@ -4114,7 +4114,7 @@ class TestDocumentsOptionalParams(unittest.TestCase):
             revision="1234",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "2")
         self.assertEqual(params["fields[workitems]"], "id,title")
@@ -4136,7 +4136,7 @@ class TestDocumentsOptionalParams(unittest.TestCase):
             revision="5678",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "20")
         self.assertEqual(params[PAGE_NUMBER], "3")
         self.assertEqual(params["fields[workitems]"], "id,name")
@@ -4158,7 +4158,7 @@ class TestDocumentsOptionalParams(unittest.TestCase):
             sort="id",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "15")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[workitems]"], "id")
@@ -4184,7 +4184,7 @@ class TestLicenseOptionalParams(unittest.TestCase):
             include="slots",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,type")
         self.assertEqual(params["include"], "slots")
 
@@ -4199,7 +4199,7 @@ class TestLicenseOptionalParams(unittest.TestCase):
             revision="1234",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "1")
         self.assertEqual(params["fields[workitems]"], "id,user")
@@ -4216,7 +4216,7 @@ class TestLicenseOptionalParams(unittest.TestCase):
             include="user",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[workitems]"], "id,status")
         self.assertEqual(params["include"], "user")
 
@@ -4230,7 +4230,7 @@ class TestLicenseOptionalParams(unittest.TestCase):
             active_only=True,
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "5")
         self.assertEqual(params[PAGE_NUMBER], "2")
         self.assertEqual(params["fields[workitems]"], "id,user")
@@ -4245,7 +4245,7 @@ class TestLicenseOptionalParams(unittest.TestCase):
             include="licenseType",
         )
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params["fields[users]"], "id,type")
         self.assertEqual(params["include"], "licenseType")
 
@@ -4356,7 +4356,7 @@ class TestPolarion2606New(unittest.TestCase):
         """Test get_llms with pagination parameters."""
         self.api.get_llms(page_size=10, page_number=1)
         call_args: tuple[tuple[str, ...], dict[str, object]] = self.mock_connection.api_request_get.call_args
-        params: dict[str, str] = call_args[1]["params"]  # type: ignore[assignment]
+        params: dict[str, str] = call_args[1]["params"]  # ty: ignore[invalid-assignment]
         self.assertEqual(params[PAGE_SIZE], "10")
         self.assertEqual(params[PAGE_NUMBER], "1")
 

@@ -128,7 +128,7 @@ tests/
 
 ```bash
 # Run tests
-uv run tox                    # Run all tests and checks (ruff, mypy, py311, py313, py314, py315)
+uv run tox                    # Run all tests and checks (ruff, ty, py311, py313, py314, py315)
 uv run tox -e py314           # Run unit tests only (Python 3.14)
 
 # Linting and formatting (using Ruff)
@@ -146,7 +146,7 @@ uv build
 
 ## Code Style Linter
 
-This library includes a custom AST-based linter that enforces code style rules beyond ruff/mypy:
+This library includes a custom AST-based linter that enforces code style rules beyond ruff/ty:
 
 - **PSP001**: All local variables must have type annotations
 - **PSP002**: `api_request_*` arguments must be variables (not inline dicts/f-strings)

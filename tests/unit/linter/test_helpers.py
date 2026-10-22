@@ -25,7 +25,7 @@ class TestGetMethodName(unittest.TestCase):
         """Test extracting method name from attribute access."""
         code: str = "obj.method()"
         tree: ast.AST = ast.parse(code)
-        call_node: ast.Call = tree.body[0].value  # type: ignore[attr-defined]
+        call_node: ast.Call = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: str | None = _get_method_name(call_node)
         self.assertEqual(result, "method")
 
@@ -33,7 +33,7 @@ class TestGetMethodName(unittest.TestCase):
         """Test extracting function name from simple call."""
         code: str = "func()"
         tree: ast.AST = ast.parse(code)
-        call_node: ast.Call = tree.body[0].value  # type: ignore[attr-defined]
+        call_node: ast.Call = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: str | None = _get_method_name(call_node)
         self.assertEqual(result, "func")
 
@@ -41,7 +41,7 @@ class TestGetMethodName(unittest.TestCase):
         """Test that complex call returns None."""
         code: str = "get_obj()['key']()"
         tree: ast.AST = ast.parse(code)
-        call_node: ast.Call = tree.body[0].value  # type: ignore[attr-defined]
+        call_node: ast.Call = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: str | None = _get_method_name(call_node)
         self.assertIsNone(result)
 
@@ -53,7 +53,7 @@ class TestReconstructFstring(unittest.TestCase):
         """Test reconstructing simple f-string."""
         code: str = 'f"/api/test"'
         tree: ast.AST = ast.parse(code)
-        fstring_node: ast.JoinedStr = tree.body[0].value  # type: ignore[attr-defined]
+        fstring_node: ast.JoinedStr = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: str = _reconstruct_fstring(fstring_node)
         self.assertEqual(result, "/api/test")
 
@@ -61,7 +61,7 @@ class TestReconstructFstring(unittest.TestCase):
         """Test reconstructing f-string with expression."""
         code: str = 'f"/api/projects/{project_id}/items"'
         tree: ast.AST = ast.parse(code)
-        fstring_node: ast.JoinedStr = tree.body[0].value  # type: ignore[attr-defined]
+        fstring_node: ast.JoinedStr = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: str = _reconstruct_fstring(fstring_node)
         self.assertEqual(result, "/api/projects/{...}/items")
 
@@ -69,7 +69,7 @@ class TestReconstructFstring(unittest.TestCase):
         """Test reconstructing f-string with query params."""
         code: str = 'f"/api/items?scope={scope}"'
         tree: ast.AST = ast.parse(code)
-        fstring_node: ast.JoinedStr = tree.body[0].value  # type: ignore[attr-defined]
+        fstring_node: ast.JoinedStr = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: str = _reconstruct_fstring(fstring_node)
         self.assertIn("?", result)
 
@@ -81,7 +81,7 @@ class TestContainsQueryParams(unittest.TestCase):
         """Test detecting ? in string concatenation."""
         code: str = '"/api/test" + "?key=value"'
         tree: ast.AST = ast.parse(code)
-        binop_node: ast.BinOp = tree.body[0].value  # type: ignore[attr-defined]
+        binop_node: ast.BinOp = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: bool = _contains_query_params(binop_node)
         self.assertTrue(result)
 
@@ -89,7 +89,7 @@ class TestContainsQueryParams(unittest.TestCase):
         """Test detecting & in string concatenation."""
         code: str = '"/api/test" + "&key=value"'
         tree: ast.AST = ast.parse(code)
-        binop_node: ast.BinOp = tree.body[0].value  # type: ignore[attr-defined]
+        binop_node: ast.BinOp = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: bool = _contains_query_params(binop_node)
         self.assertTrue(result)
 
@@ -97,7 +97,7 @@ class TestContainsQueryParams(unittest.TestCase):
         """Test no query params detected."""
         code: str = '"/api/test" + "/items"'
         tree: ast.AST = ast.parse(code)
-        binop_node: ast.BinOp = tree.body[0].value  # type: ignore[attr-defined]
+        binop_node: ast.BinOp = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: bool = _contains_query_params(binop_node)
         self.assertFalse(result)
 
@@ -105,7 +105,7 @@ class TestContainsQueryParams(unittest.TestCase):
         """Test detecting query params in nested concatenation."""
         code: str = '"/api" + "/test" + "?key=value"'
         tree: ast.AST = ast.parse(code)
-        binop_node: ast.BinOp = tree.body[0].value  # type: ignore[attr-defined]
+        binop_node: ast.BinOp = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: bool = _contains_query_params(binop_node)
         self.assertTrue(result)
 
@@ -113,7 +113,7 @@ class TestContainsQueryParams(unittest.TestCase):
         """Test detecting ? on left side of concatenation."""
         code: str = '"?key=value" + "/api/test"'
         tree: ast.AST = ast.parse(code)
-        binop_node: ast.BinOp = tree.body[0].value  # type: ignore[attr-defined]
+        binop_node: ast.BinOp = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: bool = _contains_query_params(binop_node)
         self.assertTrue(result)
 
@@ -121,7 +121,7 @@ class TestContainsQueryParams(unittest.TestCase):
         """Test detecting query params in nested left concatenation."""
         code: str = '("?key=value" + "/api") + "/test"'
         tree: ast.AST = ast.parse(code)
-        binop_node: ast.BinOp = tree.body[0].value  # type: ignore[attr-defined]
+        binop_node: ast.BinOp = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: bool = _contains_query_params(binop_node)
         self.assertTrue(result)
 
@@ -129,7 +129,7 @@ class TestContainsQueryParams(unittest.TestCase):
         """Test that non-string values don't trigger false positives."""
         code: str = "1 + 2"
         tree: ast.AST = ast.parse(code)
-        binop_node: ast.BinOp = tree.body[0].value  # type: ignore[attr-defined]
+        binop_node: ast.BinOp = tree.body[0].value  # ty: ignore[unresolved-attribute]
         result: bool = _contains_query_params(binop_node)
         self.assertFalse(result)
 

@@ -49,7 +49,7 @@ class TestViolation(unittest.TestCase):
             message="Test",
         )
         with self.assertRaises(AttributeError):
-            v.line = 2  # type: ignore[misc]
+            v.line = 2  # ty: ignore[invalid-assignment]
 
     def test_violation_equality(self) -> None:
         """Test Violation equality."""

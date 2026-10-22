@@ -30,7 +30,7 @@ class TestPolarionRestApiConnection(unittest.TestCase):
         conn: PolarionRestApiConnection = PolarionRestApiConnection(url="https://polarion.example.com", token="test-token")
 
         self.assertEqual(conn.host, "https://polarion.example.com")
-        self.assertIsNotNone(conn._HttpConnection__authorization_headers)  # type: ignore[attr-defined]
+        self.assertIsNotNone(conn._HttpConnection__authorization_headers)  # ty: ignore[unresolved-attribute]
         mock_session_class.assert_called_once()
 
     def test_activate_trial(self) -> None:

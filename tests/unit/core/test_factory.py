@@ -62,7 +62,7 @@ class TestExtensionApiFactory(unittest.TestCase):
     def test_all_extensions_are_registered(self) -> None:
         """Test that all expected extensions are registered in the factory."""
         # Access the private class variable to verify all extensions are registered
-        registered_extensions: set[str] = set(ExtensionApiFactory._ExtensionApiFactory__extension_api_classes.keys())  # type: ignore[attr-defined]
+        registered_extensions: set[str] = set(ExtensionApiFactory._ExtensionApiFactory__extension_api_classes.keys())  # ty: ignore[unresolved-attribute]
 
         self.assertEqual(registered_extensions, self.EXPECTED_EXTENSIONS)
         self.assertEqual(len(registered_extensions), 22, "Factory should have exactly 22 registered extensions")

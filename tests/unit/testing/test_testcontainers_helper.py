@@ -12,6 +12,7 @@ from http import HTTPStatus
 from unittest.mock import Mock, patch
 
 import docker
+import docker.errors
 
 from python_sbb_polarion.extensions.admin_utility import PolarionAdminUtilityApi
 from python_sbb_polarion.testing.testcontainers_helper import (
@@ -323,7 +324,7 @@ class TestTestContainersHelperGetMavenRepoLocation(unittest.TestCase):
         mock_run.assert_called_once()
         # Verify the command contains the Maven executable
         call_args: tuple[tuple[object, ...], dict[str, object]] = mock_run.call_args
-        self.assertIn("/usr/local/bin/mvn", call_args[0][0])  # type: ignore[arg-type]
+        self.assertIn("/usr/local/bin/mvn", call_args[0][0])  # ty: ignore[invalid-argument-type]
 
     @patch("python_sbb_polarion.testing.testcontainers_helper.subprocess.run")
     @patch("python_sbb_polarion.testing.testcontainers_helper.TestContainersHelper.get_maven_location")
