@@ -1,6 +1,6 @@
 """Custom AST-based linter for python-sbb-polarion code style rules.
 
-This module provides code style checking that enforces rules beyond what ruff/mypy can check.
+This module provides code style checking that enforces rules beyond what ruff/ty can check.
 It includes caching for performance and configuration via pyproject.toml.
 
 Rules (PSP001-PSP017):

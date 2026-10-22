@@ -2,9 +2,8 @@
 
 import json
 import unittest
-import unittest.mock
 from typing import TYPE_CHECKING
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import ANY, Mock, mock_open, patch
 
 from python_sbb_polarion.util.ldap import LDAP_BASE_DN, LDAP_SERVER_NAME, LdapConnection
 
@@ -36,7 +35,7 @@ class TestLdapConnection(unittest.TestCase):
         conn = LdapConnection(self.user_name, self.user_password)
 
         # Verify server was created
-        mock_server.assert_called_once_with(LDAP_SERVER_NAME, use_ssl=True, get_info=unittest.mock.ANY)
+        mock_server.assert_called_once_with(LDAP_SERVER_NAME, use_ssl=True, get_info=ANY)
         # Verify connection was created
         mock_connection.assert_called_once()
         # Verify empty user cache
@@ -74,7 +73,7 @@ class TestLdapConnection(unittest.TestCase):
 
         LdapConnection(self.user_name, self.user_password, server_name=custom_server)
 
-        mock_server.assert_called_once_with(custom_server, use_ssl=True, get_info=unittest.mock.ANY)
+        mock_server.assert_called_once_with(custom_server, use_ssl=True, get_info=ANY)
 
     @patch("python_sbb_polarion.util.ldap.ldap3.Connection")
     @patch("python_sbb_polarion.util.ldap.ldap3.Server")
@@ -95,7 +94,7 @@ class TestLdapConnection(unittest.TestCase):
         result: JsonDict = conn.get_info_about_user("testuser")
 
         # Verify LDAP search was performed
-        mock_conn_instance.search.assert_called_once_with(search_base=LDAP_BASE_DN, search_filter="(sAMAccountName=testuser)", attributes=unittest.mock.ANY)
+        mock_conn_instance.search.assert_called_once_with(search_base=LDAP_BASE_DN, search_filter="(sAMAccountName=testuser)", attributes=ANY)
         # Verify result was cached and returned
         self.assertIn("testuser", conn.ldap_users)
         self.assertEqual(result["userPrincipalName"], "user@example.com")

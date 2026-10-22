@@ -1,6 +1,6 @@
 """Custom AST-based linter for python-sbb-polarion code style rules.
 
-This linter enforces code style rules that cannot be checked by ruff or mypy.
+This linter enforces code style rules that cannot be checked by ruff or ty.
 It includes file caching for performance and configuration via pyproject.toml.
 
 Rules:
