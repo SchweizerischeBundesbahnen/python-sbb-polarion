@@ -129,7 +129,7 @@ tests/
 ```bash
 # Run tests
 uv run tox                    # Run all tests and checks (ruff, ty, py311, py313, py314, py315)
-uv run tox -e py314           # Run unit tests only (Python 3.14)
+uv run tox -e py315           # Run unit tests only (Python 3.15)
 
 # Linting and formatting (using Ruff)
 uv run ruff check python_sbb_polarion       # Check code quality

@@ -209,7 +209,7 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [tool.ty.environment]
-python-version = "3.14"  # Check against Python 3.14 features, as the mypy config did
+python-version = "3.15"  # Check against Python 3.15 features
 
 [tool.ty.terminal]
 # Fail on warning-level diagnostics too, as mypy did, so the gate does not depend on the ty default.
