@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 from http import HTTPStatus
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_type
 from unittest.mock import Mock, patch
 
 from python_sbb_polarion.core.base import PolarionGenericExtensionApi, PolarionGenericExtensionSettingsApi, PolarionRestApiConnection
@@ -548,6 +548,35 @@ class TestGenericTestCase(unittest.TestCase):
         # Act & Assert
         self.assertIsInstance(test_case, unittest.TestCase)
         self.assertIs(test_case.api(), mock_api)
+
+    def test_extension_api_is_typed_with_type_argument(self) -> None:
+        """Test extension_api and api() carry the type argument, and default to the generic API without one.
+
+        The assert_type calls are checked statically by ty; at runtime they only return their argument.
+        They take the test cases as parameters, so ty checks the declared types rather than the type
+        narrowed by the assignments below.
+        """
+
+        # Arrange
+        class _ExtensionApi(PolarionGenericExtensionApi):
+            pass
+
+        class _ParameterizedTestCase(GenericTestCase[_ExtensionApi]):
+            pass
+
+        def assert_declared_types(parameterized: _ParameterizedTestCase, unparameterized: GenericTestCase) -> None:
+            assert_type(parameterized.extension_api, _ExtensionApi)
+            assert_type(parameterized.api(), _ExtensionApi)
+            assert_type(unparameterized.extension_api, PolarionGenericExtensionApi)
+            assert_type(unparameterized.api(), PolarionGenericExtensionApi)
+
+        parameterized: _ParameterizedTestCase = _ParameterizedTestCase()
+        parameterized.extension_api = Mock(spec=_ExtensionApi)
+        unparameterized: GenericTestCase = GenericTestCase()
+        unparameterized.extension_api = Mock(spec=PolarionGenericExtensionApi)
+
+        # Act & Assert
+        assert_declared_types(parameterized, unparameterized)
 
     def test_init_settings(self) -> None:
         """Test _init_settings initializes settings with defaults."""
