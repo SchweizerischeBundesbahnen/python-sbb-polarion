@@ -541,7 +541,7 @@ class TestGenericTestCase(unittest.TestCase):
         class _ParameterizedTestCase(GenericTestCase[_ExtensionApi]):
             pass
 
-        test_case = _ParameterizedTestCase()
+        test_case: _ParameterizedTestCase = _ParameterizedTestCase()
         mock_api = Mock(spec=_ExtensionApi)
         test_case.extension_api = mock_api
 
