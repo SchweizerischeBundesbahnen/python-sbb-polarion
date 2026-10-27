@@ -330,7 +330,8 @@ class GenericTestCase[ApiT: PolarionGenericExtensionApi = PolarionGenericExtensi
         save_response: Response = self.extension_api.save_setting(feature=feature, scope=scope, data=default_settings.json())
         assert save_response.status_code == HTTPStatus.NO_CONTENT
 
-    def api(self) -> ApiT:  # NOSONAR(python:S5899): public accessor for subclasses, not a test
+    # S5899 (test methods should be discoverable): api() is a public accessor for subclasses, not a test.
+    def api(self) -> ApiT:  # NOSONAR(S5899)
         """Typed access to the extension API of this test case.
 
         Returns:
