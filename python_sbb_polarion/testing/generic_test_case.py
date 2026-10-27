@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import unittest
-from abc import abstractmethod
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Literal, TypeVar, overload
 
@@ -50,10 +49,16 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class GenericTestCase(unittest.TestCase):
-    """Generic Polarion Test Case with common code for system tests"""
+class GenericTestCase[ApiT: PolarionGenericExtensionApi = PolarionGenericExtensionApi](unittest.TestCase):
+    """Generic Polarion Test Case with common code for system tests.
 
-    extension_api: PolarionGenericExtensionApi
+    Parameterize it with the extension API of the tested extension, e.g.
+    ``class JsonEditorTestCase(GenericTestCase[PolarionJsonEditorApi])``: ``extension_api`` and ``api()``
+    are then typed with that API, so subclasses neither redeclare the attribute nor override ``api()``.
+    Without a parameter it defaults to ``PolarionGenericExtensionApi``.
+    """
+
+    extension_api: ApiT
     __polarion_api: PolarionApiV1
 
     @classmethod
@@ -325,14 +330,14 @@ class GenericTestCase(unittest.TestCase):
         save_response: Response = self.extension_api.save_setting(feature=feature, scope=scope, data=default_settings.json())
         assert save_response.status_code == HTTPStatus.NO_CONTENT
 
-    @abstractmethod
-    def api(self) -> PolarionGenericExtensionApi:
-        """Casting to extension API
+    # S5899 (test methods should be discoverable): api() is a public accessor for subclasses, not a test.
+    def api(self) -> ApiT:  # NOSONAR(S5899)
+        """Typed access to the extension API of this test case.
 
-        Raises:
-            ValueError: Always raised - method must be implemented by subclass
+        Returns:
+            ApiT: The extension API, typed with the parameter of ``GenericTestCase[...]``
         """
-        raise ValueError("Unknown extension API")
+        return self.extension_api
 
     def polarion_api(self) -> PolarionApiV1:
         return self.__polarion_api

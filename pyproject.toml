@@ -7,7 +7,7 @@ authors = [
 ]
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.11,<3.16"
+requires-python = ">=3.13,<3.16"
 dependencies = [
     "ldap3>=2.9",
     "psycopg2-binary>=2.9",
@@ -66,7 +66,7 @@ packages = ["python_sbb_polarion"]
 [tool.ruff]
 line-length = 240  # Match existing codebase standard (pylint)
 indent-width = 4
-target-version = "py311"  # Minimum supported Python version
+target-version = "py313"  # Minimum supported Python version
 exclude = [
     ".venv",
     ".tox",
@@ -186,6 +186,9 @@ max-args = 10
 ]
 "**/__init__.py" = [
     "F401",    # a package re-exports its public names
+]
+"python_sbb_polarion/types.py" = [
+    "UP040",   # public aliases (JsonDict, ...) stay TypeAlias: `type X = ...` changes the runtime object every consumer imports
 ]
 
 [tool.ruff.lint.isort]

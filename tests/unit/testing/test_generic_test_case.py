@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 from http import HTTPStatus
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_type
 from unittest.mock import Mock, patch
 
 from python_sbb_polarion.core.base import PolarionGenericExtensionApi, PolarionGenericExtensionSettingsApi, PolarionRestApiConnection
@@ -151,7 +151,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_version_success(self) -> None:
         """Test run_test_get_version with successful response."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -180,7 +180,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_version_custom_automatic_module_name(self) -> None:
         """Test run_test_get_version accepts a custom (non ch.sbb.*) automatic module name."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -208,7 +208,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_version_validates_bundle_vendor(self) -> None:
         """Test run_test_get_version validates bundleVendor is 'SBB AG'."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -233,7 +233,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_version_validates_version_format(self) -> None:
         """Test run_test_get_version validates version format."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -258,7 +258,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_version_validates_automatic_module_name(self) -> None:
         """Test run_test_get_version validates automatic module name."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -283,7 +283,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_version_validates_timestamp_format(self) -> None:
         """Test run_test_get_version validates timestamp format."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -308,7 +308,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_version_validates_timestamp_digits_only(self) -> None:
         """Test run_test_get_version validates timestamp digits only format."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -333,7 +333,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_version_validates_status_code(self) -> None:
         """Test run_test_get_version validates status code is 200."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -349,7 +349,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_version_with_invalid_token(self, mock_http_connection_class: Mock) -> None:
         """Test run_test_get_version_with_invalid_token handles 401 error."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.UNAUTHORIZED
 
@@ -373,7 +373,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_version_with_invalid_token_assertion(self, mock_http_connection_class: Mock) -> None:
         """Test run_test_get_version_with_invalid_token asserts 401 status."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK  # Wrong status code
 
@@ -393,7 +393,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_context_success(self) -> None:
         """Test run_test_get_context with successful response."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -421,7 +421,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_context_validates_status_code(self) -> None:
         """Test run_test_get_context validates status code is 200."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -436,7 +436,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_context_validates_base_url(self) -> None:
         """Test run_test_get_context validates baseUrl."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -458,7 +458,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_context_validates_extension_context(self) -> None:
         """Test run_test_get_context validates extensionContext."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -480,7 +480,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_context_validates_rest_url(self) -> None:
         """Test run_test_get_context validates restUrl."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -502,7 +502,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_run_test_get_context_validates_swagger_url(self) -> None:
         """Test run_test_get_context validates swaggerUiUrl."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         mock_response = Mock()
         mock_response.status_code = HTTPStatus.OK
         mock_response.json.return_value = {
@@ -521,23 +521,69 @@ class TestGenericTestCase(unittest.TestCase):
         with self.assertRaises(AssertionError):
             test_case.run_test_get_context()
 
-    def test_api_method_raises_value_error(self) -> None:
-        """Test api method raises ValueError (abstract method)."""
+    def test_api_method_returns_extension_api(self) -> None:
+        """Test api method returns the extension API of the test case."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
+        mock_api = Mock(spec=PolarionGenericExtensionApi)
+        test_case.extension_api = mock_api
 
         # Act & Assert
-        with self.assertRaises(ValueError) as context:
-            test_case.api()
+        self.assertIs(test_case.api(), mock_api)
 
-        self.assertIn("Unknown extension API", str(context.exception))
+    def test_parameterized_subclass_is_a_test_case(self) -> None:
+        """Test a subclass parameterized with an extension API is a regular TestCase."""
+
+        # Arrange
+        class _ExtensionApi(PolarionGenericExtensionApi):
+            pass
+
+        class _ParameterizedTestCase(GenericTestCase[_ExtensionApi]):
+            pass
+
+        test_case: _ParameterizedTestCase = _ParameterizedTestCase()
+        mock_api = Mock(spec=_ExtensionApi)
+        test_case.extension_api = mock_api
+
+        # Act & Assert
+        self.assertIsInstance(test_case, unittest.TestCase)
+        self.assertIs(test_case.api(), mock_api)
+
+    def test_extension_api_is_typed_with_type_argument(self) -> None:
+        """Test extension_api and api() carry the type argument, and default to the generic API without one.
+
+        The assert_type calls are checked statically by ty; at runtime they only return their argument.
+        They take the test cases as parameters, so ty checks the declared types rather than the type
+        narrowed by the assignments below.
+        """
+
+        # Arrange
+        class _ExtensionApi(PolarionGenericExtensionApi):
+            pass
+
+        class _ParameterizedTestCase(GenericTestCase[_ExtensionApi]):
+            pass
+
+        def assert_declared_types(parameterized: _ParameterizedTestCase, unparameterized: GenericTestCase) -> None:
+            assert_type(parameterized.extension_api, _ExtensionApi)
+            assert_type(parameterized.api(), _ExtensionApi)
+            assert_type(unparameterized.extension_api, PolarionGenericExtensionApi)
+            assert_type(unparameterized.api(), PolarionGenericExtensionApi)
+
+        parameterized: _ParameterizedTestCase = _ParameterizedTestCase()
+        parameterized.extension_api = Mock(spec=_ExtensionApi)
+        unparameterized: GenericTestCase = GenericTestCase()
+        unparameterized.extension_api = Mock(spec=PolarionGenericExtensionApi)
+
+        # Act & Assert
+        assert_declared_types(parameterized, unparameterized)
 
     def test_init_settings(self) -> None:
         """Test _init_settings initializes settings with defaults."""
         from http import HTTPStatus
 
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
 
         mock_defaults_response = Mock()
         mock_defaults_response.json.return_value = {"default": "value"}
@@ -562,7 +608,7 @@ class TestGenericTestCase(unittest.TestCase):
         from http import HTTPStatus
 
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
 
         mock_defaults_response = Mock()
         mock_defaults_response.json.return_value = {"default": "value"}
@@ -584,7 +630,7 @@ class TestGenericTestCase(unittest.TestCase):
     def test_init_settings_raises_type_error_for_non_settings_api(self) -> None:
         """Test _init_settings raises TypeError when extension doesn't support settings."""
         # Arrange
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
 
         # Use base API without settings mixin
         mock_api = Mock(spec=PolarionGenericExtensionApi)
@@ -632,7 +678,7 @@ class TestGenericTestCase(unittest.TestCase):
 
         # Act - create extension API first to initialize polarion_api()
         GenericTestCase.create_extension_api("pdf-exporter")
-        test_case = GenericTestCase()  # ty: ignore[call-non-callable]
+        test_case = GenericTestCase()
         result: object = test_case.polarion_api()
 
         # Assert - polarion_api() returns PolarionApiV1
