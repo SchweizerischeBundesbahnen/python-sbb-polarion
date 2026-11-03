@@ -36,9 +36,9 @@ class TestPolarionStrictDocExporterApi(unittest.TestCase):
 
         export_params: JsonDict = {
             "projectId": "PROJ",
-            "location": "/Documents/Test",
-            "format": "sdoc",
-            "fileName": "export.sdoc",
+            "locations": [{"spaceId": "Specification", "moduleName": "Test"}],
+            "format": "SDOC",
+            "fileName": "export",
         }
         response: Response = self.api.export_live_doc(export_params)
 
@@ -57,9 +57,9 @@ class TestPolarionStrictDocExporterApi(unittest.TestCase):
 
         export_params: JsonDict = {
             "projectId": "PROJ",
-            "location": "/Documents/Test",
-            "format": "sdoc",
-            "fileName": "export.sdoc",
+            "locations": [{"spaceId": "Specification", "moduleName": "Test"}],
+            "format": "SDOC",
+            "fileName": "export",
         }
         response: Response = self.api.export_github_livedoc(export_params)
 
@@ -70,6 +70,84 @@ class TestPolarionStrictDocExporterApi(unittest.TestCase):
             data=export_params,
             headers=expected_headers,
         )
+
+    def test_find_widgets_bulk_export_items(self) -> None:
+        """Test getting the rows of a bulk export widget."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        request_params: JsonDict = {
+            "projectId": "elibrary",
+            "query": "type:testrun",
+        }
+        response: Response = self.api.find_widgets_bulk_export_items(request_params)
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_post.assert_called_once_with(
+            f"{self.api.rest_api_url}/widgets/bulk-export/items",
+            data=request_params,
+            headers={Header.ACCEPT: MediaType.JSON, Header.CONTENT_TYPE: MediaType.JSON},
+        )
+
+    def test_get_roles_without_scope(self) -> None:
+        """Test get_roles from RolesMixin without scope."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_roles()
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/roles",
+            params=None,
+        )
+
+    def test_get_roles_with_scope(self) -> None:
+        """Test get_roles from RolesMixin with scope."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_roles(scope="project/project1/")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/roles",
+            params={"scope": "project/project1/"},
+        )
+
+    # =========================================================================
+    # Settings Mixin Methods (from PolarionGenericExtensionSettingsApi)
+    # =========================================================================
+
+    def test_get_features(self) -> None:
+        """Test get_features method."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_features()
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(f"{self.api.rest_api_url}/settings")
+
+    def test_get_setting_names(self) -> None:
+        """Test get_setting_names method."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_setting_names("feature1")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(f"{self.api.rest_api_url}/settings/feature1/names", params=None)
+
+    def test_get_setting_content(self) -> None:
+        """Test get_setting_content method."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_setting_content("feature1", name="Custom", scope="project/test")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(f"{self.api.rest_api_url}/settings/feature1/names/Custom/content", params={"scope": "project/test"})
 
 
 if __name__ == "__main__":
