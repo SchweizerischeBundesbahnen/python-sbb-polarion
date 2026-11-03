@@ -129,13 +129,17 @@ class PolarionUiBrowser:
             page.close()
 
     def close(self) -> None:
-        """Close the browser."""
-        if self.__browser is not None:
-            self.__browser.close()
-        if self.__playwright is not None:
-            self.__playwright.stop()
-        if self.__server is not None:
-            self.__server.stop()
+        """Close the browser. Each step runs also when an earlier one fails, so no container is left running."""
+        try:
+            if self.__browser is not None:
+                self.__browser.close()
+        finally:
+            try:
+                if self.__playwright is not None:
+                    self.__playwright.stop()
+            finally:
+                if self.__server is not None:
+                    self.__server.stop()
 
     def open_page(self, path: str) -> Page:
         """Open a Polarion page in a new tab.

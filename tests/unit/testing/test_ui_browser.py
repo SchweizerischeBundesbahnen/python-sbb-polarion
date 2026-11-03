@@ -82,6 +82,18 @@ class TestStartAndClose(unittest.TestCase):
         self.playwright.stop.assert_called_once_with()
         self.container.stop.assert_called_once_with()
 
+    def test_close_stops_the_container_after_a_failure(self) -> None:
+        """Test that a failing browser close still stops Playwright and the container."""
+        self.browser.close.side_effect = PlaywrightError("connection closed")
+        browser: PolarionUiBrowser = PolarionUiBrowser("http://localhost", "user", "secret")
+        browser.start()
+
+        with self.assertRaises(PlaywrightError):
+            browser.close()
+
+        self.playwright.stop.assert_called_once_with()
+        self.container.stop.assert_called_once_with()
+
     def test_close_before_start_does_nothing(self) -> None:
         """Test that close works without start."""
         PolarionUiBrowser("http://localhost", "user", "secret").close()
