@@ -85,7 +85,9 @@ class TestImageDensity(unittest.TestCase):
     def test_unknown_name_raises_attribute_error(self) -> None:
         """A name that is not deprecated is still unknown"""
         with self.assertRaisesRegex(AttributeError, "has no attribute 'Unknown'"):
-            _ = pdf_exporter.Unknown
+            # A name read by getattr, as type checkers rightly refuse pdf_exporter.Unknown
+            name: str = "Unknown"
+            getattr(pdf_exporter, name)
 
 
 class TestOrientation(unittest.TestCase):

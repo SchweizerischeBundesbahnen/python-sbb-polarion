@@ -52,9 +52,12 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> type[ImageDensity]:
-    """Resolve the deprecated ImageDensity, with a DeprecationWarning."""
-    return deprecated_type(__name__, name)
+# Runtime only: a type checker would type every unknown name by it, so a typo would pass the check
+if not TYPE_CHECKING:
+
+    def __getattr__(name: str) -> type[ImageDensity]:
+        """Resolve the deprecated ImageDensity, with a DeprecationWarning."""
+        return deprecated_type(__name__, name)
 
 
 class PolarionPdfExporterApi(
