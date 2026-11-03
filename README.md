@@ -122,6 +122,7 @@ tests/
 - **extensions** - Client interfaces for SBB Polarion extensions (pdf-exporter, docx-exporter, admin-utility, etc.)
 - **linter** - Custom AST-based code style linter (PSP001-PSP017)
 - **testing** - Test helpers: `GenericTestCase`, `TestContainersHelper`, `TempProject`, `tear_down_all`
+- **testing (ui extra)** - Visual regression tests of Polarion pages: `PolarionUiBrowser`, `UiTestCase`, `PolarionUrls`, `compare_images`. Install with `python-sbb-polarion[ui]`; Docker runs the browser
 - **types** - Type definitions: `JsonDict`, `MediaType`, `Header`, `AuthScheme`, file upload types
 
 ## Development Commands
