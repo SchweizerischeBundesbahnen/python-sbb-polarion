@@ -18,7 +18,7 @@ from python_sbb_polarion.extensions._pdf_exporter import (
     TestRunAttachmentsMixin,
     UtilityMixin,
 )
-from python_sbb_polarion.extensions._pdf_exporter._types import ImageDensity, PdfVariant
+from python_sbb_polarion.extensions._pdf_exporter._types import PdfVariant, deprecated_type
 from python_sbb_polarion.extensions._shared_exporter_types import (
     CommentsRenderType,
     ConverterJobStatus,
@@ -35,7 +35,6 @@ __all__ = [
     "CommentsRenderType",
     "ConverterJobStatus",
     "DocumentType",
-    "ImageDensity",
     "Language",
     "Orientation",
     "PaperSize",
@@ -43,6 +42,11 @@ __all__ = [
     "PolarionPdfExporterApi",
     "WebhookAuthType",
 ]
+
+
+def __getattr__(name: str) -> type:
+    """Resolve the deprecated ImageDensity, with a DeprecationWarning."""
+    return deprecated_type(__name__, name)
 
 
 class PolarionPdfExporterApi(
