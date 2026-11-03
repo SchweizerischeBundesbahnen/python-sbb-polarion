@@ -51,6 +51,10 @@ __all__ = [
     "WebhookAuthType",
 ]
 
+if TYPE_CHECKING:
+    # Re-exported for type checkers only: a star import at runtime does not read the deprecated name
+    __all__ += ["ImageDensity"]
+
 
 # Runtime only: a type checker would type every unknown name by it, so a typo would pass the check
 if not TYPE_CHECKING:

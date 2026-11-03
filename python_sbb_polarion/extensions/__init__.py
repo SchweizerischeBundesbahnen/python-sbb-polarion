@@ -45,7 +45,7 @@ from python_sbb_polarion.extensions.xml_repair import PolarionXmlRepairApi
 
 
 if TYPE_CHECKING:
-    from python_sbb_polarion.extensions._pdf_exporter._types import ImageDensity
+    from python_sbb_polarion.extensions._pdf_exporter._types import ImageDensity as ImageDensity
 
 
 __all__ = [
