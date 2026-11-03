@@ -5,8 +5,12 @@ Each module corresponds to a specific Polarion extension from:
 https://github.com/SchweizerischeBundesbahnen/ch.sbb.polarion.extension.*
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from python_sbb_polarion.extensions._collection_checker._types import ReportFormat
-from python_sbb_polarion.extensions._pdf_exporter._types import ImageDensity, PdfVariant
+from python_sbb_polarion.extensions._pdf_exporter._types import PdfVariant, deprecated_type
 from python_sbb_polarion.extensions._shared_exporter_types import (
     CommentsRenderType,
     ConverterJobStatus,
@@ -40,12 +44,15 @@ from python_sbb_polarion.extensions.vcontext import PolarionVContextApi
 from python_sbb_polarion.extensions.xml_repair import PolarionXmlRepairApi
 
 
+if TYPE_CHECKING:
+    from python_sbb_polarion.extensions._pdf_exporter._types import ImageDensity as ImageDensity
+
+
 __all__ = [
     "AttachTableParams",
     "CommentsRenderType",
     "ConverterJobStatus",
     "DocumentType",
-    "ImageDensity",
     "Language",
     "Orientation",
     "PaperSize",
@@ -75,3 +82,11 @@ __all__ = [
     "ReportFormat",
     "WebhookAuthType",
 ]
+
+
+# Runtime only: a type checker would type every unknown name by it, so a typo would pass the check
+if not TYPE_CHECKING:
+
+    def __getattr__(name: str) -> type[ImageDensity]:
+        """Resolve the deprecated ImageDensity, with a DeprecationWarning."""
+        return deprecated_type(__name__, name)

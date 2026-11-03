@@ -7,6 +7,9 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock, mock_open, patch
 
+from python_sbb_polarion import extensions
+from python_sbb_polarion.extensions import pdf_exporter
+from python_sbb_polarion.extensions._pdf_exporter._types import ImageDensity
 from python_sbb_polarion.extensions.pdf_exporter import DocumentType, Orientation, PaperSize, PdfVariant, PolarionPdfExporterApi
 from python_sbb_polarion.types import Header, MediaType
 
@@ -56,6 +59,35 @@ class TestPdfVariant(unittest.TestCase):
         """Test that PdfVariant enum values are strings"""
         self.assertIsInstance(PdfVariant.PDF_A_2B, str)
         self.assertEqual(PdfVariant.PDF_A_2B, "PDF_A_2B")
+
+
+class TestImageDensity(unittest.TestCase):
+    """Test the deprecated ImageDensity enum"""
+
+    def test_image_density_warns_where_it_is_read(self) -> None:
+        """Both public modules still give ImageDensity, with a DeprecationWarning on the line that reads it"""
+        for module in (pdf_exporter, extensions):
+            with self.subTest(module=module.__name__):
+                with self.assertWarns(DeprecationWarning) as ctx:
+                    image_density: type[ImageDensity] = module.ImageDensity
+
+                self.assertIs(image_density, ImageDensity)
+                # ty checks this line: the module __getattr__ keeps the members typed
+                self.assertEqual(image_density.DPI_300, "DPI_300")
+                self.assertIn("ImageDensity is deprecated", str(ctx.warning))
+                self.assertEqual(ctx.filename, __file__)
+
+    def test_image_density_is_not_star_exported(self) -> None:
+        """A star import does not read ImageDensity, so it does not warn"""
+        self.assertNotIn("ImageDensity", pdf_exporter.__all__)
+        self.assertNotIn("ImageDensity", extensions.__all__)
+
+    def test_unknown_name_raises_attribute_error(self) -> None:
+        """A name that is not deprecated is still unknown"""
+        with self.assertRaisesRegex(AttributeError, "has no attribute 'Unknown'"):
+            # A name read by getattr, as type checkers rightly refuse pdf_exporter.Unknown
+            name: str = "Unknown"
+            getattr(pdf_exporter, name)
 
 
 class TestOrientation(unittest.TestCase):

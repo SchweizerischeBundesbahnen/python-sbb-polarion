@@ -9,6 +9,10 @@ The implementation is split into mixins for better organization:
 - UtilityMixin: Collections, document info, webhooks, project info
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from python_sbb_polarion.core.base import PolarionGenericExtensionApi, PolarionGenericExtensionSettingsApi, PolarionRestApiConnection
 from python_sbb_polarion.extensions._base import ExportPermissionMixin, RolesMixin
 from python_sbb_polarion.extensions._pdf_exporter import (
@@ -18,7 +22,7 @@ from python_sbb_polarion.extensions._pdf_exporter import (
     TestRunAttachmentsMixin,
     UtilityMixin,
 )
-from python_sbb_polarion.extensions._pdf_exporter._types import ImageDensity, PdfVariant
+from python_sbb_polarion.extensions._pdf_exporter._types import PdfVariant, deprecated_type
 from python_sbb_polarion.extensions._shared_exporter_types import (
     CommentsRenderType,
     ConverterJobStatus,
@@ -30,12 +34,15 @@ from python_sbb_polarion.extensions._shared_exporter_types import (
 )
 
 
+if TYPE_CHECKING:
+    from python_sbb_polarion.extensions._pdf_exporter._types import ImageDensity
+
+
 # Re-export for public API
 __all__ = [
     "CommentsRenderType",
     "ConverterJobStatus",
     "DocumentType",
-    "ImageDensity",
     "Language",
     "Orientation",
     "PaperSize",
@@ -43,6 +50,18 @@ __all__ = [
     "PolarionPdfExporterApi",
     "WebhookAuthType",
 ]
+
+if TYPE_CHECKING:
+    # Re-exported for type checkers only: a star import at runtime does not read the deprecated name
+    __all__ += ["ImageDensity"]
+
+
+# Runtime only: a type checker would type every unknown name by it, so a typo would pass the check
+if not TYPE_CHECKING:
+
+    def __getattr__(name: str) -> type[ImageDensity]:
+        """Resolve the deprecated ImageDensity, with a DeprecationWarning."""
+        return deprecated_type(__name__, name)
 
 
 class PolarionPdfExporterApi(
