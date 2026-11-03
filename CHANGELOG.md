@@ -1,5 +1,27 @@
 # Changelog
 
+## [5.1.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v5.0.0...v5.1.0) (2026-11-03)
+
+
+### Features
+
+* add Playwright-based helpers for visual regression tests of Polarion pages ([#158](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/158)) ([b8e10ee](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/b8e10eef3ebe42ef258cdf86562a83f38a61f585)), closes [#157](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/157)
+* deprecate ImageDensity ([#162](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/162)) ([a171c06](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/a171c0664dcdc4be3713295d7d08278527947871))
+
+
+### Bug Fixes
+
+* **deps:** update dependency pytest to v9.2.0 ([1e5c011](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/1e5c0118469d6b0bc84d7f99f495626e14a6e41b))
+* **deps:** update dependency ruff to v0.17.3 ([4fc7931](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/4fc7931f4ebc2effe84136308dfa995c9361eba9))
+* **deps:** update dependency tox to v4.67.2 ([d967261](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/d9672617637df58823b14fe8d9d59eec6f1c6d9b))
+* **deps:** update dependency tox to v4.67.4 ([dad4cea](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/dad4ceacae847eb845e583c3c3f071f9a68f03d1))
+* **deps:** update dependency tox to v4.67.5 ([c838805](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/c8388053d4aff02fca90fd19a3c77e04a274304e))
+* **deps:** update dependency tox-uv to v1.37.2 ([a63f7cf](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/a63f7cf463bdc981877a8c86ffcbc9214e9de413))
+* **deps:** update dependency ty to v0.0.92 ([ac7a9f7](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/ac7a9f7c0f6a2f3e32fb62005b3dafe2c9dcc56d))
+* **deps:** update dependency ty to v0.0.93 ([101c4b3](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/101c4b384d45634963e7999c420522cd4f36b6fe))
+* **deps:** update dependency ty to v0.0.94 ([942548a](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/942548a069bfa000e702df951314e4792dc75fee))
+* **deps:** update dependency ty to v0.0.95 ([f1e383e](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/f1e383e3bb7c44b0591aaa9b94d77b78cc996ee8))
+
 ## [5.0.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v4.4.0...v5.0.0) (2026-10-27)
 
 
