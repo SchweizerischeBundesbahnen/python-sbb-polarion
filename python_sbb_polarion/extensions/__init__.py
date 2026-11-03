@@ -5,6 +5,10 @@ Each module corresponds to a specific Polarion extension from:
 https://github.com/SchweizerischeBundesbahnen/ch.sbb.polarion.extension.*
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from python_sbb_polarion.extensions._collection_checker._types import ReportFormat
 from python_sbb_polarion.extensions._pdf_exporter._types import PdfVariant, deprecated_type
 from python_sbb_polarion.extensions._shared_exporter_types import (
@@ -38,6 +42,10 @@ from python_sbb_polarion.extensions.strictdoc_exporter import PolarionStrictDocE
 from python_sbb_polarion.extensions.test_data import PolarionTestDataApi
 from python_sbb_polarion.extensions.vcontext import PolarionVContextApi
 from python_sbb_polarion.extensions.xml_repair import PolarionXmlRepairApi
+
+
+if TYPE_CHECKING:
+    from python_sbb_polarion.extensions._pdf_exporter._types import ImageDensity
 
 
 __all__ = [
@@ -76,6 +84,6 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> type:
+def __getattr__(name: str) -> type[ImageDensity]:
     """Resolve the deprecated ImageDensity, with a DeprecationWarning."""
     return deprecated_type(__name__, name)

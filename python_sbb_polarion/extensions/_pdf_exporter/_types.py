@@ -43,7 +43,7 @@ class ImageDensity(StrEnum):
 IMAGE_DENSITY_DEPRECATION: str = "ImageDensity is deprecated and will be removed in a future major release; weasyprint-service 70.0.8 and later ignores it."
 
 
-def deprecated_type(module_name: str, name: str) -> type[StrEnum]:
+def deprecated_type(module_name: str, name: str) -> type[ImageDensity]:
     """Resolve a deprecated type of a module, for its ``__getattr__``.
 
     Emits a ``DeprecationWarning`` that points at the code which reads the name.

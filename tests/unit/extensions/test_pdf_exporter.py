@@ -69,9 +69,11 @@ class TestImageDensity(unittest.TestCase):
         for module in (pdf_exporter, extensions):
             with self.subTest(module=module.__name__):
                 with self.assertWarns(DeprecationWarning) as ctx:
-                    image_density: type = module.ImageDensity
+                    image_density: type[ImageDensity] = module.ImageDensity
 
                 self.assertIs(image_density, ImageDensity)
+                # ty checks this line: the module __getattr__ keeps the members typed
+                self.assertEqual(image_density.DPI_300, "DPI_300")
                 self.assertIn("ImageDensity is deprecated", str(ctx.warning))
                 self.assertEqual(ctx.filename, __file__)
 

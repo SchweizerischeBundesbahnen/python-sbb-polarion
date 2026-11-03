@@ -9,6 +9,10 @@ The implementation is split into mixins for better organization:
 - UtilityMixin: Collections, document info, webhooks, project info
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from python_sbb_polarion.core.base import PolarionGenericExtensionApi, PolarionGenericExtensionSettingsApi, PolarionRestApiConnection
 from python_sbb_polarion.extensions._base import ExportPermissionMixin, RolesMixin
 from python_sbb_polarion.extensions._pdf_exporter import (
@@ -30,6 +34,10 @@ from python_sbb_polarion.extensions._shared_exporter_types import (
 )
 
 
+if TYPE_CHECKING:
+    from python_sbb_polarion.extensions._pdf_exporter._types import ImageDensity
+
+
 # Re-export for public API
 __all__ = [
     "CommentsRenderType",
@@ -44,7 +52,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> type:
+def __getattr__(name: str) -> type[ImageDensity]:
     """Resolve the deprecated ImageDensity, with a DeprecationWarning."""
     return deprecated_type(__name__, name)
 
