@@ -35,6 +35,7 @@ class TestStartAndClose(unittest.TestCase):
         self.page: MagicMock = self.context.new_page.return_value
         self.enterContext(patch(f"{MODULE}.version", return_value="1.64.1"))
         self.enterContext(patch(f"{MODULE}.wait_for_logs"))
+        self.enterContext(patch(f"{MODULE}.secrets.token_urlsafe", return_value="random-token"))
         self.docker_container: MagicMock = self.enterContext(patch(f"{MODULE}.DockerContainer", return_value=self.container))
         sync_playwright: MagicMock = self.enterContext(patch(f"{MODULE}.sync_playwright"))
         sync_playwright.return_value.start.return_value = self.playwright
@@ -46,8 +47,8 @@ class TestStartAndClose(unittest.TestCase):
         browser.start()
 
         self.docker_container.assert_called_once_with(image="mcr.microsoft.com/playwright:v1.64.1-noble")
-        self.container.with_command.assert_called_once_with("npx -y playwright@1.64.1 run-server --port 3000 --host 0.0.0.0")
-        self.playwright.chromium.connect.assert_called_once_with("ws://localhost:49153/", expose_network="*")
+        self.container.with_command.assert_called_once_with("npx -y playwright@1.64.1 run-server --port 3000 --host 0.0.0.0 --path /random-token")
+        self.playwright.chromium.connect.assert_called_once_with("ws://localhost:49153/random-token", expose_network="*")
         self.browser.new_context.assert_called_once_with(viewport={"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT})
         self.page.goto.assert_called_once_with("http://localhost/polarion/")
         self.page.fill.assert_has_calls([call(USERNAME_FIELD, "user"), call(PASSWORD_FIELD, "secret")])

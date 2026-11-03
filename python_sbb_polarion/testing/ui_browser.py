@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import secrets
 import time
 from importlib.metadata import version
 from typing import TYPE_CHECKING
@@ -93,18 +94,20 @@ class PolarionUiBrowser:
             RuntimeError: If Polarion does not accept the login
         """
         playwright_version: str = version("playwright")
+        # Docker publishes the port on every host interface, so only who knows this path can drive the browser.
+        server_path: str = f"/{secrets.token_urlsafe(24)}"
         self.__server = (
             DockerContainer(image=f"mcr.microsoft.com/playwright:v{playwright_version}-noble")
             .with_exposed_ports(SERVER_PORT)
             .with_kwargs(shm_size=SERVER_SHM_SIZE)
-            .with_command(f"npx -y playwright@{playwright_version} run-server --port {SERVER_PORT} --host 0.0.0.0")
+            .with_command(f"npx -y playwright@{playwright_version} run-server --port {SERVER_PORT} --host 0.0.0.0 --path {server_path}")
         )
         self.__server.start()
         wait_for_logs(self.__server, "Listening on", timeout=SERVER_START_TIMEOUT_SECONDS)
 
         self.__playwright = sync_playwright().start()
         self.__browser = self.__playwright.chromium.connect(
-            f"ws://{self.__server.get_container_host_ip()}:{self.__server.get_exposed_port(SERVER_PORT)}/",
+            f"ws://{self.__server.get_container_host_ip()}:{self.__server.get_exposed_port(SERVER_PORT)}{server_path}",
             # The browser reaches Polarion through this process, so localhost and VPN hosts work unchanged.
             expose_network="*",
         )
