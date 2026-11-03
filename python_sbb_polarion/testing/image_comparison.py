@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-# Rendering noise such as anti-aliasing stays below this difference in gray level.
+# Rendering noise such as anti-aliasing stays below this difference in each color channel.
 TOLERANCE: int = 10
 
 # (left, top, right, bottom) in pixels, with the origin at the top left corner
@@ -59,8 +59,9 @@ def compare_images(expected_path: Path, actual_path: Path, ignore_regions: list[
     for left, top, right, bottom in ignore_regions or []:
         difference[max(top, 0) : max(bottom, 0), max(left, 0) : max(right, 0)] = 0
 
-    gray: NDArray[np.uint8] = np.asarray(cv2.cvtColor(difference, cv2.COLOR_BGR2GRAY), dtype=np.uint8)
-    return ImageDifference(int(np.count_nonzero(gray > TOLERANCE)), difference)
+    # Zero the noise, so the count and the saved image of the differences agree
+    difference[difference.max(axis=2) <= TOLERANCE] = 0
+    return ImageDifference(int(np.count_nonzero(difference.any(axis=2))), difference)
 
 
 def save_difference_image(difference: NDArray[np.uint8], path: Path) -> None:

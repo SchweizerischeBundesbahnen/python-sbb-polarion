@@ -53,6 +53,28 @@ class TestCompareImages(unittest.TestCase):
 
         self.assertEqual(0, compare_images(expected, actual).pixels)
 
+    def test_counts_a_change_in_one_channel(self) -> None:
+        """Test that a change in only the blue channel counts, which grayscale would weight at 0.114."""
+        expected: Path = _write_image(self.path / "expected.png")
+        image: np.ndarray = np.full((20, 30, 3), 255, dtype=np.uint8)
+        image[0, 0] = [205, 255, 255]
+        actual: Path = self.path / "actual.png"
+        cv2.imwrite(str(actual), image)
+
+        self.assertEqual(1, compare_images(expected, actual).pixels)
+
+    def test_difference_image_leaves_noise_out(self) -> None:
+        """Test that the image of the differences shows only the counted pixels."""
+        expected: Path = _write_image(self.path / "expected.png", gray=200)
+        actual: Path = _write_image(self.path / "actual.png", gray=205)
+
+        difference: ImageDifference = compare_images(expected, actual)
+
+        image: np.ndarray | None = difference.image
+        if image is None:
+            self.fail("No image of the differences")
+        self.assertEqual(0, int(np.count_nonzero(image)))
+
     def test_leaves_ignore_regions_out(self) -> None:
         """Test that a difference inside an ignore region does not count."""
         expected: Path = _write_image(self.path / "expected.png")

@@ -6,6 +6,8 @@ import os
 import shutil
 from typing import TYPE_CHECKING, ClassVar
 
+import cv2
+
 from python_sbb_polarion.testing.generic_test_case import GenericTestCase
 from python_sbb_polarion.testing.image_comparison import ImageDifference, compare_images, save_difference_image
 from python_sbb_polarion.testing.ui_browser import PolarionUiBrowser
@@ -15,6 +17,9 @@ from python_sbb_polarion.util.argparse import get_script_arguments
 if TYPE_CHECKING:
     import argparse
     from pathlib import Path
+
+    import numpy as np
+    from numpy.typing import NDArray
 
     from python_sbb_polarion.testing.image_comparison import IgnoreRegion
 
@@ -80,7 +85,15 @@ class UiTestCase(GenericTestCase):
             self.fail(f"No expected image '{expected}'. Check '{actual}', then run with {UPDATE_SNAPSHOTS_VARIABLE}=1.")
 
         difference: ImageDifference = compare_images(expected, actual, ignore_regions=ignore_regions)
+        if difference.image is None:
+            self.fail(f"'{actual}' has size {_size(actual)}, expected {_size(expected)} of '{expected}'")
         if difference.pixels > 0:
-            if difference.image is not None:
-                save_difference_image(difference.image, self.output_folder / f"{name}_diff.png")
+            save_difference_image(difference.image, self.output_folder / f"{name}_diff.png")
             self.fail(f"'{actual}' differs from '{expected}': {difference.pixels} pixels")
+
+
+def _size(path: Path) -> str:
+    image: NDArray[np.uint8] | None = cv2.imread(str(path))  # ty: ignore[invalid-assignment]
+    if image is None:
+        return "unknown"
+    return f"{image.shape[1]}x{image.shape[0]}"

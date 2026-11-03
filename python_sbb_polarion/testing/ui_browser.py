@@ -162,15 +162,15 @@ class PolarionUiBrowser:
         Args:
             page: Page to search
             selector: CSS selector of an element the frame must contain
-            text: Regular expression of a text the frame must show
-            url_pattern: Regular expression the frame URL must match
+            text: JavaScript regular expression of a text the frame must show
+            url_pattern: Python regular expression the frame URL must match
             timeout_seconds: Time to wait
 
         Returns:
             Frame: The first frame that matches
 
         Raises:
-            ValueError: If no condition is given
+            ValueError: If no condition is given, or the selector or the text is invalid
             TimeoutError: If no frame matches in time
         """
         if selector is None and text is None and url_pattern is None:
@@ -184,7 +184,9 @@ class PolarionUiBrowser:
                 try:
                     matches: bool = frame.evaluate(FRAME_MATCH_SCRIPT, [selector, text])
                 # A frame can reload or disappear while Polarion builds the page.
-                except PlaywrightError:
+                except PlaywrightError as error:
+                    if "SyntaxError" in str(error):
+                        raise ValueError(f"Invalid selector={selector!r} or text={text!r}: {error}") from error
                     continue
                 if matches:
                     return frame
@@ -211,7 +213,7 @@ class PolarionUiBrowser:
             frame: Frame of the element
             selector: CSS selector of the element
             path: Path of the image to write
-            text_replacements: Regular expressions of text that changes between runs, with its replacement
+            text_replacements: JavaScript regular expressions of text that changes between runs, with its replacement
             mask_selectors: CSS selectors of elements in the frame that change between runs, painted over with one color
             style: CSS applied only while the screenshot is taken, for example to hide a sidebar
         """

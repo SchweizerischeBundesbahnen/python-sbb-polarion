@@ -59,6 +59,17 @@ class TestAssertImageMatchesExpected(unittest.TestCase):
             self.case.assert_image_matches_expected("page")
         self.assertTrue((_SnapshotTest.output_folder / "page_diff.png").is_file())
 
+    def test_different_size_fails_with_both_sizes(self) -> None:
+        """Test that images of different sizes fail with both sizes in the message."""
+        self.case.output_image("page").parent.mkdir(parents=True, exist_ok=True)
+        cv2.imwrite(str(self.case.output_image("page")), np.full((12, 10, 3), 255, dtype=np.uint8))
+        _write_image(_SnapshotTest.expected_folder / "page.png")
+
+        with self.assertRaises(AssertionError) as context:
+            self.case.assert_image_matches_expected("page")
+        self.assertIn("10x12", str(context.exception))
+        self.assertIn("10x10", str(context.exception))
+
     def test_missing_expected_image_fails(self) -> None:
         """Test that a missing expected image fails and names the update variable."""
         _write_image(self.case.output_image("page"))

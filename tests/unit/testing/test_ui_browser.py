@@ -134,6 +134,15 @@ class TestFindFrame(unittest.TestCase):
 
         self.assertIs(right, PolarionUiBrowser.find_frame(page, text="Result"))
 
+    def test_invalid_pattern_fails_at_once(self) -> None:
+        """Test that a selector or pattern the browser cannot parse fails without waiting."""
+        broken: MagicMock = _frame("http://localhost/polarion/", matches=PlaywrightError("SyntaxError: Invalid regular expression"))
+        page: MagicMock = MagicMock(frames=[broken])
+
+        with self.assertRaises(ValueError):
+            PolarionUiBrowser.find_frame(page, text="(?i)status")
+        page.wait_for_timeout.assert_not_called()
+
     def test_polls_until_a_frame_matches(self) -> None:
         """Test that find_frame waits and searches again."""
         frame: MagicMock = MagicMock(url="http://localhost/polarion/")
