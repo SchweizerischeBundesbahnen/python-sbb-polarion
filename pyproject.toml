@@ -21,6 +21,12 @@ dependencies = [
     "tzlocal>=5.4.3",
 ]
 
+[project.optional-dependencies]
+ui = [
+    "playwright>=1.55",
+    "opencv-python-headless>=5.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion"
 Repository = "https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion"
@@ -41,6 +47,9 @@ dev = [
     "types-requests-oauthlib>=2.0.0.20250809",
     "types-docker>=7.1.0.20241231",
     "python-dotenv>=1.1.1",
+    # The ui extra, so type checks and unit tests cover the UI test helpers
+    "playwright>=1.55",
+    "opencv-python-headless>=5.0",
 ]
 test = [
     "tox==4.67.5",
