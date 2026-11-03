@@ -25,13 +25,14 @@ class ExportMixin(BaseMixin):
         response_type="binary",
     )
     def export_live_doc(self, export_params: JsonDict) -> Response:
-        """Export Polarion live document to StrictDoc format.
+        """Export Polarion live documents to StrictDoc format.
 
         Args:
-            export_params: Export parameters containing projectId, location, format, fileName
+            export_params: Export parameters containing projectId, locations
+                (list of {spaceId, moduleName, revision?, baselineRevision?}), format, fileName, renderComments
 
         Returns:
-            Response: Response object with exported document content
+            Response: Response object with a zip archive holding the exported documents
         """
         url: str = f"{self.rest_api_url}/export/livedoc"
         headers: dict[str, str] = {
@@ -47,13 +48,14 @@ class ExportMixin(BaseMixin):
         response_type="binary",
     )
     def export_github_livedoc(self, export_params: JsonDict) -> Response:
-        """Export a Polarion live document to StrictDoc format on GitHub.
+        """Export Polarion live documents to StrictDoc format and upload them to GitHub.
 
         Args:
-            export_params: Export parameters containing projectId, location, format, fileName
+            export_params: Export parameters containing projectId, locations
+                (list of {spaceId, moduleName, revision?, baselineRevision?}), folderName, owner, repo, commitMessage
 
         Returns:
-            Response: Response object with exported document content
+            Response: Response object from the API call
         """
         url: str = f"{self.rest_api_url}/export-github/livedoc"
         headers: dict[str, str] = {
@@ -61,3 +63,23 @@ class ExportMixin(BaseMixin):
             Header.CONTENT_TYPE: MediaType.JSON,
         }
         return self.polarion_connection.api_request_post(url, headers=headers, data=export_params)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/widgets/bulk-export/items",
+        body_param="request_params",
+        required_params=["__request_body__"],
+        response_type="json",
+    )
+    def find_widgets_bulk_export_items(self, request_params: JsonDict) -> Response:
+        """Get the rows of a bulk export widget.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/widgets/bulk-export/items"
+        headers: dict[str, str] = {
+            Header.ACCEPT: MediaType.JSON,
+            Header.CONTENT_TYPE: MediaType.JSON,
+        }
+        return self.polarion_connection.api_request_post(url, data=request_params, headers=headers)
