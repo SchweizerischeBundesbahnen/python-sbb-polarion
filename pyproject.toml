@@ -52,7 +52,7 @@ dev = [
     "opencv-python-headless>=5.0",
 ]
 test = [
-    "tox==4.67.8",
+    "tox==4.67.9",
     "tox-uv==1.37.4",
     "pytest==9.2.0",
     "pytest-cov==7.1.0",
