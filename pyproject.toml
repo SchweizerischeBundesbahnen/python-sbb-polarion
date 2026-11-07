@@ -53,7 +53,7 @@ dev = [
 ]
 test = [
     "tox==4.67.9",
-    "tox-uv==1.37.4",
+    "tox-uv==1.37.5",
     "pytest==9.2.0",
     "pytest-cov==7.1.0",
 ]
