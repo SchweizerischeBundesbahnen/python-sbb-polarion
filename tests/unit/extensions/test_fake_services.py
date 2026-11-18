@@ -418,3 +418,110 @@ class TestPolarionFakeServicesApi(unittest.TestCase):
         self.mock_connection.api_request_get.assert_called_once_with(
             f"{self.api.rest_api_url}/opentext/manage/tickets",
         )
+
+    # =========================================================================
+    # Fake export webhook
+    # =========================================================================
+
+    def test_webhook_respond_path_with_key_only(self) -> None:
+        """Test the path of a webhook which answers the way an untouched export expects."""
+        self.assertEqual(self.api.webhook_respond_path("case_1"), "/polarion/fake-services/rest/api/webhook/respond?key=case_1")
+
+    def test_webhook_respond_path_with_every_parameter(self) -> None:
+        """Test that every parameter reaches the query, encoded."""
+        path: str = self.api.webhook_respond_path(
+            "case_1",
+            status=500,
+            body="Not approved",
+            body_size=700,
+            delay_millis=1500,
+            append="<p>Webhook was here</p>",
+        )
+
+        self.assertEqual(
+            path,
+            "/polarion/fake-services/rest/api/webhook/respond?key=case_1&status=500&body=Not+approved&bodySize=700&delayMillis=1500&append=%3Cp%3EWebhook+was+here%3C%2Fp%3E",
+        )
+
+    def test_call_webhook(self) -> None:
+        """Test calling the fake webhook the way an exporter does."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        response: Response = self.api.call_webhook("<html></html>", export_params='{"projectId":"elibrary"}', key="case_1", status=500, body="Not approved")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_post.assert_called_once_with(
+            f"{self.api.rest_api_url}/webhook/respond",
+            params={"key": "case_1", "status": "500", "body": "Not approved"},
+            files={
+                "exportParams": ("exportParams.json", '{"projectId":"elibrary"}'),
+                "html": ("html.html", "<html></html>"),
+            },
+        )
+
+    def test_call_webhook_without_parameters(self) -> None:
+        """Test that a call without parameters sends no query."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        self.api.call_webhook("<html></html>")
+
+        self.mock_connection.api_request_post.assert_called_once_with(
+            f"{self.api.rest_api_url}/webhook/respond",
+            params=None,
+            files={
+                "exportParams": ("exportParams.json", "{}"),
+                "html": ("html.html", "<html></html>"),
+            },
+        )
+
+    def test_get_webhook_calls(self) -> None:
+        """Test getting the recorded webhook calls of one bucket."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.get_webhook_calls("case_1")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/webhook/manage/calls",
+            params={"key": "case_1"},
+        )
+
+    def test_get_webhook_calls_without_key(self) -> None:
+        """Test getting every recorded webhook call."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        self.api.get_webhook_calls()
+
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/webhook/manage/calls",
+            params=None,
+        )
+
+    def test_delete_webhook_calls(self) -> None:
+        """Test deleting the recorded webhook calls of one bucket."""
+        mock_response = Mock()
+        self.mock_connection.api_request_delete.return_value = mock_response
+
+        response: Response = self.api.delete_webhook_calls("case_1")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_delete.assert_called_once_with(
+            f"{self.api.rest_api_url}/webhook/manage/calls",
+            params={"key": "case_1"},
+        )
+
+    def test_delete_webhook_calls_without_key(self) -> None:
+        """Test deleting every recorded webhook call."""
+        mock_response = Mock()
+        self.mock_connection.api_request_delete.return_value = mock_response
+
+        self.api.delete_webhook_calls()
+
+        self.mock_connection.api_request_delete.assert_called_once_with(
+            f"{self.api.rest_api_url}/webhook/manage/calls",
+            params=None,
+        )
