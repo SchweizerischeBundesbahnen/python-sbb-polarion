@@ -460,6 +460,37 @@ class TestPolarionFakeServicesApi(unittest.TestCase):
             },
         )
 
+    def test_call_webhook_with_every_parameter(self) -> None:
+        """Test that every parameter of a call reaches the query."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+
+        self.api.call_webhook(
+            "<html></html>",
+            key="case_1",
+            status=500,
+            body="Not approved",
+            body_size=700,
+            delay_millis=1500,
+            append="<p>Webhook was here</p>",
+        )
+
+        self.mock_connection.api_request_post.assert_called_once_with(
+            f"{self.api.rest_api_url}/webhook/respond",
+            params={
+                "key": "case_1",
+                "status": "500",
+                "body": "Not approved",
+                "bodySize": "700",
+                "delayMillis": "1500",
+                "append": "<p>Webhook was here</p>",
+            },
+            files={
+                "exportParams": ("exportParams.json", "{}"),
+                "html": ("html.html", "<html></html>"),
+            },
+        )
+
     def test_call_webhook_without_parameters(self) -> None:
         """Test that a call without parameters sends no query."""
         mock_response = Mock()
