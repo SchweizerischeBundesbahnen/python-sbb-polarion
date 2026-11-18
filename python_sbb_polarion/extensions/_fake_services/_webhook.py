@@ -18,6 +18,47 @@ if TYPE_CHECKING:
 WEBHOOK_RESPOND_PATH = "/polarion/fake-services/rest/api/webhook/respond"
 
 
+def _respond_query(
+    key: str | None = None,
+    status: int | None = None,
+    body: str | None = None,
+    body_size: int | None = None,
+    delay_millis: int | None = None,
+    append: str | None = None,
+) -> dict[str, str]:
+    """The query which tells the fake webhook how to answer, holding only the parameters that were given.
+
+    One builder for both callers: a URL stored in a configuration and a direct call have to mean the same thing,
+    and a query name renamed in one copy of this would silently make them differ.
+
+    Args:
+        key: the bucket the calls are recorded in, so parallel cases do not read each other's calls
+        status: the status to answer with, 200 where it is not given
+        body: the body to answer a refusal with
+        body_size: the length of a generated body, used where no body is given
+        delay_millis: how long the webhook holds its answer back
+        append: markup inserted before </body> of the HTML the webhook answers with
+
+    Returns:
+        dict[str, str]: the query parameters, as the fake names them
+    """
+    query: dict[str, str] = {}
+    if key is not None:
+        query["key"] = key
+    if status is not None:
+        # int() and not str() alone: a caller passing an HTTPStatus member gets its number on every version
+        query["status"] = str(int(status))
+    if body is not None:
+        query["body"] = body
+    if body_size is not None:
+        query["bodySize"] = str(int(body_size))
+    if delay_millis is not None:
+        query["delayMillis"] = str(int(delay_millis))
+    if append is not None:
+        query["append"] = append
+    return query
+
+
 class WebhookMixin(BaseMixin):
     """Fake export webhook operations.
 
@@ -51,17 +92,7 @@ class WebhookMixin(BaseMixin):
         Returns:
             str: the path and query to store as the URL of a webhook
         """
-        query: dict[str, str] = {"key": key}
-        if status is not None:
-            query["status"] = str(int(status))
-        if body is not None:
-            query["body"] = body
-        if body_size is not None:
-            query["bodySize"] = str(int(body_size))
-        if delay_millis is not None:
-            query["delayMillis"] = str(int(delay_millis))
-        if append is not None:
-            query["append"] = append
+        query: dict[str, str] = _respond_query(key, status, body, body_size, delay_millis, append)
         return f"{WEBHOOK_RESPOND_PATH}?{urlencode(query)}"
 
     @restapi_endpoint(
@@ -101,19 +132,7 @@ class WebhookMixin(BaseMixin):
             Response: Response object from the API call
         """
         url: str = f"{self.rest_api_url}/webhook/respond"
-        params: dict[str, str] = {}
-        if key is not None:
-            params["key"] = key
-        if status is not None:
-            params["status"] = str(int(status))
-        if body is not None:
-            params["body"] = body
-        if body_size is not None:
-            params["bodySize"] = str(int(body_size))
-        if delay_millis is not None:
-            params["delayMillis"] = str(int(delay_millis))
-        if append is not None:
-            params["append"] = append
+        params: dict[str, str] = _respond_query(key, status, body, body_size, delay_millis, append)
         files: FilesDict = {
             "exportParams": ("exportParams.json", export_params),
             "html": ("html.html", html),
