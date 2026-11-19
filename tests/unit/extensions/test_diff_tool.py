@@ -13,7 +13,7 @@ from python_sbb_polarion.types import Header, MediaType
 if TYPE_CHECKING:
     from requests import Response
 
-    from python_sbb_polarion.types import JsonDict
+    from python_sbb_polarion.types import JsonDict, JsonList
 
 
 class TestPolarionDiffToolApi(unittest.TestCase):
@@ -724,6 +724,64 @@ class TestPolarionDiffToolApi(unittest.TestCase):
         self.mock_connection.api_request_get.assert_called_once_with(
             f"{self.api.rest_api_url}/projects/project1/workitems/search",
             params={"query": "type:task", "sortBy": "id", "page": "1", "recordsPerPage": "25"},
+        )
+
+    def test_search_documents_without_params(self) -> None:
+        """Test search_documents without optional parameters."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.search_documents("project1")
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/projects/project1/documents/search",
+            params=None,
+        )
+
+    def test_search_documents_with_params(self) -> None:
+        """Test search_documents with query and paging."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.search_documents("project1", query="space.id:Specification", page=2, records_per_page=50)
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/projects/project1/documents/search",
+            params={"query": "space.id:Specification", "page": "2", "recordsPerPage": "50"},
+        )
+
+    def test_search_documents_with_first_page(self) -> None:
+        """Test search_documents sends page zero, which is falsy but valid."""
+        mock_response = Mock()
+        self.mock_connection.api_request_get.return_value = mock_response
+
+        response: Response = self.api.search_documents("project1", page=0)
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_get.assert_called_once_with(
+            f"{self.api.rest_api_url}/projects/project1/documents/search",
+            params={"page": "0"},
+        )
+
+    def test_check_documents(self) -> None:
+        """Test check_documents posts the document references."""
+        mock_response = Mock()
+        self.mock_connection.api_request_post.return_value = mock_response
+        documents: JsonList = [
+            {
+                "spaceId": "Specification",
+                "name": "Requirements",
+            },
+        ]
+
+        response: Response = self.api.check_documents("project1", documents)
+
+        self.assertEqual(response, mock_response)
+        self.mock_connection.api_request_post.assert_called_once_with(
+            f"{self.api.rest_api_url}/projects/project1/documents/resolve",
+            data=documents,
         )
 
     def test_get_link_roles(self) -> None:
