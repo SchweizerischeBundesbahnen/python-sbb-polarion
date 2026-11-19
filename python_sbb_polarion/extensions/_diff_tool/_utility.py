@@ -11,7 +11,7 @@ from python_sbb_polarion.extensions._base import BaseMixin
 if TYPE_CHECKING:
     from requests import Response
 
-    from python_sbb_polarion.types import JsonDict
+    from python_sbb_polarion.types import JsonDict, JsonList
 
 
 class UtilityMixin(BaseMixin):
@@ -348,6 +348,55 @@ class UtilityMixin(BaseMixin):
         if records_per_page is not None:
             params["recordsPerPage"] = str(records_per_page)
         return self.polarion_connection.api_request_get(url, params=params or None)
+
+    @restapi_endpoint(
+        method="GET",
+        path="/api/projects/{projectId}/documents/search",
+        path_params={
+            "projectId": "project_id",
+        },
+        query_params={
+            "query": "query",
+            "page": "page",
+            "recordsPerPage": "records_per_page",
+        },
+        required_params=["projectId"],
+        response_type="json",
+    )
+    def search_documents(self, project_id: str, query: str | None = None, page: int | None = None, records_per_page: int | None = None) -> Response:
+        """Search documents of a project, ordered by space and name.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/projects/{project_id}/documents/search"
+        params: dict[str, str] = {}
+        if query:
+            params["query"] = query
+        if page is not None:
+            params["page"] = str(page)
+        if records_per_page is not None:
+            params["recordsPerPage"] = str(records_per_page)
+        return self.polarion_connection.api_request_get(url, params=params or None)
+
+    @restapi_endpoint(
+        method="POST",
+        path="/api/projects/{projectId}/documents/resolve",
+        path_params={
+            "projectId": "project_id",
+        },
+        body_param="data",
+        required_params=["projectId", "__request_body__"],
+        response_type="json",
+    )
+    def check_documents(self, project_id: str, data: JsonList) -> Response:
+        """Tell for each given document (spaceId and name) if it exists in the project and is readable.
+
+        Returns:
+            Response: Response object from the API call
+        """
+        url: str = f"{self.rest_api_url}/projects/{project_id}/documents/resolve"
+        return self.polarion_connection.api_request_post(url, data=data)
 
     @restapi_endpoint(
         method="GET",
