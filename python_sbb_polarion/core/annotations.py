@@ -38,7 +38,7 @@ def deprecated_method(replacement: str) -> Callable[[F], F]:
             return func(*args, **kwargs)
 
         wrapper.__deprecated_replacement__ = replacement  # ty: ignore[missing-attribute]
-        return wrapper  # ty: ignore[invalid-return-type]
+        return wrapper  # ty: ignore[invalid-explicit-return]
 
     return decorator
 
