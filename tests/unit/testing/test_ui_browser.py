@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, call, patch
@@ -9,10 +10,20 @@ from unittest.mock import MagicMock, call, patch
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-from python_sbb_polarion.testing.ui_browser import MISSING_HEIGHT_SCRIPT, PASSWORD_FIELD, USERNAME_FIELD, VIEWPORT_HEIGHT, VIEWPORT_WIDTH, PolarionUiBrowser
+from python_sbb_polarion.testing.ui_browser import MISSING_HEIGHT_SCRIPT, PASSWORD_FIELD, USERNAME_FIELD, VIEWPORT_HEIGHT, VIEWPORT_WIDTH, PolarionUiBrowser, _playwright_driver_version
 
 
 MODULE: str = "python_sbb_polarion.testing.ui_browser"
+
+
+class TestPlaywrightDriverVersion(unittest.TestCase):
+    """Test reading the version of the driver bundled with Playwright."""
+
+    def test_reads_the_bundled_driver(self) -> None:
+        """Test that the installed Playwright package still holds the driver at the expected path."""
+        driver_version: str = _playwright_driver_version()
+
+        self.assertRegex(driver_version, re.compile(r"^\d+\.\d+\.\d+$"))
 
 
 def _fluent_container() -> MagicMock:
@@ -33,7 +44,7 @@ class TestStartAndClose(unittest.TestCase):
         self.browser: MagicMock = self.playwright.chromium.connect.return_value
         self.context: MagicMock = self.browser.new_context.return_value
         self.page: MagicMock = self.context.new_page.return_value
-        self.enterContext(patch(f"{MODULE}.version", return_value="1.64.1"))
+        self.enterContext(patch(f"{MODULE}._playwright_driver_version", return_value="1.64.1"))
         self.enterContext(patch(f"{MODULE}.wait_for_logs"))
         self.enterContext(patch(f"{MODULE}.secrets.token_urlsafe", return_value="random-token"))
         self.docker_container: MagicMock = self.enterContext(patch(f"{MODULE}.DockerContainer", return_value=self.container))

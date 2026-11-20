@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import re
 import secrets
 import time
-from importlib.metadata import version
+from importlib.resources import files
 from typing import TYPE_CHECKING
 
 from playwright.sync_api import Error as PlaywrightError
@@ -63,10 +64,17 @@ REPLACE_TEXT_SCRIPT: str = """([selector, replacements]) => {
 }"""
 
 
+def _playwright_driver_version() -> str:
+    # PyPI has patch releases without an npm release or a Docker image, for example 1.65.2. The bundled driver has both.
+    package_json: str = files("playwright").joinpath("driver/package/package.json").read_text(encoding="utf-8")
+    driver_version: str = json.loads(package_json)["version"]
+    return driver_version
+
+
 class PolarionUiBrowser:
     """Headless Chromium logged in to Polarion through its login form, as a user does.
 
-    The browser runs in the Playwright Linux image of the installed Playwright version. Fonts render differently
+    The browser runs in the Playwright Linux image of the driver bundled with the installed Playwright. Fonts render differently
     on each OS, so this keeps screenshots comparable between developer machines and CI.
 
     ``close`` does not log out: Polarion's logout ends every session of the user, also those of parallel runs.
@@ -93,7 +101,7 @@ class PolarionUiBrowser:
         Raises:
             RuntimeError: If Polarion does not accept the login
         """
-        playwright_version: str = version("playwright")
+        playwright_version: str = _playwright_driver_version()
         # Docker publishes the port on every host interface, so only who knows this path can drive the browser.
         server_path: str = f"/{secrets.token_urlsafe(24)}"
         self.__server = (
