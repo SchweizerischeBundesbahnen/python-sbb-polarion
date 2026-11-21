@@ -1,5 +1,15 @@
 # Changelog
 
+## [5.2.1](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v5.2.0...v5.2.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency tox to v4.67.15 ([677e82a](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/677e82a71e5efe4b2f36b1f47bd2fce16b2f09a3))
+* **deps:** update dependency tox-uv to v1.37.9 ([9fc8e81](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/9fc8e81551b79a701dc7979a7babba2340b69656))
+* **deps:** update dependency ty to v0.0.105 ([22dd79d](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/22dd79dc34ceb8fade75e264bd81569fcba9be52))
+* start the Playwright image of the bundled driver version ([#171](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/171)) ([66e5ebe](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/commit/66e5ebe2677c91cca1f806180c342983b66abfbd)), closes [#170](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/issues/170)
+
 ## [5.2.0](https://github.com/SchweizerischeBundesbahnen/python-sbb-polarion/compare/v5.1.0...v5.2.0) (2026-11-19)
 
 
